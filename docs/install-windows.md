@@ -5,7 +5,7 @@ The teaching preview ships as one installer file, `PrismStatistics_<version>_x64
 ## Installing
 
 1. Double-click the installer.
-2. The installer isn't code-signed yet, so Windows may show **"Windows protected your PC"**. Choose **More info**, then **Run anyway**.
+2. The installer and the program are code-signed. A new download can still show **"Windows protected your PC"** until enough people have installed it; check that the publisher shown is the one on the release page, then choose **More info** and **Run anyway**. You can also check the file against the SHA-256 on the release page.
 3. Accept the license (Apache 2.0) and finish. No administrator rights are needed: PrismStatistics installs for the current user only, under `%LOCALAPPDATA%\PrismStatistics`.
 
 The installer adds PrismStatistics to the Start menu (in a **PrismOpenResearch** folder) and makes `.pstat` project files open in PrismStatistics when double-clicked.
@@ -66,6 +66,6 @@ The installer is written to `app/src-tauri/target/release/bundle/nsis/`. The bui
 
 ## Not done yet
 
-- **Code signing.** Signing removes the SmartScreen warning but needs a paid certificate, so it waits for a decision by the product owner.
+- **Code signing.** `python tools/release.py build --sign` signs and timestamps the program, the installer's parts and the installer with Azure Artifact Signing, then checks the installer's signature. The account names come from the `OPENSTAGE_SIGN_*` environment variables and the sign-in from `az login`; `python tools/sign_windows.py --ready` says whether everything it needs is there.
 - **macOS or web version** for spring 2027 (D12).
 - **Automatic updates.**

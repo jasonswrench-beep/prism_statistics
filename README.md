@@ -43,7 +43,7 @@ The R reference values for the tests are made by the scripts in `crates/prism-en
 
 - `python tools/validate.py` runs every reference suite and writes [docs/validation-report.md](docs/validation-report.md): what each suite checks, the R script and package versions behind it, and each test's outcome. Add `--regenerate` to re-run the R scripts first and report any reference value that moved. The product owner signs suites in [docs/validation-signoff.md](docs/validation-signoff.md).
 - `python tools/release.py check` confirms the version is the same in every file, and `bump <version>` changes it everywhere.
-- `python tools/release.py build` runs the tests and the validation report, then makes an **unsigned** Windows installer in `release/<version>/`, with its SHA-256 and the release notes from [CHANGELOG.md](CHANGELOG.md). Code signing is a separate step for the product owner.
+- `python tools/release.py build` runs the tests and the validation report, then makes a Windows installer in `release/<version>/`, with its SHA-256 and the release notes from [CHANGELOG.md](CHANGELOG.md). It is unsigned unless you add `--sign`, which signs and timestamps the program and the installer with Azure Artifact Signing (`tools/sign_windows.py`; the account names come from the `OPENSTAGE_SIGN_*` environment variables and the sign-in from `az login`). The build fails if the program contains a build folder's path.
 
 The in-app help (Help menu, F1, the ? in each dialog) lives in `app/ui/src/help`: the user guide in `guide/` and one page per dialog in `topics/`.
 

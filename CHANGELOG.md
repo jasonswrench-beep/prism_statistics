@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.1.0 (teaching preview, not yet released)
+## 0.1.0 (teaching preview)
 
-The first release for classes and research, on Windows. The installer is not code-signed yet.
+The first release for classes and research, on Windows. The installer and the program are code-signed.
 
 ### Data
 
@@ -80,6 +80,5 @@ From an independent review before release. A project, data file or script from s
 
 ### Known issues
 
-- The installer is not code-signed, so Windows asks for confirmation the first time it runs.
 - The .xlsx reader's XML library (quick-xml 0.38) has two denial-of-service advisories (RUSTSEC-2026-0194, -0195). It will be updated when the reader moves to a fixed version; workbooks are size-checked before reading meanwhile.
 - A security advisory for the `glib` library (GitHub Dependabot alert 1) affects only Linux builds of the desktop shell. The Windows build doesn't include that library. It will be resolved when the Tauri framework moves to the fixed version.

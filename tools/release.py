@@ -3,11 +3,14 @@
     python tools/release.py check             # the version is the same everywhere it is written
     python tools/release.py bump 0.2.0        # set a new version everywhere
     python tools/release.py build             # tests, validation report, UI build, then the unsigned installer
+    python tools/release.py build --sign      # the same, with the program and installer signed and timestamped
 
 `build` stops at the first failure. It maps the build folders out of the program (--remap-path-prefix, /d1trimfile) and
 fails if the program still holds the user profile or repository path. It writes the installer, its SHA-256 checksum and the release notes for this version
-(from CHANGELOG.md) to release/<version>/. Code signing is a separate, deliberate step that the product owner starts:
-this script never signs, and it refuses to run while a signing setting is present in tauri.conf.json.
+(from CHANGELOG.md) to release/<version>/. Signing is a deliberate choice: only `--sign` signs, through
+tools/sign_windows.py (Azure Artifact Signing, every signature timestamped). Its account names come from the
+OPENSTAGE_SIGN_* environment variables and the sign-in from `az login`, so nothing about the account is in the
+repository; tauri.conf.json itself never holds a signing setting, and the build refuses to run if it does.
 """
 
 import hashlib
@@ -126,12 +129,29 @@ def check_no_private_paths(exe):
     print("No private paths in the program.")
 
 
-def build():
+SIGN_SCRIPT = os.path.join(ROOT, "tools", "sign_windows.py")
+
+
+def tauri_config(sign):
+    """The build's Tauri settings: tools/tauri-release.json, plus, for a signed build, a sign command that Tauri runs for
+    each file it signs (the program, the installer's plugins, the uninstaller and the setup file)."""
+    cfg = json.loads(read(os.path.join(ROOT, "tools", "tauri-release.json")))
+    if sign:
+        cfg.setdefault("bundle", {}).setdefault("windows", {})["signCommand"] = {"cmd": sys.executable, "args": ["-I", SIGN_SCRIPT, "--description", "PrismStatistics", "%1"]}
+    path = os.path.join(ROOT, "target", "release-config", "tauri-signed.json" if sign else "tauri-unsigned.json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    write(path, json.dumps(cfg, indent=2) + "\n")
+    return path
+
+
+def build(sign=False):
     version = check()
     conf = json.loads(read(TAURI_CONF))
     win = conf.get("bundle", {}).get("windows", {})
     if win.get("certificateThumbprint") or win.get("signCommand"):
-        sys.exit("tauri.conf.json has a signing setting. This script makes unsigned builds only; signing is the product owner's step.")
+        sys.exit("tauri.conf.json has a signing setting. Signing is chosen per build with --sign, not kept in the configuration.")
+    if sign:
+        step("Signing: checking everything it needs", [sys.executable, "-I", SIGN_SCRIPT, "--ready"])
     release_notes = notes(version)
     step("Rust tests", ["cargo", "test", "--workspace", "-q"])
     step("Interface tests", "npm test", cwd=os.path.join(ROOT, "app", "ui"), shell=True)
@@ -139,8 +159,8 @@ def build():
     step("Interface build", "npm run build", cwd=os.path.join(ROOT, "app", "ui"), shell=True)
     # The interface is built above, so Tauri's own before-build step (which resolves ../ui from the folder it was
     # started in) is switched off by tools/tauri-release.json.
-    cfg = os.path.join(ROOT, "tools", "tauri-release.json")
-    step("Installer (unsigned)", f'npm --prefix ../ui exec -- tauri build --config "{cfg}"', cwd=os.path.join(ROOT, "app", "src-tauri"), shell=True, env=path_free_env())
+    cfg = tauri_config(sign)
+    step("Installer (signed)" if sign else "Installer (unsigned)", f'npm --prefix ../ui exec -- tauri build --config "{cfg}"', cwd=os.path.join(ROOT, "app", "src-tauri"), shell=True, env=path_free_env())
     check_no_private_paths(os.path.join(ROOT, "app", "src-tauri", "target", "release", "prismstatistics-app.exe"))
     bundle = os.path.join(ROOT, "app", "src-tauri", "target", "release", "bundle", "nsis")
     found = [f for f in os.listdir(bundle) if f.endswith("-setup.exe") and f"_{version}_" in f]
@@ -150,11 +170,14 @@ def build():
     os.makedirs(out, exist_ok=True)
     exe = os.path.join(out, found[0])
     shutil.copy2(os.path.join(bundle, found[0]), exe)
+    if sign:
+        step("Signing: checking the installer", [sys.executable, "-I", SIGN_SCRIPT, "--check", exe])
     digest = hashlib.sha256(open(exe, "rb").read()).hexdigest()
     write(os.path.join(out, "SHA256SUMS.txt"), f"{digest}  {found[0]}\n")
-    write(os.path.join(out, "RELEASE-NOTES.md"), release_notes + "\nThis build is not code-signed: Windows shows \"Windows protected your PC\"; choose More info, then Run anyway.\n")
+    signed_note = "The installer and the program are code-signed and timestamped." if sign else "This build is not code-signed: Windows shows \"Windows protected your PC\"; choose More info, then Run anyway."
+    write(os.path.join(out, "RELEASE-NOTES.md"), release_notes + "\n" + signed_note + "\n")
     shutil.copy2(os.path.join(ROOT, "docs", "validation-report.md"), os.path.join(out, "validation-report.md"))
-    print(f"\nUnsigned installer: {os.path.relpath(exe, ROOT)}\nSHA-256: {digest}")
+    print(f"\n{'Signed' if sign else 'Unsigned'} installer: {os.path.relpath(exe, ROOT)}\nSHA-256: {digest}")
 
 
 if __name__ == "__main__":
@@ -167,4 +190,7 @@ if __name__ == "__main__":
             sys.exit("bump needs a version, e.g. python tools/release.py bump 0.2.0")
         bump(sys.argv[2])
     else:
-        build()
+        extra = sys.argv[2:]
+        if extra not in ([], ["--sign"]):
+            sys.exit("build takes only --sign, e.g. python tools/release.py build --sign")
+        build(sign=extra == ["--sign"])
