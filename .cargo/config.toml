@@ -1,0 +1,4 @@
+# llama.cpp (the AI writer's engine) is built from source: CMake must be on PATH, and bindgen needs libclang from LLVM.
+# This is where the Windows LLVM installer puts it; a setting in the environment takes precedence (macOS, other paths).
+[env]
+LIBCLANG_PATH = { value = "C:/Program Files/LLVM/bin", force = false }

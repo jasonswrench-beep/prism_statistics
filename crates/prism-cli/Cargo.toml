@@ -1,0 +1,19 @@
+[package]
+name = "prism-cli"
+description = "A command-line harness for the PrismStatistics engine, used for testing and scripting."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[[bin]]
+name = "prism"
+path = "src/main.rs"
+
+[dependencies]
+prism-engine = { path = "../prism-engine" }
+prism-api = { path = "../prism-api" }
+tiny_http.workspace = true
+serde_json.workspace = true

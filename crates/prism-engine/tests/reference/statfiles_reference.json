@@ -1,0 +1,30 @@
+{
+  "_made_with": "R version 4.6.1 (2026-06-24 ucrt), haven 2.5.5",
+  "sav": {
+    "_labels": {"id": null, "sex": "Sex of participant", "age": "Age in years", "score": "Quiz score", "name": null, "visit": null},
+    "id": [1, 2, 3, 4, 5, 6, 7, 8],
+    "sex": [1, 2, 2, 1, 9, 1, 2, 1],
+    "age": [19, 22, 99, 20, 21, 35, 28, 24],
+    "score": [4.5, 3.25, null, 5, 2.75, 4, 3.5, 4.75],
+    "name": ["Ana", "Ben", "", "Dee", "Eli", "Fay", "Gus", "Hal"],
+    "visit": ["2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", null, "2026-01-10", "2026-01-11", "2026-01-12"]
+  },
+  "dta": {
+    "_labels": {"id": null, "sex": "Sex of participant", "age": "Age in years", "score": "Quiz score", "name": null, "visit": null},
+    "id": [1, 2, 3, 4, 5, 6, 7, 8],
+    "sex": [1, 2, 2, 1, 9, 1, 2, 1],
+    "age": [19, 22, 99, 20, 21, 35, 28, 24],
+    "score": [4.5, 3.25, null, 5, 2.75, 4, 3.5, 4.75],
+    "name": ["Ana", "Ben", "", "Dee", "Eli", "Fay", "Gus", "Hal"],
+    "visit": ["2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", null, "2026-01-10", "2026-01-11", "2026-01-12"]
+  },
+  "sas7bdat": {
+    "_labels": {"id": null, "sex": null, "age": "Age in years", "score": "Quiz score", "name": null, "visit": null},
+    "id": [1, 2, 3, 4, 5, 6, 7, 8],
+    "sex": [1, 2, 2, 1, 9, 1, 2, 1],
+    "age": [19, 22, 99, 20, 21, 35, 28, 24],
+    "score": [4.5, 3.25, null, 5, 2.75, 4, 3.5, 4.75],
+    "name": ["Ana", "Ben", "", "Dee", "Eli", "Fay", "Gus", "Hal"],
+    "visit": ["2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", null, "2026-01-10", "2026-01-11", "2026-01-12"]
+  }
+}

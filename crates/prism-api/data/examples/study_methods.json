@@ -1,0 +1,263 @@
+{
+  "id": "study_methods",
+  "rows": 120,
+  "title": "Study methods",
+  "description": "120 students in three sections of an introductory course, taught by lecture or by active learning. Test scores before and after the unit, the final exam, weekly study hours, absences, satisfaction with the course, and a five-item test-anxiety scale.",
+  "try": [
+    "Compare exam scores between the two methods (independent-samples t test)",
+    "Compare pretest and posttest scores (paired-samples t test)",
+    "Relate study hours to exam scores (correlation, regression)",
+    "Predict passing from hours and method (logistic regression)",
+    "Check the anxiety scale (reliability; anx3 is reverse-worded)"
+  ],
+  "variables": [
+    {
+      "name": "id",
+      "label": "Student ID",
+      "measure": "nominal"
+    },
+    {
+      "name": "section",
+      "label": "Course section",
+      "measure": "nominal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Section A"
+        },
+        {
+          "value": 2,
+          "label": "Section B"
+        },
+        {
+          "value": 3,
+          "label": "Section C"
+        }
+      ]
+    },
+    {
+      "name": "method",
+      "label": "Teaching method",
+      "measure": "nominal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Lecture"
+        },
+        {
+          "value": 2,
+          "label": "Active learning"
+        }
+      ]
+    },
+    {
+      "name": "hours",
+      "label": "Study hours per week",
+      "measure": "scale"
+    },
+    {
+      "name": "pretest",
+      "label": "Pretest score (0-100)",
+      "measure": "scale"
+    },
+    {
+      "name": "posttest",
+      "label": "Posttest score (0-100)",
+      "measure": "scale"
+    },
+    {
+      "name": "exam",
+      "label": "Final exam score (0-100)",
+      "measure": "scale"
+    },
+    {
+      "name": "passed",
+      "label": "Passed the exam (70 or more)",
+      "measure": "nominal",
+      "value_labels": [
+        {
+          "value": 0,
+          "label": "No"
+        },
+        {
+          "value": 1,
+          "label": "Yes"
+        }
+      ]
+    },
+    {
+      "name": "satisfaction",
+      "label": "I am satisfied with this course",
+      "measure": "ordinal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Strongly disagree"
+        },
+        {
+          "value": 2,
+          "label": "Disagree"
+        },
+        {
+          "value": 3,
+          "label": "Neutral"
+        },
+        {
+          "value": 4,
+          "label": "Agree"
+        },
+        {
+          "value": 5,
+          "label": "Strongly agree"
+        },
+        {
+          "value": -99,
+          "label": "No answer"
+        }
+      ],
+      "missing_values": [
+        -99
+      ]
+    },
+    {
+      "name": "anx1",
+      "label": "I worry before a test",
+      "measure": "ordinal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Strongly disagree"
+        },
+        {
+          "value": 2,
+          "label": "Disagree"
+        },
+        {
+          "value": 3,
+          "label": "Neutral"
+        },
+        {
+          "value": 4,
+          "label": "Agree"
+        },
+        {
+          "value": 5,
+          "label": "Strongly agree"
+        }
+      ]
+    },
+    {
+      "name": "anx2",
+      "label": "My mind goes blank in exams",
+      "measure": "ordinal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Strongly disagree"
+        },
+        {
+          "value": 2,
+          "label": "Disagree"
+        },
+        {
+          "value": 3,
+          "label": "Neutral"
+        },
+        {
+          "value": 4,
+          "label": "Agree"
+        },
+        {
+          "value": 5,
+          "label": "Strongly agree"
+        }
+      ]
+    },
+    {
+      "name": "anx3",
+      "label": "I feel calm during tests",
+      "measure": "ordinal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Strongly disagree"
+        },
+        {
+          "value": 2,
+          "label": "Disagree"
+        },
+        {
+          "value": 3,
+          "label": "Neutral"
+        },
+        {
+          "value": 4,
+          "label": "Agree"
+        },
+        {
+          "value": 5,
+          "label": "Strongly agree"
+        }
+      ]
+    },
+    {
+      "name": "anx4",
+      "label": "I lose sleep before an exam",
+      "measure": "ordinal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Strongly disagree"
+        },
+        {
+          "value": 2,
+          "label": "Disagree"
+        },
+        {
+          "value": 3,
+          "label": "Neutral"
+        },
+        {
+          "value": 4,
+          "label": "Agree"
+        },
+        {
+          "value": 5,
+          "label": "Strongly agree"
+        }
+      ]
+    },
+    {
+      "name": "anx5",
+      "label": "My heart races during a test",
+      "measure": "ordinal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Strongly disagree"
+        },
+        {
+          "value": 2,
+          "label": "Disagree"
+        },
+        {
+          "value": 3,
+          "label": "Neutral"
+        },
+        {
+          "value": 4,
+          "label": "Agree"
+        },
+        {
+          "value": 5,
+          "label": "Strongly agree"
+        }
+      ]
+    },
+    {
+      "name": "absences",
+      "label": "Classes missed",
+      "measure": "scale"
+    }
+  ]
+}

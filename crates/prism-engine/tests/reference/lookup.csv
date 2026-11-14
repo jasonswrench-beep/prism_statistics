@@ -1,0 +1,5 @@
+"group","region","weight"
+"a","North",1.5
+"b","South",2
+"c","East",0.5
+"z","West",9

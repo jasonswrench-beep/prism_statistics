@@ -1,0 +1,25 @@
+[package]
+name = "prism-engine"
+description = "The PrismStatistics engine: datasets, imports, analyses and result bundles."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+prismqda-stats.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+csv.workspace = true
+thiserror.workspace = true
+calamine.workspace = true
+zip.workspace = true
+ambers.workspace = true
+arrow-array.workspace = true
+arrow-schema.workspace = true
+dta.workspace = true
+sas7bdat.workspace = true
+rusqlite.workspace = true
+roxmltree.workspace = true

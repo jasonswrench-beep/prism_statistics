@@ -1,0 +1,17 @@
+{
+  "_made_with": "R version 4.6.1 (2026-06-24 ucrt)",
+  "age_n": 10,
+  "age_mean": 22.5,
+  "age_sd": 4.1163630117428225,
+  "age_min": 18,
+  "age_max": 31,
+  "age_median": 21.5,
+  "age_se": 1.3017082793177754,
+  "age_ci_lo": 19.555331292067567,
+  "age_ci_hi": 25.444668707932433,
+  "sex_1": 6,
+  "sex_2": 4,
+  "sex_3": 1,
+  "sex_empty": 1,
+  "eth_missing": 1
+}

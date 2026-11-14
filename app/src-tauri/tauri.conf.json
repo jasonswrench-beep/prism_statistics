@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "PrismStatistics",
+  "version": "0.1.0",
+  "identifier": "io.github.jasonswrench-beep.prismstatistics",
+  "build": {
+    "frontendDist": "../ui/dist",
+    "devUrl": "http://localhost:5317",
+    "beforeDevCommand": "npm --prefix ../ui run dev",
+    "beforeBuildCommand": "npm --prefix ../ui run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "PrismStatistics",
+        "width": 1360,
+        "height": 860,
+        "minWidth": 960,
+        "minHeight": 600,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "PrismStatistics contributors",
+    "copyright": "Copyright 2026 PrismStatistics contributors. Apache License 2.0.",
+    "category": "Education",
+    "longDescription": "PrismStatistics is a free desktop statistics application for teaching and research, with a familiar menu-driven workspace, results checked against R, and APA-style output.",
+    "fileAssociations": [
+      {
+        "ext": ["pstat"],
+        "name": "PrismStatistics project",
+        "description": "PrismStatistics project",
+        "role": "Editor",
+        "mimeType": "application/x-prismstatistics-project"
+      }
+    ],
+    "shortDescription": "Free, familiar statistics with explanations",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico"],
+    "licenseFile": "../../LICENSE",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico",
+        "startMenuFolder": "PrismOpenResearch"
+      }
+    }
+  }
+}

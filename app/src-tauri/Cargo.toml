@@ -1,0 +1,28 @@
+[package]
+name = "prismstatistics-app"
+version = "0.1.0"
+description = "The PrismStatistics desktop app: a Tauri window around the engine and the React interface."
+edition = "2021"
+rust-version = "1.92"
+license = "Apache-2.0"
+authors = ["PrismStatistics contributors"]
+publish = false
+
+# The desktop app is its own Cargo workspace, as in PrismQDA: Tauri brings several hundred crates, and keeping it out
+# of the main workspace keeps `cargo test --workspace` fast and the engine free of any window toolkit.
+[workspace]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+prism-api = { path = "../../crates/prism-api" }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true

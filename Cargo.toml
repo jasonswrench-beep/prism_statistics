@@ -1,0 +1,49 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/prism-engine",
+    "crates/prism-api",
+    "crates/prism-cli",
+    "crates/prism-pdf",
+    "crates/prism-ai",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.92"
+license = "Apache-2.0"
+authors = ["PrismStatistics contributors"]
+
+[workspace.dependencies]
+# The statistics are shared with PrismQDA (decision D03): one implementation, validated against R there and here.
+# Pinned to a commit of the public PrismQDA repository (its 0.1.0-beta.1 release), so a change in PrismQDA never changes
+# PrismStatistics' numbers without a deliberate update.
+prismqda-stats = { git = "https://github.com/jasonswrench-beep/prismqda", rev = "56a161e0b0b9fb2d81268e75045fc31269d7b47e" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+csv = "1.4"
+thiserror = "2"
+tiny_http = "0.12"
+calamine = "0.38.0"
+ambers = { version = "0.4.7", default-features = false }
+arrow-array = "57.3"
+arrow-schema = "57.3"
+dta = { version = "0.6.0", default-features = false }
+sas7bdat = { version = "0.9.3", default-features = false }
+rusqlite = { version = "0.41.1", features = ["bundled"] }
+zip = { version = "9.5.1", default-features = false, features = ["deflate"] }
+base64 = "0.22"
+ureq = "3.5.0"
+typst = "=0.15.1"
+typst-layout = "=0.15.1"
+typst-pdf = "=0.15.1"
+typst-assets = { version = "=0.15.1", features = ["fonts"] }
+# Charts: SVG text to outlines (for the PDF) and SVG to PNG (for Word). The version Typst already uses.
+resvg = "0.47"
+# Chart pictures from project files are rebuilt from an allowlist (prism-engine svg_clean.rs). The version usvg uses.
+roxmltree = "0.21"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

@@ -1,0 +1,1123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PrismStatistics Mockups</title>
+<meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#151A3D; --deep:#0B0F2B; --ink:#151A3D; --muted:#565C80; --accent:#6555C4; --accent-ink:#4E3FB0;
+  --paper:#FFFFFF; --wash:#F5F4FB; --line:#E3E2F0; --pill:#EDEAFB; --hover:#F1EFFA;
+  --c1:#22C7EE; --c2:#3D7BF2; --c3:#7C5CF0; --c4:#E04FB3; --c5:#FF7A59; --c6:#FFB23E;
+  --spectrum:linear-gradient(90deg,var(--c1),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6));
+  --info-bg:#EAF2FE; --info-line:#CFE0FB; --info-ink:#1F4FB8;
+  --warn-bg:#FFF4E5; --warn-line:#F7D9A8; --warn-ink:#8A4B00;
+  --ok-bg:#E8F6EE; --ok-line:#BFE5CF; --ok-ink:#17663A;
+  --gen-bg:#F4F1FF; --gen-line:#D9D1FB;
+  --mono:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,monospace;
+  --radius:12px; --shadow:0 1px 2px rgba(21,26,61,.06),0 4px 14px rgba(21,26,61,.06);
+  --focus:0 0 0 3px rgba(101,85,196,.45);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--wash);color:var(--ink);font:14px/1.45 Inter,"Segoe UI",system-ui,sans-serif;font-feature-settings:"tnum" 0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:none;box-shadow:var(--focus);border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.num{font-feature-settings:"tnum" 1;text-align:right}
+
+/* ---------- app frame ---------- */
+.app{display:grid;grid-template-rows:auto auto auto auto 1fr auto;height:100%;min-width:0;overflow:hidden}
+.mock-strip{display:flex;align-items:center;gap:10px;justify-content:center;font-size:12px;color:#fff;background:var(--deep);padding:3px 12px;border-bottom:2px solid transparent;border-image:var(--spectrum) 1}
+.mock-strip b{font-weight:600}
+.titlebar{display:flex;align-items:center;gap:12px;background:var(--navy);color:#fff;height:44px;padding:0 6px 0 14px}
+.titlebar .brand{display:flex;align-items:center;gap:8px;font-weight:600;letter-spacing:.1px}
+.titlebar .brand img{width:24px;height:24px}
+.titlebar .sep{width:1px;height:18px;background:rgba(255,255,255,.25)}
+.titlebar .proj{color:#D9DCF2}
+.titlebar .saved{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#B4B9DA;margin-left:6px}
+.titlebar .saved::before{content:"";width:7px;height:7px;border-radius:50%;background:#5FD49B}
+.titlebar .win{margin-left:auto;display:flex}
+.titlebar .win span{width:42px;height:44px;display:grid;place-items:center;color:#B4B9DA}
+.menubar{display:flex;align-items:center;gap:2px;background:var(--paper);border-bottom:1px solid var(--line);padding:0 8px;height:38px;position:relative;z-index:30}
+.menubar>.mb{position:relative}
+.menubar>.mb>button{background:none;border:0;padding:6px 10px;border-radius:6px;cursor:pointer}
+.menubar>.mb>button:hover,.menubar>.mb>button[aria-expanded="true"]{background:var(--hover)}
+.menu{position:absolute;left:0;top:calc(100% + 4px);min-width:270px;background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(21,26,61,.16);padding:6px;display:none}
+.menu.open{display:block}
+.menu [role=menuitem]{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:7px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.menu [role=menuitem]:hover,.menu [role=menuitem]:focus{background:var(--pill);outline:none;box-shadow:none}
+.menu [role=menuitem][aria-disabled="true"]{color:#9A9EBB;cursor:default}
+.menu [role=menuitem][aria-disabled="true"]:hover{background:none}
+.menu .kbd{margin-left:auto;color:var(--muted);font-size:12px}
+.menu .later{margin-left:auto;font-size:11px;border:1px solid var(--line);border-radius:999px;padding:0 7px;color:var(--muted)}
+.menu .grp{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:8px 10px 2px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:5px 4px}
+.menu .sub{position:relative}
+.menu .sub>.menu{left:100%;top:-7px}
+.search{margin-left:auto;position:relative}
+.search input{width:300px;max-width:32vw;border:1px solid var(--line);border-radius:999px;padding:6px 12px 6px 34px;background:var(--wash)}
+.search svg{position:absolute;left:11px;top:8px;color:var(--muted);width:16px;height:16px}
+.search .results{position:absolute;right:0;top:calc(100% + 6px);width:380px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(21,26,61,.16);padding:6px;display:none}
+.search .results.open{display:block}
+.search .results [role=option]{padding:8px 10px;border-radius:6px;cursor:pointer;display:flex;flex-direction:column}
+.search .results [role=option][aria-selected="true"],.search .results [role=option]:hover{background:var(--pill)}
+.search .results small{color:var(--muted)}
+.toolbar{display:flex;align-items:center;gap:4px;background:var(--paper);border-bottom:1px solid var(--line);padding:4px 8px}
+.tb{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid transparent;border-radius:8px;padding:5px 9px;cursor:pointer;color:var(--ink)}
+.tb:hover{background:var(--hover)}
+.tb.primary{color:var(--accent-ink)}
+.tbsep{width:1px;height:20px;background:var(--line);margin:0 6px}
+
+.body{display:grid;grid-template-columns:auto 1fr auto;min-height:0}
+.rail{background:var(--paper);border-right:1px solid var(--line);width:168px;padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.rail button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-radius:9px;padding:8px 10px;cursor:pointer;text-align:left;color:var(--ink)}
+.rail button:hover{background:var(--hover)}
+.rail button[aria-current="page"]{background:var(--pill);color:var(--accent-ink);font-weight:600}
+.rail .spacer{flex:1}
+.rail.collapsed{width:56px}.rail.collapsed .lbl{display:none}
+
+.main{min-width:0;min-height:0;display:flex;flex-direction:column}
+.doctabs{display:flex;gap:4px;padding:0 16px;background:var(--paper);border-bottom:1px solid var(--line)}
+.doctabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px 9px;cursor:pointer;color:var(--muted);font-weight:500}
+.doctabs button[aria-selected="true"]{color:var(--accent-ink);border-bottom-color:var(--accent)}
+.view{flex:1;min-height:0;overflow:auto;padding:18px}
+
+.dock{width:340px;background:var(--paper);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.dock header{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);font-weight:600}
+.dock header .x{margin-left:auto}
+.dock .dockbody{padding:14px;overflow:auto;flex:1}
+.iconbtn{background:none;border:0;border-radius:6px;padding:4px;cursor:pointer;color:var(--muted);display:inline-grid;place-items:center}
+.iconbtn:hover{background:var(--hover);color:var(--ink)}
+
+.ctxbar{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;background:var(--paper);border-top:1px solid var(--line);padding:6px 14px;font-size:12.5px;color:var(--muted)}
+.ctxbar b{color:var(--ink);font-weight:600}
+.ctxbar .chip{border:1px solid var(--line);border-radius:999px;padding:1px 8px;background:var(--wash)}
+
+/* ---------- shared components ---------- */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:9px;border:1px solid var(--line);background:#fff;padding:8px 16px;cursor:pointer;font-weight:500}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:linear-gradient(180deg,#7465D6,#5A4ABC);border-color:#5A4ABC;color:#fff}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.callout{display:flex;gap:10px;border:1px solid var(--info-line);background:var(--info-bg);border-radius:10px;padding:10px 12px;color:#17306E}
+.callout svg{color:var(--c2);margin-top:1px}
+.callout.warn{border-color:var(--warn-line);background:var(--warn-bg);color:#5A3100}.callout.warn svg{color:#C86B00}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px;border:1px solid}
+.status svg{width:14px;height:14px}
+.status.ok{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)}
+.status.review{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn-ink)}
+.status.na{background:var(--wash);border-color:var(--line);color:var(--muted)}
+.status.stale{background:#FDECEF;border-color:#F5C6CF;color:#9B1C34}
+.placeholder{font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:#8A4B00;background:var(--warn-bg);border:1px dashed #E4B76B;border-radius:6px;padding:1px 7px}
+h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.2px}
+h1{font-size:28px}h2{font-size:18px}h3{font-size:15px}
+.muted{color:var(--muted)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;cursor:pointer;color:var(--muted);font-weight:500}
+.tabs button[aria-selected="true"]{color:var(--accent-ink);border-bottom-color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:54px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:9px 16px;border-radius:10px;box-shadow:var(--shadow);font-size:13px;z-index:90;display:none}
+.toast.show{display:block}
+.screens{position:fixed;right:16px;bottom:46px;z-index:80}
+.screens>button{background:var(--navy);color:#fff;border:0;border-radius:999px;padding:8px 14px;box-shadow:var(--shadow);cursor:pointer;display:flex;gap:8px;align-items:center;font-weight:500}
+.screens ol{position:absolute;right:0;bottom:calc(100% + 8px);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(21,26,61,.16);padding:6px;margin:0;list-style:none;width:280px;display:none}
+.screens ol.open{display:block}
+.screens li button{width:100%;text-align:left;background:none;border:0;padding:7px 10px;border-radius:6px;cursor:pointer}
+.screens li button:hover{background:var(--pill)}
+
+/* ---------- welcome ---------- */
+.welcome{max-width:1060px;margin:0 auto;position:relative}
+.welcome .hero{display:flex;align-items:center;gap:18px;padding:18px 4px 22px}
+.welcome .hero img{width:76px;height:76px}
+.welcome .hero p{margin:6px 0 0;color:var(--muted);font-size:15px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:118px;cursor:pointer;font-weight:600;border:1px solid var(--line);background:#fff;border-radius:var(--radius);box-shadow:var(--shadow)}
+.tile svg{width:28px;height:28px;color:var(--accent)}
+.tile:hover{border-color:#CFC8F3}
+.tile.primary{background:linear-gradient(160deg,#7A6BDA,#5544B8);color:#fff;border-color:#5544B8}
+.tile.primary svg{color:#fff}
+.tile small{font-weight:400;color:var(--muted);margin-top:-6px}.tile.primary small{color:#E3DFFB}
+.wgrid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-top:18px}
+.wgrid .card{padding:16px}
+.recent{list-style:none;margin:10px 0 0;padding:0}
+.recent li{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px}
+.recent li:hover{background:var(--wash)}
+.recent .ic{width:36px;height:36px;border-radius:9px;background:var(--pill);display:grid;place-items:center;color:var(--accent)}
+.recent .meta{font-size:12.5px;color:var(--muted)}
+.recent .missing{font-size:12px;color:var(--warn-ink)}
+.steps{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:4px}
+.steps li{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px}
+.steps li .n{width:24px;height:24px;border-radius:7px;background:var(--pill);color:var(--accent-ink);display:grid;place-items:center;font-size:12px;font-weight:700}
+.steps li.done .n{background:var(--ok-bg);color:var(--ok-ink)}
+
+/* ---------- data grid ---------- */
+.gridwrap{height:100%;display:flex;flex-direction:column;gap:10px}
+.gridbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--pill);color:var(--accent-ink);font-weight:600}
+.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.switch input{appearance:none;width:34px;height:20px;border-radius:999px;background:#CFCDE3;position:relative;cursor:pointer;transition:.15s}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+.switch input:checked{background:var(--accent)}.switch input:checked::after{left:16px}
+.gridscroll{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
+table.dg{border-collapse:separate;border-spacing:0;font-size:13px;font-feature-settings:"tnum" 1}
+table.dg th,table.dg td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:5px 10px;white-space:nowrap;height:30px}
+table.dg thead th{position:sticky;top:0;background:#FAF9FE;z-index:2;font-weight:600;text-align:left}
+table.dg thead th small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+table.dg .rn{position:sticky;left:0;background:#FAF9FE;color:var(--muted);text-align:right;z-index:1;min-width:48px}
+table.dg thead .rn{z-index:3}
+table.dg td.id{position:sticky;left:48px;background:#fff;z-index:1;box-shadow:1px 0 0 var(--line)}
+table.dg thead th.id{left:48px;z-index:3}
+table.dg td:focus{outline:2px solid var(--accent);outline-offset:-2px;background:#F3F0FF;box-shadow:none;border-radius:0}
+table.dg td.miss{color:#9A9EBB}
+table.dg td.umiss{color:#9B5A00;font-style:italic}
+table.dg td.lbl{font-style:italic}
+.vv td{white-space:nowrap}
+.vv input,.vv select{border:1px solid transparent;background:transparent;padding:3px 6px;border-radius:6px;width:100%}
+.vv input:hover,.vv select:hover{border-color:var(--line)}
+.measure{display:inline-flex;align-items:center;gap:6px}
+.measure svg{width:15px;height:15px;color:var(--accent)}
+.healthrow{display:flex;gap:10px;flex-wrap:wrap}
+.health{font-size:12.5px;display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 10px}
+.health svg{width:14px;height:14px}
+
+/* ---------- dock: variables ---------- */
+.varlist{list-style:none;margin:0;padding:0}
+.varlist li{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:default}
+.varlist li:hover{background:var(--wash)}
+.varlist li .lab{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.props dt{font-size:12px;color:var(--muted);margin-top:10px}
+.props dd{margin:2px 0 0}
+
+/* ---------- dialog ---------- */
+.overlay{position:fixed;inset:0;background:rgba(11,15,43,.35);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+.overlay.open{display:flex}
+.dialog{width:min(820px,100%);max-height:calc(100vh - 40px);overflow:auto;background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(11,15,43,.35);border:1px solid var(--line)}
+.dialog>header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.dialog>header h2{font-size:17px}
+.dialog>header .x{margin-left:auto}
+.dialog .dbody{padding:16px 18px;display:grid;gap:14px}
+.transfer{display:grid;grid-template-columns:1fr auto 1.15fr;gap:12px;align-items:start}
+.listbox{border:1px solid var(--line);border-radius:10px;background:#fff;min-height:64px;padding:4px;list-style:none;margin:0}
+.listbox.tall{height:310px;overflow:auto}
+.listbox li{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;cursor:pointer}
+.listbox li[aria-selected="true"]{background:var(--pill);color:var(--accent-ink)}
+.listbox li .lab{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.listbox li .measure{margin-left:auto}
+.listbox li.empty{color:#9A9EBB;font-style:italic;cursor:default}
+.listbox:focus-within{border-color:#B9AFEE}
+.rolecol{display:grid;gap:12px}
+.role{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start}
+.role .arrow{margin-top:24px}
+.role label,.fieldlabel{font-weight:600;font-size:13px;display:block;margin-bottom:4px}
+.role .hint,.fieldhint{font-weight:400;color:var(--muted);font-size:12px}
+.arrowbtn{width:36px;height:32px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;display:grid;place-items:center;color:var(--accent-ink)}
+.arrowbtn:hover{background:var(--pill)}
+.groupsdef{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:13px}
+.groupsdef select{border:1px solid var(--line);border-radius:7px;padding:4px 6px}
+details.opt{border:1px solid var(--line);border-radius:10px;padding:0 12px}
+details.opt>summary{cursor:pointer;padding:10px 0;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}
+details.opt>summary::-webkit-details-marker{display:none}
+details.opt>summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:.15s;margin-right:2px}
+details.opt[open]>summary::before{transform:rotate(45deg)}
+details.opt>summary .cur{font-weight:400;color:var(--muted);margin-left:auto;font-size:13px}
+details.opt .optbody{padding:0 0 12px;display:grid;gap:8px}
+.radio{display:flex;gap:8px;align-items:flex-start}
+.radio input{margin-top:3px;accent-color:var(--accent)}
+.inline-err{color:#9B1C34;font-size:12.5px;display:flex;gap:6px;align-items:flex-start}
+.inline-err svg{width:15px;height:15px;color:#C0334F;margin-top:2px}
+.dialog footer{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line);background:#FBFAFE;border-radius:0 0 14px 14px}
+
+/* ---------- output ---------- */
+.outgrid{display:grid;grid-template-columns:230px 1fr;gap:16px;min-height:100%}
+.outline{padding:10px}
+.outline ul{list-style:none;margin:0;padding:0 0 0 12px}
+.outline>ul{padding:0}
+.outline li>button{background:none;border:0;padding:5px 8px;border-radius:7px;cursor:pointer;width:100%;text-align:left;display:flex;gap:6px;align-items:center}
+.outline li>button:hover{background:var(--wash)}
+.outline li>button[aria-current="true"]{background:var(--pill);color:var(--accent-ink);font-weight:600}
+.result{padding:0;overflow:hidden}
+.result>.rhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px 8px}
+.result>.rhead h2 button{all:unset;cursor:pointer}
+.result>.rhead h2 button:hover{text-decoration:underline;text-decoration-color:var(--accent)}
+.result>.rhead h2 button:focus-visible{box-shadow:var(--focus);border-radius:4px}
+.result .ractions{margin-left:auto;display:flex;gap:4px}
+.result .rmeta{padding:0 16px 10px;color:var(--muted);font-size:12.5px}
+.result .tabs{padding:0 10px}
+.result .tabpanel{padding:16px}
+table.apa{border-collapse:collapse;font-feature-settings:"tnum" 1;margin:6px 0 4px;min-width:520px}
+table.apa caption{text-align:left;font-weight:600;padding-bottom:6px}
+table.apa caption i{font-weight:400}
+table.apa th,table.apa td{padding:5px 14px;text-align:right}
+table.apa th:first-child,table.apa td:first-child{text-align:left;padding-left:0}
+table.apa thead th{border-top:1.5px solid var(--ink);border-bottom:1px solid var(--ink);font-weight:600}
+table.apa tbody tr:last-child td{border-bottom:1.5px solid var(--ink)}
+.tnote{font-size:12.5px;color:var(--muted);max-width:760px;margin:4px 0 18px}
+.diaglist{display:grid;gap:10px}
+.diag{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:12px;border:1px solid var(--line);border-radius:10px}
+.diag p{margin:0;color:var(--muted);font-size:13px;grid-column:1/-1}
+.gen{border:1px solid var(--gen-line);background:var(--gen-bg);border-radius:10px;padding:12px 14px;position:relative}
+.gen .tag{display:inline-flex;gap:6px;align-items:center;font-size:11.5px;font-weight:600;color:var(--accent-ink);margin-bottom:6px}
+code.slot{font:12px var(--mono);background:#FFF4E5;border:1px solid #F7D9A8;border-radius:5px;padding:0 4px;color:#8A4B00}
+.bound{background:#fff;border:1px solid var(--gen-line);border-radius:5px;padding:0 4px;font-feature-settings:"tnum" 1}
+.studentbox textarea{width:100%;min-height:96px;border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+.boxplot text{font:12px Inter,sans-serif;fill:var(--muted)}
+
+/* ---------- guide ---------- */
+.gsteps{display:flex;gap:6px;margin-bottom:12px}
+.gsteps span{flex:1;height:4px;border-radius:4px;background:var(--line)}
+.gsteps span.on{background:var(--accent)}
+.choice{display:grid;gap:8px;margin:10px 0}
+.choice button{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer}
+.choice button:hover{border-color:#CFC8F3;background:#FCFBFF}
+.choice button[aria-pressed="true"]{border-color:var(--accent);background:var(--pill)}
+.choice button small{display:block;color:var(--muted)}
+.answers{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+.answers li{margin:2px 0}
+.answers button{background:none;border:0;color:var(--accent-ink);cursor:pointer;padding:0;text-decoration:underline}
+
+/* ---------- syntax ---------- */
+.syn{display:grid;grid-template-columns:260px 1fr;gap:16px}
+.hist{list-style:none;margin:0;padding:6px}
+.hist li{display:flex;gap:8px;align-items:flex-start;padding:8px;border-radius:8px}
+.hist li[aria-current="true"]{background:var(--pill)}
+.hist li .n{font:12px var(--mono);color:var(--muted);margin-top:2px}
+.hist li small{display:block;color:var(--muted)}
+.panes{display:grid;gap:14px}
+.pane{overflow:hidden}
+.pane>header{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.pane>header .eng{font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;border-radius:6px;padding:2px 8px}
+.eng.prism{background:var(--pill);color:var(--accent-ink)}
+.eng.r{background:#E6F4FB;color:#0B5F86}
+.pane>header .acts{margin-left:auto;display:flex;gap:6px}
+pre.code{margin:0;padding:14px;font:12.5px/1.6 var(--mono);overflow:auto;background:#FCFCFE;color:#2A2F55}
+pre.code .k{color:#7C3AED}pre.code .s{color:#0F7A55}pre.code .c{color:#8A8FB0}pre.code .n{color:#B4530F}
+.msgs{padding:10px 14px;font-size:13px;display:grid;gap:6px}
+
+/* ---------- report ---------- */
+.rep{display:grid;grid-template-columns:220px 1fr 260px;gap:16px;min-height:100%}
+.repout ol{list-style:none;margin:0;padding:6px}
+.repout li button{all:unset;display:block;padding:6px 10px;border-radius:7px;cursor:pointer;width:calc(100% - 20px)}
+.repout li button:hover{background:var(--wash)}
+.repout li button[aria-current="true"]{background:var(--pill);color:var(--accent-ink);font-weight:600}
+.repout li ol{padding:0 0 0 14px}
+.editor{padding:0;overflow:hidden}
+.edbar{display:flex;gap:2px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.edbar select{border:1px solid var(--line);border-radius:7px;padding:4px 6px;margin-right:6px}
+.edbar button{background:none;border:0;border-radius:6px;padding:5px 8px;cursor:pointer;font-weight:600}
+.edbar button:hover{background:var(--hover)}
+.page{padding:26px 34px;max-width:780px}
+.page h2{font-size:20px;margin:0 0 10px}
+.page p{margin:0 0 12px}
+.page [contenteditable]{outline:none;border-radius:6px;padding:2px 4px;margin:-2px -4px}
+.page [contenteditable]:focus{box-shadow:var(--focus)}
+.checks{padding:12px}
+.checks li{display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px}
+.checks ul{list-style:none;margin:0;padding:0}
+.checks svg{width:16px;height:16px;margin-top:2px}
+
+@media (max-width:1100px){.dock{width:290px}.tiles{grid-template-columns:repeat(2,1fr)}.rep{grid-template-columns:1fr}.rep>.repout,.rep>.checkscard{display:none}}
+@media (max-width:900px){.rail{width:56px}.rail .lbl{display:none}.dock{position:fixed;right:0;top:0;bottom:0;z-index:50;box-shadow:-8px 0 30px rgba(11,15,43,.2)}.outgrid,.syn{grid-template-columns:1fr}.outline{display:none}.wgrid{grid-template-columns:1fr}.transfer{grid-template-columns:1fr}.search input{width:170px}}
+.result .ractions{flex-wrap:wrap}
+.result .tabpanel,.wgrid .card{min-width:0;overflow-x:auto}
+@media (max-width:700px){
+  .titlebar .proj,.titlebar .sep{display:none}
+  .menubar{flex-wrap:wrap;height:auto;padding-block:4px}
+  .menubar>.mb{position:static}
+  .menubar .menu{left:8px;right:8px;min-width:0;max-height:70vh;overflow-y:auto}
+  .menu .sub>.menu{position:static;display:none;box-shadow:none;border:0;padding:0 0 0 12px}
+  .menu .sub>.menu.open{display:block}
+  .search{margin-left:0;width:100%;order:99;padding-bottom:2px}
+  .search input{width:100%;max-width:none}
+  .search .results{left:0;right:0;width:auto}
+  .toolbar{flex-wrap:wrap}.tb span{display:none}
+  .tiles{grid-template-columns:1fr 1fr}
+  .recent li{flex-wrap:wrap}
+  .welcome .hero{flex-wrap:wrap}
+  .dock{width:min(340px,100vw)}
+  .view{padding:14px}
+  .page{padding:18px 16px}
+  .screens{right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(46px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="mock-strip" role="note"><b>Concept mockup</b> for user testing · Not working software · All numbers are placeholders</div>
+  <header class="titlebar">
+    <span class="brand"><img src="{{LOGO}}" alt=""><span>PrismStatistics</span></span>
+    <span class="sep" aria-hidden="true"></span>
+    <span class="proj" id="tbProject">Wellbeing Study</span>
+    <span class="sep" aria-hidden="true"></span>
+    <span class="proj" id="tbModule">Home</span>
+    <span class="saved" id="tbSaved">Saved</span>
+    <span class="win" aria-hidden="true"><span>&#8211;</span><span>&#9633;</span><span>&#10005;</span></span>
+  </header>
+  <nav class="menubar" id="menubar" role="menubar" aria-label="Main menu"></nav>
+  <div class="toolbar" role="toolbar" aria-label="Quick actions" id="toolbar"></div>
+  <div class="body">
+    <nav class="rail" id="rail" aria-label="Workspace"></nav>
+    <main class="main" id="main">
+      <div class="doctabs" role="tablist" id="doctabs" aria-label="Documents"></div>
+      <div class="view" id="view" tabindex="-1"></div>
+    </main>
+    <aside class="dock" id="dock" aria-label="Side panel" hidden></aside>
+  </div>
+  <footer class="ctxbar" id="ctxbar" aria-label="Analysis context"></footer>
+</div>
+
+<div class="overlay" id="overlay"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle" id="dialog"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="screens"><button id="screensBtn" aria-expanded="false" aria-controls="screensList"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Screens</button><ol id="screensList"></ol></div>
+
+<script>
+/* ======================== icons ======================== */
+const P={
+ home:"M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
+ data:"M4 5h16v14H4z M4 10h16 M4 15h16 M10 5v14",
+ output:"M6 3h9l4 4v14H6z M9.5 17v-3 M12.5 17v-6 M15.5 17v-4",
+ syntax:"M8 8l-4 4 4 4 M16 8l4 4-4 4 M13.5 6l-3 12",
+ report:"M6 3h9l4 4v14H6z M9 12h7 M9 16h7 M9 8h3",
+ learn:"M2 9l10-5 10 5-10 5z M6 11v5c3 2 9 2 12 0v-5",
+ settings:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z",
+ plus:"M12 5v14 M5 12h14",
+ folder:"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+ opendata:"M14 3H6v18h12V7z M14 3v4h4 M9 13l3-3 3 3 M12 10v7",
+ undo:"M9 14 4 9l5-5 M4 9h10a6 6 0 0 1 0 12h-3",
+ redo:"M15 14l5-5-5-5 M20 9H10a6 6 0 0 0 0 12h3",
+ save:"M5 3h11l3 3v15H5z M8 3v5h7V3 M8 21v-7h8v7",
+ run:"M7 4v16l13-8z",
+ bulb:"M9 18h6 M10 21h4 M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z",
+ info:"M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 11v5 M12 7.5v.5",
+ search:"M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M21 21l-5-5",
+ vars:"M9 6h11 M9 12h11 M9 18h11 M4.5 6h.01 M4.5 12h.01 M4.5 18h.01",
+ history:"M3 12a9 9 0 1 0 3-6.7L3 8 M3 3v5h5 M12 7v5l3 2",
+ close:"M6 6l12 12 M18 6 6 18",
+ right:"M5 12h14 M13 6l6 6-6 6", left:"M19 12H5 M11 6l-6 6 6 6",
+ chev:"M9 6l6 6-6 6", down:"M6 9l6 6 6-6",
+ check:"M5 12l5 5 9-10",
+ warn:"M12 3l9.5 17h-19z M12 10v4 M12 17v.5",
+ minus:"M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M8 12h8",
+ scale:"M3.5 16.5l13-13 4 4-13 13z M7.5 12.5l2 2 M10.5 9.5l2 2 M13.5 6.5l2 2",
+ ordinal:"M5 19v-4 M10 19v-8 M15 19V7 M20 19V4",
+ nominal:"M5 5h5v5H5z M14 5h5v5h-5z M9.5 14h5v5h-5z",
+ idv:"M3 7h18v10H3z M7 11h.01 M10 11h7 M7 14h10",
+ date:"M4 6h16v14H4z M4 10h16 M8 3v5 M16 3v5",
+ text:"M5 6h14 M12 6v13 M9 19h6",
+ chart:"M4 20V4 M4 20h16 M8 16v-4 M12 16V8 M16 16v-6",
+ export:"M14 3H6v18h12V7z M14 3v4h4 M12 11v6 M9 14l3 3 3-3",
+ copy:"M9 9h11v11H9z M5 15H4V4h11v1",
+ compare:"M8 3v18 M16 3v18 M3 8h5 M16 16h5",
+ refresh:"M20 11a8 8 0 0 0-14.9-3 M4 4v4h4 M4 13a8 8 0 0 0 14.9 3 M20 20v-4h-4",
+ users:"M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M2 21v-1a6 6 0 0 1 12 0v1 M16 3.5a4 4 0 0 1 0 7 M18 14a6 6 0 0 1 4 6v1",
+ file:"M14 3H6v18h12V7z M14 3v4h4",
+ transform:"M4 7h12 M13 4l3 3-3 3 M20 17H8 M11 14l-3 3 3 3",
+ bold:"M7 5h6a3.5 3.5 0 0 1 0 7H7z M7 12h7a3.5 3.5 0 0 1 0 7H7z",
+ link:"M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1 M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1",
+ pen:"M4 20h4L19 9l-4-4L4 16z M14 6l4 4",
+ sparkle:"M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"
+};
+const ic=(n,cls="")=>`<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${P[n]}"/></svg>`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ======================== synthetic data ======================== */
+let seed=20261110; const rnd=()=>{seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296};
+const norm=()=>{let u=0,v=0;while(!u)u=rnd();while(!v)v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const LIK={1:"Strongly disagree",2:"Disagree",3:"Neutral",4:"Agree",5:"Strongly agree"};
+const VARS=[
+ {name:"id",type:"Numeric",fmt:"F4",label:"Participant ID",values:{},missing:"None",measure:"ID",role:"ID",units:"",notes:""},
+ {name:"group",type:"Numeric",fmt:"F1",label:"Study group",values:{1:"Control",2:"Treatment"},missing:"None",measure:"Nominal",role:"Factor",units:"",notes:"Assigned at enrolment"},
+ {name:"site",type:"Numeric",fmt:"F1",label:"Recruitment site",values:{1:"North",2:"Central",3:"South"},missing:"None",measure:"Nominal",role:"Factor",units:"",notes:""},
+ {name:"age",type:"Numeric",fmt:"F3",label:"Age",values:{},missing:"None",measure:"Scale",role:"Predictor",units:"years",notes:""},
+ {name:"gender",type:"Numeric",fmt:"F1",label:"Gender",values:{1:"Woman",2:"Man",3:"Another identity",9:"Prefer not to say"},missing:"9",measure:"Nominal",role:"Predictor",units:"",notes:""},
+ {name:"employment",type:"Numeric",fmt:"F1",label:"Employment status",values:{1:"Full-time",2:"Part-time",3:"Student",4:"Not employed",8:"Don't know",9:"Refused"},missing:"8, 9",measure:"Nominal",role:"Predictor",units:"",notes:""},
+ ...[1,2,3,4,5,6].map(k=>({name:"stress_"+k,type:"Numeric",fmt:"F1",label:["I feel overwhelmed","I can't keep up","I feel calm (reverse)","Small things upset me","I feel tense","I manage pressure well (reverse)"][k-1],values:LIK,missing:"None",measure:"Ordinal",role:"Unused",units:"",notes:(k===3||k===6)?"Reverse-keyed item":""})),
+ {name:"stress_mean",type:"Numeric",fmt:"F4.2",label:"Stress score (mean of 6 items)",values:{},missing:"None",measure:"Scale",role:"Outcome",units:"1–5",notes:"Composite: mean of stress_1–6, items 3 and 6 reversed (bounds 1–5), at least 4 answered"},
+ {name:"wellbeing",type:"Numeric",fmt:"F3",label:"Wellbeing index",values:{},missing:"None",measure:"Scale",role:"Outcome",units:"0–100",notes:""},
+ {name:"enrolled",type:"Date",fmt:"YYYY-MM-DD",label:"Enrolment date",values:{},missing:"None",measure:"Scale",role:"Time",units:"",notes:""}
+];
+const ROWS=[];
+for(let i=1;i<=240;i++){
+  const g=i===37||i===151?null:(rnd()<.5?1:2);
+  const r={id:1000+i,group:g,site:1+Math.floor(rnd()*3),age:Math.round(clamp(34+norm()*11,18,79)),
+    gender:rnd()<.05?9:1+Math.floor(rnd()*2.2),employment:rnd()<.04?(rnd()<.5?8:9):1+Math.floor(rnd()*4)};
+  const base=(g===2?2.86:3.21)+norm()*.7; let ans=0,sum=0;
+  for(let k=1;k<=6;k++){let v=Math.round(clamp(base+norm()*.6,1,5)); if(k===3||k===6)v=6-v;
+    if(rnd()<.03||[12,88,203].includes(i)&&k<5){r["stress_"+k]=null}else{r["stress_"+k]=v;ans++;sum+=(k===3||k===6)?6-v:v}}
+  r.stress_mean=ans>=4?+(sum/ans).toFixed(2):null;
+  r.wellbeing=Math.round(clamp(72-(base-3)*12+norm()*9,0,100));
+  const d=new Date(2026,0,5+Math.floor(rnd()*120)); r.enrolled=d.toISOString().slice(0,10);
+  ROWS.push(r);
+}
+const userMissing=(v,val)=>v.missing!=="None"&&v.missing.split(",").map(s=>+s.trim()).includes(val);
+
+/* ======================== state ======================== */
+const S={screen:"home",doc:"data",dataMode:"data",labels:false,dock:"variables",hasResult:false,stale:false,
+  estimator:"welch",version:1,resultTab:"tables",explainOpen:false,
+  dlg:{tests:[],group:null,g1:1,g2:2,sel:null,ci:95,err:""},
+  guide:{step:0,goal:null,outcome:null,design:null},reportSec:"3.1",studentText:"",revealed:false,ai:{state:"idle",step:0,status:"draft",showSlots:false}};
+
+/* ======================== menus ======================== */
+const M=[
+ ["File",[["New dataset","Ctrl+N"],["Open data…","Ctrl+O","opendata"],["Open project…","Ctrl+Shift+O"],["Open example dataset…"],"-",["Save project","Ctrl+S","save"],["Save As…","Ctrl+Shift+S"],"-",["Import from PrismQDA…"],["Export",null,null,[["Data (CSV, XLSX)…"],["Tables (CSV)…"],["Report (DOCX, HTML)…",null,"report"],["Figures (PNG, SVG)…"],["R script…",null,"syntax"],["Reproduction package…"],["PDF (tagged)…"]]],"-",["Recent"],["Close","Ctrl+W"]]],
+ ["Edit",[["Undo","Ctrl+Z"],["Redo","Ctrl+Y"],"-",["Cut","Ctrl+X"],["Copy","Ctrl+C"],["Paste","Ctrl+V"],"-",["Find…","Ctrl+F"],["Replace…","Ctrl+H"],["Go to case or variable…","Ctrl+G"],"-",["Preferences…","Ctrl+,"]]],
+ ["View",[["Data View","Ctrl+T","dataview"],["Variable View","Ctrl+T","varview"],"-",["Output","Ctrl+2","output"],["Syntax","Ctrl+3","syntax"],["Report","Ctrl+4","report"],"-",["Show value labels",null,"labels"],["Panels",null,null,[["Variables",null,"dockvars"],["History",null,"syntax"],["Explain this result",null,"explain"],["Navigator rail",null,"rail"]]],["Layout",null,null,[["Standard"],["More help",null,"guide"],["More scripting",null,"syntax"],["Reset layout"]]],"-",["Zoom in","Ctrl+="],["Zoom out","Ctrl+-"]]],
+ ["Data",[["Data health…"],["Sort cases…"],["Select cases…"],["Split file…"],["Weight cases…"],"-",["Merge datasets…"],["Append cases…"],["Aggregate…"],["Restructure…"],["Identify duplicates…"],"-",["Dataset manager…"],["Survey design…",null,null,null,"later"]]],
+ ["Transform",[["Compute variable…"],["Recode",null,null,[["Into new variable…"],["Into same variable…"]]],["Reverse score…"],["Composite score…"],"-",["Rank cases…"],["Standardize (z)…"],["Date and time…"],["Text…"],["Random numbers…"],"-",["Multiple imputation…",null,null,null,"later"]]],
+ ["Analyze",[["Descriptive Statistics",null,null,[["Frequencies…"],["Descriptives…"],["Explore…"],["Crosstabs…"]]],
+   ["Compare Means",null,null,[["Means by group…"],["One-Sample T Test…"],["Independent-Samples T Test…",null,"ttest"],["Paired-Samples T Test…"],["One-Way ANOVA…"]]],
+   ["General Linear Model",null,null,[["Univariate (two factors)…"],["Repeated measures…",null,null,null,"later"],["Multivariate…",null,null,null,"later"],["ANCOVA…",null,null,null,"later"]]],
+   ["Correlate",null,null,[["Bivariate…"],["Partial…"]]],
+   ["Regression",null,null,[["Linear…"],["Binary Logistic…"],["Ordinal…",null,null,null,"later"],["Multinomial…",null,null,null,"later"],["Mixed models…",null,null,null,"later"]]],
+   ["Nonparametric Tests",null,null,[["Chi-square goodness of fit…"],["Mann-Whitney U…"],["Wilcoxon signed-rank…"],["Kruskal-Wallis…"],["Friedman…"],["McNemar…"]]],
+   ["Scale",null,null,[["Reliability (alpha, item analysis)…"],["Omega…",null,null,null,"later"],["Factor analysis…",null,null,null,"later"]]],
+   ["Power and Sample Size",null,null,[["t tests…"],["One-way ANOVA…"],["Correlation…"],["Proportions…"]]],
+   "-",["Help me choose…","Ctrl+Shift+H","guide"]]],
+ ["Graphs",[["Chart Builder…"],"-",["Histogram…"],["Boxplot…"],["Bar chart with intervals…"],["Scatterplot…"],["Q-Q plot…"],["Residual plots…"]]],
+ ["Results",[["Go to output item…"],["Reopen settings","Enter","ttest"],["Run again / refresh stale","F5","rerun"],["Duplicate analysis"],["Compare versions…"],"-",["Copy"],["Export item…"],["Add to report","Ctrl+Shift+R","report"]]],
+ ["Tools",[["Replay project…","Ctrl+R","syntax"],["Run selected steps","Ctrl+Enter","syntax"],["Workflow and batch setup…"],["Data dictionary…"],["Method validation records…"],["PrismQDA exchange…"],"-",["Open in external R…",null,null,null,"later"]]],
+ ["Help",[["Help me choose…",null,"guide"],["Help for this procedure","F1"],["Glossary"],["Worked examples",null,"learn"],"-",["Migration guides",null,null,[["From menu-driven packages"],["From command-driven packages"],["From R Commander"],["From JASP"],["From PSPP"]]],["Statistical defaults compared…"],"-",["Keyboard shortcuts"],["Accessibility"],["About PrismStatistics"]]]
+];
+function menuItems(items){
+  return items.map(it=>{
+    if(it==="-")return "<hr>";
+    const [label,kbd,act,sub,later]=it;
+    if(sub)return `<div class="sub"><button role="menuitem" aria-haspopup="true" aria-expanded="false" data-sub>${esc(label)}<span class="kbd">${ic("chev")}</span></button><div class="menu" role="menu" aria-label="${esc(label)}">${menuItems(sub)}</div></div>`;
+    return `<button role="menuitem" ${later?'aria-disabled="true"':""} data-act="${act||""}" data-label="${esc(label)}">${esc(label)}${later?'<span class="later">Later release</span>':kbd?`<span class="kbd">${kbd}</span>`:""}</button>`;
+  }).join("");
+}
+function buildMenubar(){
+  const mb=document.getElementById("menubar");
+  mb.innerHTML=M.map(([n,items],i)=>`<div class="mb"><button role="menuitem" aria-haspopup="true" aria-expanded="false" id="mb${i}">${n}</button><div class="menu" role="menu" aria-labelledby="mb${i}">${menuItems(items)}</div></div>`).join("")+
+  `<div class="search" role="search"><label class="sr" for="q">Search procedures and project</label>${ic("search")}<input id="q" placeholder="Search procedures and project (Ctrl+K)" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="qres" aria-autocomplete="list"><div class="results" id="qres" role="listbox" aria-label="Search results"></div></div>`;
+  const closeAll=()=>mb.querySelectorAll(".menu.open").forEach(m=>{m.classList.remove("open");m.previousElementSibling&&m.previousElementSibling.setAttribute("aria-expanded","false")});
+  mb.querySelectorAll(".mb>button").forEach(b=>{
+    b.addEventListener("click",e=>{const m=b.nextElementSibling;const was=m.classList.contains("open");closeAll();if(!was){m.classList.add("open");b.setAttribute("aria-expanded","true");m.querySelector("[role=menuitem]").focus()}});
+    b.addEventListener("mouseenter",()=>{if(mb.querySelector(".mb>.menu.open")&&!b.nextElementSibling.classList.contains("open")){closeAll();b.nextElementSibling.classList.add("open");b.setAttribute("aria-expanded","true")}});
+    b.addEventListener("keydown",e=>{const all=[...mb.querySelectorAll(".mb>button")];const i=all.indexOf(b);
+      if(e.key==="ArrowRight"){e.preventDefault();all[(i+1)%all.length].focus()}
+      if(e.key==="ArrowLeft"){e.preventDefault();all[(i-1+all.length)%all.length].focus()}
+      if(e.key==="ArrowDown"){e.preventDefault();b.click()}});
+  });
+  mb.querySelectorAll("[data-sub]").forEach(b=>{
+    const open=()=>{b.parentElement.parentElement.querySelectorAll(":scope>.sub>.menu.open").forEach(m=>m.classList.remove("open"));b.nextElementSibling.classList.add("open");b.setAttribute("aria-expanded","true")};
+    b.addEventListener("mouseenter",open);b.addEventListener("click",e=>{e.stopPropagation();open();b.nextElementSibling.querySelector("[role=menuitem]").focus()});
+  });
+  mb.querySelectorAll(".menu").forEach(menu=>menu.addEventListener("keydown",e=>{
+    const items=[...menu.querySelectorAll(":scope>[role=menuitem],:scope>.sub>[role=menuitem]")];const i=items.indexOf(document.activeElement);
+    if(i<0)return;
+    if(e.key==="ArrowDown"){e.preventDefault();e.stopPropagation();items[(i+1)%items.length].focus()}
+    if(e.key==="ArrowUp"){e.preventDefault();e.stopPropagation();items[(i-1+items.length)%items.length].focus()}
+    if(e.key==="ArrowRight"&&document.activeElement.hasAttribute("data-sub")){e.preventDefault();e.stopPropagation();document.activeElement.click()}
+    if(e.key==="ArrowLeft"&&menu.parentElement.classList.contains("sub")){e.preventDefault();e.stopPropagation();menu.classList.remove("open");menu.previousElementSibling.focus()}
+    if(e.key==="Escape"){e.preventDefault();e.stopPropagation();const top=menu.closest(".mb");closeAll();top.querySelector(":scope>button").focus()}
+  }));
+  mb.addEventListener("click",e=>{const t=e.target.closest("[role=menuitem][data-label]");if(!t)return;
+    if(t.getAttribute("aria-disabled")==="true"){toast(`"${t.dataset.label}" is planned for a later release. It's listed so you can find it, but it can't be run yet.`);return}
+    closeAll();doAct(t.dataset.act,t.dataset.label)});
+  document.addEventListener("click",e=>{if(!e.target.closest(".menubar"))closeAll();if(!e.target.closest(".search"))closeSearch();if(!e.target.closest(".screens"))document.getElementById("screensList").classList.remove("open")});
+  // search
+  const q=document.getElementById("q"),res=document.getElementById("qres");
+  q.addEventListener("input",()=>renderSearch(q.value));
+  q.addEventListener("focus",()=>renderSearch(q.value));
+  q.addEventListener("keydown",e=>{const opts=[...res.querySelectorAll("[role=option]")];let i=opts.findIndex(o=>o.getAttribute("aria-selected")==="true");
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();if(!opts.length)return;i=e.key==="ArrowDown"?(i+1)%opts.length:(i-1+opts.length)%opts.length;opts.forEach((o,j)=>o.setAttribute("aria-selected",j===i));q.setAttribute("aria-activedescendant",opts[i].id)}
+    if(e.key==="Enter"&&opts.length){e.preventDefault();(opts[i<0?0:i]).click()}
+    if(e.key==="Escape"){closeSearch();q.blur()}});
+}
+const SEARCH=[
+ {name:"Independent-Samples T Test",path:"Analyze › Compare Means",alias:"t test ttest t-test welch student two sample independent samples compare two means T-TEST",act:"ttest"},
+ {name:"Paired-Samples T Test",path:"Analyze › Compare Means",alias:"paired dependent pre post matched t test"},
+ {name:"One-Sample T Test",path:"Analyze › Compare Means",alias:"one sample t test"},
+ {name:"One-Way ANOVA",path:"Analyze › Compare Means",alias:"anova oneway f test compare several means welch"},
+ {name:"Univariate (two factors)",path:"Analyze › General Linear Model",alias:"two-way anova factorial unianova glm"},
+ {name:"Crosstabs",path:"Analyze › Descriptive Statistics",alias:"chi-square chi2 contingency tabulate crosstabs association"},
+ {name:"Mann-Whitney U",path:"Analyze › Nonparametric Tests",alias:"wilcoxon rank-sum ranksum u test"},
+ {name:"Bivariate Correlation",path:"Analyze › Correlate",alias:"correlation pearson spearman kendall r pwcorr correlate"},
+ {name:"Reliability Analysis",path:"Analyze › Scale",alias:"cronbach alpha reliability internal consistency item analysis"},
+ {name:"Linear Regression",path:"Analyze › Regression",alias:"regression ols lm regress linear model"},
+ {name:"Binary Logistic Regression",path:"Analyze › Regression",alias:"logit logistic odds ratio glm binomial"},
+ {name:"Descriptives",path:"Analyze › Descriptive Statistics",alias:"summary summarize mean sd describe"},
+ {name:"Frequencies",path:"Analyze › Descriptive Statistics",alias:"freq tab tabulate counts table"},
+ {name:"Repeated measures ANOVA",path:"Analyze › General Linear Model · Later release",alias:"repeated measures within subjects rm anova",later:true},
+ {name:"Help me choose",path:"Guidance",alias:"help choose which test not sure guide",act:"guide"}
+];
+function renderSearch(v){
+  const res=document.getElementById("qres"),q=document.getElementById("q");v=v.trim().toLowerCase();
+  if(!v){closeSearch();return}
+  const hits=SEARCH.filter(s=>(s.name+" "+s.alias).toLowerCase().includes(v)).slice(0,7);
+  res.innerHTML=hits.length?hits.map((h,i)=>`<div role="option" id="qo${i}" aria-selected="false" data-i="${SEARCH.indexOf(h)}"><span>${esc(h.name)}${h.later?' <span class="later" style="font-size:11px;border:1px solid var(--line);border-radius:999px;padding:0 7px;color:var(--muted)">Later release</span>':""}</span><small>${esc(h.path)}</small></div>`).join("")+`<div style="font-size:11.5px;color:var(--muted);padding:6px 10px 2px">Aliases help you find a procedure. They don't run another package's syntax or R code.</div>`:`<div style="padding:10px;color:var(--muted)">No matching procedure</div>`;
+  res.classList.add("open");q.setAttribute("aria-expanded","true");
+  res.querySelectorAll("[role=option]").forEach(o=>o.addEventListener("click",()=>{const s=SEARCH[+o.dataset.i];closeSearch();q.value="";
+    if(s.later)toast(`${s.name} is planned for a later release.`);else if(s.act)doAct(s.act);else toast(`${s.name} isn't part of this mockup. Try the Independent-Samples T Test.`)}));
+}
+function closeSearch(){const r=document.getElementById("qres");if(r){r.classList.remove("open");document.getElementById("q").setAttribute("aria-expanded","false")}}
+
+/* ======================== actions ======================== */
+function doAct(act,label){
+  switch(act){
+    case"ttest":openTTest();break;
+    case"guide":S.dock="guide";if(S.screen==="home")go("data");else render();break;
+    case"dataview":S.dataMode="data";go("data");break;
+    case"varview":S.dataMode="vars";go("data");break;
+    case"output":go("output");break;case"syntax":go("syntax");break;case"report":go("report");break;case"learn":go("learn");break;
+    case"labels":S.labels=!S.labels;go("data");break;
+    case"dockvars":S.dock="variables";render();break;
+    case"explain":if(S.hasResult){S.dock="explain";go("output")}else toast("Run an analysis first, then choose Explain this result.");break;
+    case"rail":document.getElementById("rail").classList.toggle("collapsed");break;
+    case"opendata":go("data");toast("In the real app, this opens the import preview (SCR02).");break;
+    case"save":toast("Project saved.");break;
+    case"rerun":if(S.hasResult){S.stale=false;S.version++;go("output");toast("Analysis run again from its saved settings.")}else toast("No analysis to run yet.");break;
+    default:toast(`"${label||"This command"}" isn't part of this mockup.`);
+  }
+}
+let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),3800)}
+
+/* ======================== shell ======================== */
+const RAIL=[["home","Home","home"],["data","Data","data"],["output","Output","output"],["syntax","Syntax","syntax"],["report","Report","report"],["learn","Learn","learn"]];
+function buildRail(){
+  document.getElementById("rail").innerHTML=RAIL.map(([k,l,i])=>`<button data-go="${k}">${ic(i)}<span class="lbl">${l}</span></button>`).join("")+`<div class="spacer"></div><button data-go="settings">${ic("settings")}<span class="lbl">Settings</span></button>`;
+  document.getElementById("rail").addEventListener("click",e=>{const b=e.target.closest("[data-go]");if(!b)return;if(b.dataset.go==="settings"){toast("Settings (SCR12) isn't part of this mockup.");return}go(b.dataset.go)});
+}
+function buildToolbar(){
+  const T=[["opendata","Open data","opendata"],["save","Save","save"],"|",["undo","Undo"],["redo","Redo"],"|",["vars","Variables","dockvars"],["run","Run","ttest","primary"],["bulb","Help me choose","guide"],"|",["info","Explain this result","explain"]];
+  document.getElementById("toolbar").innerHTML=T.map(t=>t==="|"?'<span class="tbsep" aria-hidden="true"></span>':`<button class="tb ${t[3]||""}" data-act="${t[2]||""}" data-label="${t[1]}">${ic(t[0])}<span>${t[1]}</span></button>`).join("");
+  document.getElementById("toolbar").addEventListener("click",e=>{const b=e.target.closest("button");if(b)doAct(b.dataset.act,b.dataset.label)});
+}
+function go(screen){S.screen=screen;if(["data","output","syntax","report"].includes(screen))S.doc=screen;render();document.getElementById("view").focus({preventScroll:true})}
+
+function render(){
+  const doc=["data","output","syntax","report"].includes(S.screen);
+  document.querySelectorAll("#rail [data-go]").forEach(b=>b.toggleAttribute("aria-current",false));
+  const cur=document.querySelector(`#rail [data-go="${S.screen}"]`);if(cur)cur.setAttribute("aria-current","page");
+  document.getElementById("tbModule").textContent={home:"Home",data:S.dataMode==="vars"?"Variable View":"Data View",output:"Output",syntax:"Syntax",report:"Report",learn:"Learn"}[S.screen];
+  const tabs=document.getElementById("doctabs");tabs.hidden=!doc;
+  tabs.innerHTML=[["data","Data"],["output","Output"],["syntax","Syntax"],["report","Report"]].map(([k,l])=>`<button role="tab" aria-selected="${S.doc===k&&doc}" data-go="${k}">${l}</button>`).join("");
+  tabs.onclick=e=>{const b=e.target.closest("[data-go]");if(b)go(b.dataset.go)};
+  tabs.onkeydown=e=>{if(!["ArrowLeft","ArrowRight"].includes(e.key))return;const bs=[...tabs.querySelectorAll("button")];const i=bs.indexOf(document.activeElement);const n=bs[(i+(e.key==="ArrowRight"?1:-1)+bs.length)%bs.length];go(n.dataset.go);tabs.querySelector(`[data-go="${n.dataset.go}"]`).focus()};
+  const v=document.getElementById("view");
+  ({home:vHome,data:vData,output:vOutput,syntax:vSyntax,report:vReport,learn:vLearn})[S.screen](v);
+  renderDock();renderCtx();
+}
+function renderCtx(){
+  const n=ROWS.length;
+  document.getElementById("ctxbar").innerHTML= S.screen==="home"?`<span>No dataset open in this view · Recent project: <b>Wellbeing Study</b></span>`:
+  `<span>Dataset <b>wellbeing</b> <span class="chip">v3</span></span><span>Filter <b>none</b></span><span>Weight <b>none</b></span><span>Split <b>off</b></span><span>Cases <b>${n}</b> of ${n}</span>${S.screen==="output"&&S.hasResult?(R=>`<span>Analyzed in current result <b>${R.analyzed}</b> (${R.excl} excluded)</span>`)(calc()):""}<span style="margin-left:auto">Engine: Prism concept build · not validated</span>`;
+}
+
+/* ======================== screens ======================== */
+function vHome(v){
+  v.innerHTML=`<div class="welcome">
+   <div class="hero"><img src="{{LOGO}}" alt="PrismStatistics logo"><div><h1>Welcome to PrismStatistics</h1><p>Familiar statistical analysis, with guidance when you want it.</p></div></div>
+   <div class="tiles">
+     <button class="tile primary" data-h="new">${ic("plus")}New dataset<small>Type data in Data View</small></button>
+     <button class="tile" data-h="open">${ic("opendata")}Open data<small>CSV, XLSX, SAV, DTA</small></button>
+     <button class="tile" data-h="proj">${ic("folder")}Open project<small>.prsm files</small></button>
+     <button class="tile" data-h="ex">${ic("learn")}Example datasets<small>With worked examples</small></button>
+   </div>
+   <div class="wgrid">
+     <section class="card"><h2>Recent projects</h2>
+       <ul class="recent">
+        <li>${`<span class="ic">${ic("file")}</span>`}<div><b>Wellbeing Study.prsm</b><div class="meta">D:\\Research\\Wellbeing · Modified today, 2:14 PM</div></div><button class="btn" style="margin-left:auto" data-h="openrecent">Open</button></li>
+        <li><span class="ic">${ic("file")}</span><div><b>COMM 2010 Lab 4.prsm</b><div class="meta">Course examples · Modified yesterday</div></div><button class="btn" style="margin-left:auto" data-h="x">Open</button></li>
+        <li><span class="ic">${ic("file")}</span><div><b>Program Evaluation.prsm</b><div class="missing">${ic("warn")} Source file not found: survey_2025.xlsx</div></div><span style="margin-left:auto;display:flex;gap:6px"><button class="btn" data-h="x">Locate file…</button><button class="btn" data-h="x">Open stored results</button></span></li>
+       </ul></section>
+     <section class="card"><h2>Get started</h2>
+       <ol class="steps">
+        <li class="done"><span class="n">${ic("check")}</span>Open or import your data</li>
+        <li><span class="n">2</span>Check your variables in Variable View</li>
+        <li><span class="n">3</span>Run an analysis from the Analyze menu</li>
+        <li><span class="n">4</span>Read the output and diagnostics</li>
+        <li><span class="n">5</span>Export a report</li>
+       </ol>
+       <div class="callout" style="margin-top:12px">${ic("bulb")}<div>Not sure which analysis you need? <button class="btn" style="margin-top:8px;display:flex" data-h="guide">Help me choose</button></div></div>
+       <label class="switch" style="margin-top:14px;font-size:13px"><input type="checkbox"> Don't show this welcome at startup</label>
+     </section>
+   </div></div>`;
+  v.onclick=e=>{const b=e.target.closest("[data-h]");if(!b)return;const h=b.dataset.h;
+    if(h==="openrecent"||h==="open"){go("data")}else if(h==="guide"){doAct("guide")}else toast("That path isn't part of this mockup. Open Wellbeing Study.prsm to continue.")};
+}
+
+function measureTag(m){const i={Scale:"scale",Ordinal:"ordinal",Nominal:"nominal",ID:"idv"}[m]||"scale";return `<span class="measure">${ic(i)}${m}</span>`}
+function vData(v){
+  const vars=VARS;
+  v.innerHTML=`<div class="gridwrap">
+   <div class="gridbar">
+     <div class="seg" role="group" aria-label="Data editor view"><button aria-pressed="${S.dataMode==="data"}" data-m="data">Data View</button><button aria-pressed="${S.dataMode==="vars"}" data-m="vars">Variable View</button></div>
+     ${S.dataMode==="data"?`<label class="switch"><input type="checkbox" id="lblsw" ${S.labels?"checked":""}> Show value labels</label><label class="switch"><input type="checkbox"> Browse only</label>`:""}
+     <div class="healthrow" style="margin-left:auto" aria-label="Data health summary">
+       <span class="health">${ic("check","")}<span>240 cases · 16 variables</span></span>
+       <span class="health" style="color:var(--warn-ink)">${ic("warn")}<span>${ROWS.filter(r=>r.group===null).length} cases missing <b>group</b></span></span>
+       <span class="health" style="color:var(--warn-ink)">${ic("warn")}<span>${ROWS.reduce((a,r)=>a+VARS.filter(v=>userMissing(v,r[v.name])).length,0)} user-missing codes</span></span>
+     </div>
+   </div>
+   <div class="gridscroll" id="gs">${S.dataMode==="data"?dataTable(vars):varTable(vars)}</div>
+   <div class="muted" style="font-size:12.5px">${S.dataMode==="data"?"Arrow keys move between cells. Missing values show as a dot (·); user-missing codes are shown in amber italics. Synthetic data generated for this mockup.":"Changing a name or label keeps the variable's identity, so analyses that use it stay linked. Edits here are recorded and can be undone."}</div>
+  </div>`;
+  v.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{S.dataMode=b.dataset.m;render()});
+  const sw=v.querySelector("#lblsw");if(sw)sw.onchange=()=>{S.labels=sw.checked;render()};
+  if(S.dataMode==="data")gridKeys(v.querySelector("table.dg"));
+}
+function cellVal(vr,val){
+  if(val===null||val===undefined)return {t:"·",cls:"miss",sr:"system missing"};
+  if(userMissing(vr,val))return {t:S.labels&&vr.values[val]?vr.values[val]:val,cls:"umiss",sr:"user-missing"};
+  if(S.labels&&vr.values[val])return {t:vr.values[val],cls:"lbl"};
+  return {t:val,cls:typeof val==="number"?"num":""};
+}
+function dataTable(vars){
+  const head=`<thead><tr><th class="rn" scope="col"><span class="sr">Row</span></th>${vars.map((vr,j)=>`<th scope="col" class="${j===0?"id":""}" title="${esc(vr.label)}">${vr.name}<small>${esc(vr.label)}</small></th>`).join("")}</tr></thead>`;
+  const body=ROWS.map((r,i)=>`<tr aria-rowindex="${i+2}"><th class="rn" scope="row">${i+1}</th>${vars.map((vr,j)=>{const c=cellVal(vr,r[vr.name]);return `<td class="${c.cls} ${j===0?"id":""}" tabindex="${i===0&&j===0?0:-1}">${esc(c.t)}${c.sr?`<span class="sr"> ${c.sr}</span>`:""}</td>`}).join("")}</tr>`).join("");
+  return `<table class="dg" role="grid" aria-label="Data View: wellbeing, 240 cases, ${vars.length} variables" aria-rowcount="${ROWS.length+1}">${head}<tbody>${body}</tbody></table>`;
+}
+function gridKeys(t){
+  t.addEventListener("keydown",e=>{const td=e.target.closest("td");if(!td)return;const tr=td.parentElement;const ci=[...tr.children].indexOf(td);let n=null;
+    if(e.key==="ArrowRight")n=tr.children[ci+1];if(e.key==="ArrowLeft"&&ci>1)n=tr.children[ci-1];
+    if(e.key==="ArrowDown")n=tr.nextElementSibling&&tr.nextElementSibling.children[ci];if(e.key==="ArrowUp")n=tr.previousElementSibling&&tr.previousElementSibling.children[ci];
+    if(e.key==="Home")n=tr.children[1];if(e.key==="End")n=tr.lastElementChild;
+    if(n&&n.tagName==="TD"){e.preventDefault();td.tabIndex=-1;n.tabIndex=0;n.focus()}});
+}
+function varTable(vars){
+  const cols=["Name","Type","Format","Label","Values","Missing","Measure","Role","Units","Notes"];
+  return `<table class="dg vv" aria-label="Variable View: ${vars.length} variables"><thead><tr><th class="rn" scope="col">#</th>${cols.map(c=>`<th scope="col">${c}</th>`).join("")}</tr></thead><tbody>${vars.map((vr,i)=>{
+    const vals=Object.keys(vr.values).length?Object.entries(vr.values).slice(0,2).map(([k,l])=>`${k} = ${l}`).join("; ")+(Object.keys(vr.values).length>2?"; …":""):"None";
+    return `<tr><th class="rn" scope="row">${i+1}</th><td><input aria-label="Name of variable ${i+1}" value="${vr.name}"></td><td>${vr.type}</td><td>${vr.fmt}</td><td style="min-width:220px"><input aria-label="Label for ${vr.name}" value="${esc(vr.label)}"></td><td><button class="btn" style="padding:2px 8px;font-size:12.5px;font-weight:400" aria-label="Edit value labels for ${vr.name}: ${esc(vals)}">${esc(vals)}</button></td><td>${vr.missing==="None"?"None":`<span style="color:var(--warn-ink)">${vr.missing}</span>`}</td><td>${measureTag(vr.measure)}</td><td>${vr.role}</td><td>${vr.units||""}</td><td class="muted" style="max-width:320px;overflow:hidden;text-overflow:ellipsis">${esc(vr.notes)}</td></tr>`}).join("")}</tbody></table>`;
+}
+
+/* ---------- dock ---------- */
+function renderDock(){
+  const d=document.getElementById("dock");
+  if(S.screen==="home"||!S.dock||(S.dock==="explain"&&S.screen!=="output")){d.hidden=true;return}
+  d.hidden=false;
+  if(S.dock==="variables"){
+    d.innerHTML=`<header>${ic("vars")}Variables<button class="iconbtn x" aria-label="Close Variables panel" data-x>${ic("close")}</button></header><div class="dockbody"><ul class="varlist">${VARS.map(v=>`<li>${measureTag(v.measure).replace(/(<\/svg>)\w+/,"$1")}<div style="min-width:0"><b>${v.name}</b><div class="lab">${esc(v.label)}</div></div></li>`).join("")}</ul>
+    <dl class="props" style="border-top:1px solid var(--line);margin-top:10px;padding-top:4px"><dt>Selected</dt><dd><b>stress_mean</b> · Scale · Outcome</dd><dt>Defined by</dt><dd>Composite score, step 2 in History</dd><dt>Valid / missing</dt><dd>${ROWS.filter(r=>r.stress_mean!==null).length} / ${ROWS.filter(r=>r.stress_mean===null).length}</dd></dl></div>`;
+  } else if(S.dock==="guide"){ d.innerHTML=guideHTML(); bindGuide(d); }
+  else if(S.dock==="explain"){ d.innerHTML=explainHTML(); bindExplain(d); }
+  else if(S.dock==="ai"){ d.innerHTML=aiPanelHTML(); bindAI(d); }
+  const x=d.querySelector("[data-x]");if(x)x.onclick=()=>{S.dock=null;render()};
+}
+
+/* ---------- Help me choose ---------- */
+function guideHTML(){
+  const g=S.guide;const step=g.step;
+  const bar=`<div class="gsteps" aria-hidden="true">${[0,1,2,3].map(i=>`<span class="${i<=step?"on":""}"></span>`).join("")}</div>`;
+  let body="";
+  if(step===0)body=`<h3>What are you trying to do?</h3><p class="muted" style="margin:4px 0 0">You can leave at any time. Your answers are saved with the project.</p><div class="choice">${[["compare","Compare groups","Do scores differ between groups or conditions?"],["relate","Look at a relationship","Do two measures go together?"],["describe","Describe my data","Averages, spreads, counts"],["predict","Predict an outcome","Several predictors at once"]].map(([k,t,s])=>`<button aria-pressed="${g.goal===k}" data-goal="${k}">${ic(k==="compare"?"compare":k==="relate"?"chart":k==="describe"?"data":"transform")}<span><b>${t}</b><small>${s}</small></span></button>`).join("")}</div>`;
+  if(step===1)body=`<h3>What's the outcome you're comparing?</h3><p class="muted" style="margin:4px 0 0">Pick the measure you expect to differ.</p><div class="choice">${VARS.filter(v=>v.measure==="Scale"&&v.type!=="Date").map(v=>`<button aria-pressed="${g.outcome===v.name}" data-out="${v.name}">${ic("scale")}<span><b>${v.name}</b><small>${esc(v.label)} · Scale</small></span></button>`).join("")}</div>`;
+  if(step===2)body=`<h3>How were the groups formed?</h3><p class="muted" style="margin:4px 0 0">This can't be worked out from the spreadsheet, so only you can answer it.</p><div class="choice">${[["indep","Different people in each group","e.g. Control vs. Treatment participants"],["paired","The same people measured twice","e.g. before and after, or matched pairs"],["cluster","Groups of people within sites, classes or families","Observations within a cluster may be related"]].map(([k,t,s])=>`<button aria-pressed="${g.design===k}" data-des="${k}">${ic(k==="indep"?"users":k==="paired"?"refresh":"nominal")}<span><b>${t}</b><small>${s}</small></span></button>`).join("")}</div>`;
+  if(step===3){
+    if(g.design==="cluster")body=`<h3>This design isn't supported yet</h3><div class="callout warn" style="margin-top:10px">${ic("warn")}<div>Comparing groups when people are clustered within sites needs a <b>multilevel (mixed) model</b>. That's planned for a later release. Running an ordinary t test here would treat related people as independent and understate the uncertainty, so PrismStatistics won't do that silently.</div></div><p style="margin-top:12px">What you can do now:</p><ul style="margin:0;padding-left:18px"><li>Export the data and settings for use in other software</li><li>Read the method page for mixed models (Help › Later releases)</li><li>Change your answer if the groups aren't clustered</li></ul>`;
+    else if(g.design==="paired")body=`<h3>Suggested: Paired-Samples T Test</h3><p>The same people were measured twice, so the comparison should use each person's difference. <span class="muted">(Not part of this mockup. Choose “Different people” to continue.)</span></p>`;
+    else body=`<h3>Suggested: Independent-Samples T Test</h3>
+      <div class="callout" style="margin-top:10px">${ic("check")}<div><b>Why it fits:</b> you're comparing one Scale outcome (<b>${g.outcome||"stress_mean"}</b>) between two groups made of different people (<b>group</b>: Control, Treatment).</div></div>
+      <p style="margin:12px 0 4px"><b>What the data can't tell us:</b> whether people were randomly assigned, or whether anyone could be in both groups. Those come from your study design.</p>
+      <p style="margin:8px 0 4px"><b>Reasonable alternatives:</b></p><ul style="margin:0;padding-left:18px"><li>Mann-Whitney U if you're interested in rank ordering rather than means</li><li>Linear regression if you want to adjust for age</li></ul>
+      <button class="btn primary" style="margin-top:14px;width:100%" data-openttest>${ic("run")}Open the T Test dialog with these roles</button>
+      <p class="muted" style="font-size:12px;margin-top:6px">You'll see the ordinary procedure dialog and can change anything before running.</p>`;
+  }
+  const answers=[g.goal&&["Goal",{compare:"Compare groups",relate:"Relationship",describe:"Describe",predict:"Predict"}[g.goal],0],g.outcome&&["Outcome",g.outcome,1],g.design&&["Design",{indep:"Different people",paired:"Same people twice",cluster:"Clustered"}[g.design],2]].filter(Boolean);
+  return `<header>${ic("bulb")}Help me choose<button class="iconbtn x" aria-label="Close Help me choose" data-x>${ic("close")}</button></header>
+  <div class="dockbody">${bar}<div aria-live="polite">${body}</div>
+   <div style="display:flex;gap:8px;margin-top:14px">${step>0?`<button class="btn" data-back>${ic("left")}Back</button>`:""}</div>
+   ${answers.length?`<div class="answers"><b>Your answers</b> (rule set v0.1)<ul style="margin:4px 0 0;padding-left:16px">${answers.map(a=>`<li>${a[0]}: ${esc(a[1])} · <button data-edit="${a[2]}">Change</button></li>`).join("")}</ul></div>`:""}
+  </div>`;
+}
+function bindGuide(d){
+  const g=S.guide;
+  d.querySelectorAll("[data-goal]").forEach(b=>b.onclick=()=>{g.goal=b.dataset.goal;if(g.goal!=="compare"){toast("Only “Compare groups” is part of this mockup.");renderDock();return}g.step=1;renderDock();focusDock()});
+  d.querySelectorAll("[data-out]").forEach(b=>b.onclick=()=>{g.outcome=b.dataset.out;g.step=2;renderDock();focusDock()});
+  d.querySelectorAll("[data-des]").forEach(b=>b.onclick=()=>{g.design=b.dataset.des;g.step=3;renderDock();focusDock()});
+  d.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{g.step=+b.dataset.edit;renderDock();focusDock()});
+  const bk=d.querySelector("[data-back]");if(bk)bk.onclick=()=>{g.step--;renderDock();focusDock()};
+  const o=d.querySelector("[data-openttest]");if(o)o.onclick=()=>{S.dlg.tests=[g.outcome||"stress_mean"];S.dlg.group="group";S.dlg.err="";openTTest(true)};
+}
+function focusDock(){const h=document.querySelector("#dock h3");if(h){h.tabIndex=-1;h.focus()}}
+
+/* ---------- T test dialog ---------- */
+let lastFocus=null;
+function openTTest(fromGuide){
+  lastFocus=document.activeElement;
+  document.getElementById("overlay").classList.add("open");
+  renderDialog(fromGuide);
+  setTimeout(()=>{const f=document.querySelector("#dialog .listbox li[tabindex='0']")||document.querySelector("#dialog button");f&&f.focus()},0);
+}
+function closeDialog(){document.getElementById("overlay").classList.remove("open");lastFocus&&lastFocus.focus&&lastFocus.focus()}
+function renderDialog(fromGuide){
+  const D=S.dlg;const used=[...D.tests,D.group].filter(Boolean);
+  const avail=VARS.filter(v=>!used.includes(v.name)&&v.type!=="Date");
+  if(!D.sel||used.includes(D.sel))D.sel=avail[0]&&avail[0].name;
+  const gv=D.group&&VARS.find(v=>v.name===D.group);
+  const codes=gv?Object.keys(gv.values).filter(k=>!userMissing(gv,+k)):[];
+  const li=(v,sel,list)=>`<li role="option" id="${list}-${v.name}" aria-selected="${sel}" tabindex="${sel?0:-1}" data-v="${v.name}" data-list="${list}">${ic({Scale:"scale",Ordinal:"ordinal",Nominal:"nominal",ID:"idv"}[v.measure])}<span style="min-width:0"><b>${v.name}</b> <span class="lab">${esc(v.label)}</span></span></li>`;
+  document.getElementById("dialog").innerHTML=`
+   <header>${ic("compare")}<h2 id="dlgTitle">Independent-Samples T Test</h2>${fromGuide?'<span class="status na">Roles filled in from Help me choose</span>':""}<button class="iconbtn x" aria-label="Close dialog" data-cancel>${ic("close")}</button></header>
+   <div class="dbody">
+    <div class="transfer">
+      <div><span class="fieldlabel" id="availLbl">Variables <span class="fieldhint">(${avail.length})</span></span>
+        <ul class="listbox tall" role="listbox" aria-labelledby="availLbl" id="availList">${avail.map(v=>li(v,v.name===D.sel,"avail")).join("")}</ul>
+        <div class="fieldhint" style="margin-top:6px">Select a variable, then use an arrow button, or press <b>T</b> for Test variable or <b>G</b> for Grouping variable.</div></div>
+      <div></div>
+      <div class="rolecol">
+        <div class="role"><button class="arrowbtn arrow" data-move="tests" aria-label="Move selected variable to Test variables">${ic("right")}</button>
+          <div><label id="tLbl">Test variable(s) <span class="hint">· the outcome, Scale</span></label>
+          <ul class="listbox" role="listbox" aria-labelledby="tLbl">${D.tests.length?D.tests.map(n=>`<li role="option" aria-selected="false" tabindex="-1" data-remove="tests" data-v="${n}">${ic("scale")}<span><b>${n}</b> <span class="lab">${esc(VARS.find(v=>v.name===n).label)}</span></span><button class="iconbtn" style="margin-left:auto" aria-label="Remove ${n}" data-rm="tests:${n}">${ic("close")}</button></li>`).join(""):`<li class="empty">Add one or more outcome variables</li>`}</ul></div></div>
+        <div class="role"><button class="arrowbtn arrow" data-move="group" aria-label="Move selected variable to Grouping variable">${ic("right")}</button>
+          <div><label id="gLbl">Grouping variable <span class="hint">· defines the two groups</span></label>
+          <ul class="listbox" role="listbox" aria-labelledby="gLbl">${D.group?`<li role="option" aria-selected="false" tabindex="-1" data-v="${D.group}">${ic("nominal")}<span><b>${D.group}</b> <span class="lab">${esc(gv.label)}</span></span><button class="iconbtn" style="margin-left:auto" aria-label="Remove ${D.group}" data-rm="group:${D.group}">${ic("close")}</button></li>`:`<li class="empty">Add the variable that defines the groups</li>`}</ul>
+          ${D.group?`<div class="groupsdef" role="group" aria-label="Define groups"><span><b>Define groups</b></span>
+            <label>Group 1 <select data-g="g1">${codes.map(c=>`<option value="${c}" ${+c===D.g1?"selected":""}>${c} = ${esc(gv.values[c])}</option>`).join("")}</select></label>
+            <label>Group 2 <select data-g="g2">${codes.map(c=>`<option value="${c}" ${+c===D.g2?"selected":""}>${c} = ${esc(gv.values[c])}</option>`).join("")}</select></label></div>
+            ${codes.length>2?`<div class="callout warn" style="margin-top:8px;font-size:13px">${ic("warn")}<div><b>${D.group}</b> has ${codes.length} categories. This test compares exactly two, so cases in other categories are left out and counted in the output. To compare all ${codes.length}, use <b>One-Way ANOVA</b>.</div></div>`:""}`:""}
+          </div></div>
+      </div>
+    </div>
+    <div id="dlgErr" aria-live="assertive">${D.err?`<div class="inline-err">${ic("warn")}<span>${D.err}</span></div>`:""}</div>
+    <details class="opt" open><summary>Estimator and interval <span class="cur">${S.estimator==="welch"?"Welch":"Student (pooled)"} · ${D.ci}% CI</span></summary><div class="optbody">
+      <label class="radio"><input type="radio" name="est" value="welch" ${S.estimator==="welch"?"checked":""}><span><b>Welch</b> (default): doesn't assume equal variances in the two groups</span></label>
+      <label class="radio"><input type="radio" name="est" value="student" ${S.estimator==="student"?"checked":""}><span><b>Student, pooled variance</b>: assumes equal variances. some packages label this “Equal variances assumed”</span></label>
+      <div class="callout" style="font-size:13px">${ic("info")}<div>PrismStatistics doesn't pick the estimator from a variance test. <a href="#" data-why>Why Welch is the default</a></div></div>
+      <label>Confidence level <input type="number" min="50" max="99.9" step="0.1" value="${D.ci}" data-ci style="width:72px;border:1px solid var(--line);border-radius:7px;padding:3px 6px"> %</label></div></details>
+    <details class="opt"><summary>Missing values <span class="cur">Exclude cases analysis by analysis</span></summary><div class="optbody">
+      <label class="radio"><input type="radio" name="miss" checked><span>Exclude cases analysis by analysis: each test variable uses every case with valid data on it and the grouping variable</span></label>
+      <label class="radio"><input type="radio" name="miss"><span>Exclude cases listwise: only cases complete on all listed test variables</span></label>
+      <p class="muted" style="margin:0;font-size:12.5px">User-missing codes (such as 8 and 9) always count as missing. The output reports how many cases were excluded and why.</p></div></details>
+    <details class="opt"><summary>Effect size <span class="cur">Hedges' g, pooled SD</span></summary><div class="optbody">
+      <label class="radio"><input type="radio" name="es" checked><span>Hedges' g, pooled standard deviation (small-sample corrected)</span></label>
+      <label class="radio"><input type="radio" name="es"><span>Cohen's d, pooled standard deviation</span></label>
+      <label class="radio"><input type="radio" name="es"><span>Glass's Δ, control group SD</span></label></div></details>
+   </div>
+   <footer><button class="btn" data-help style="margin-right:auto">Help</button><button class="btn" data-reset>Reset</button><button class="btn" data-cancel>Cancel</button><button class="btn" data-paste>Paste</button><button class="btn primary" data-run>${ic("run")}Run</button></footer>`;
+  bindDialog();
+}
+function bindDialog(){
+  const dl=document.getElementById("dialog"),D=S.dlg;
+  const move=role=>{const n=D.sel;if(!n){return}const v=VARS.find(x=>x.name===n);
+    if(role==="tests"){if(v.measure!=="Scale"){D.err=`<b>${n}</b> is ${v.measure}, so it can't be a test variable. Test variables need a Scale measure. If ${n} really is a continuous measure, change its Measure in Variable View.`;renderDialog();focusSel();return}D.tests.push(n)}
+    else{if(v.measure==="Scale"){D.err=`<b>${n}</b> is a Scale variable. A grouping variable should be Nominal or Ordinal with a few categories.`;renderDialog();focusSel();return}D.group=n;const c=Object.keys(v.values).filter(k=>!userMissing(v,+k));D.g1=+c[0];D.g2=+c[1]}
+    D.err="";renderDialog();focusSel()};
+  dl.querySelectorAll("[data-move]").forEach(b=>b.onclick=()=>move(b.dataset.move));
+  const al=dl.querySelector("#availList");
+  al.addEventListener("click",e=>{const l=e.target.closest("li[data-v]");if(!l)return;D.sel=l.dataset.v;al.querySelectorAll("li").forEach(x=>{x.setAttribute("aria-selected",x===l);x.tabIndex=x===l?0:-1});l.focus()});
+  al.addEventListener("dblclick",e=>{const l=e.target.closest("li[data-v]");if(l){D.sel=l.dataset.v;move(VARS.find(v=>v.name===D.sel).measure==="Scale"?"tests":"group")}});
+  al.addEventListener("keydown",e=>{const ls=[...al.querySelectorAll("li")];const i=ls.findIndex(x=>x.dataset.v===D.sel);let n=null;
+    if(e.key==="ArrowDown")n=ls[Math.min(i+1,ls.length-1)];if(e.key==="ArrowUp")n=ls[Math.max(i-1,0)];
+    if(n){e.preventDefault();D.sel=n.dataset.v;ls.forEach(x=>{x.setAttribute("aria-selected",x===n);x.tabIndex=x===n?0:-1});n.focus();n.scrollIntoView({block:"nearest"})}
+    if(e.key.toLowerCase()==="t"){e.preventDefault();move("tests")}if(e.key.toLowerCase()==="g"){e.preventDefault();move("group")}
+    if(e.key==="Enter"){e.preventDefault();move(VARS.find(v=>v.name===D.sel).measure==="Scale"?"tests":"group")}});
+  dl.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{const [r,n]=b.dataset.rm.split(":");if(r==="tests")D.tests=D.tests.filter(x=>x!==n);else D.group=null;D.err="";renderDialog()});
+  dl.querySelectorAll("[data-g]").forEach(s=>s.onchange=()=>{D[s.dataset.g]=+s.value});
+  dl.querySelectorAll("input[name=est]").forEach(r=>r.onchange=()=>{S.estimator=r.value;dl.querySelector("details.opt .cur").textContent=`${r.value==="welch"?"Welch":"Student (pooled)"} · ${D.ci}% CI`});
+  const ci=dl.querySelector("[data-ci]");ci.onchange=()=>{D.ci=+ci.value};
+  dl.querySelector("[data-why]").onclick=e=>{e.preventDefault();toast("Welch's test keeps its error rate when group variances differ and loses little when they're equal. Choosing between tests based on a variance test makes the overall error rate worse.")};
+  dl.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=closeDialog);
+  dl.querySelector("[data-reset]").onclick=()=>{S.dlg={tests:[],group:null,g1:1,g2:2,sel:null,ci:95,err:""};S.estimator="welch";renderDialog()};
+  dl.querySelector("[data-help]").onclick=()=>toast("Procedure help (F1) opens the method page: what the test estimates, assumptions, and how its defaults compare with R, JASP, PSPP and other packages.");
+  const valid=()=>{if(!D.tests.length){D.err="Add at least one test variable.";return false}if(!D.group){D.err="Add a grouping variable and define the two groups.";return false}if(D.g1===D.g2){D.err="Group 1 and Group 2 must be different categories.";return false}return true};
+  dl.querySelector("[data-run]").onclick=()=>{if(!valid()){renderDialog();dl.querySelector("#dlgErr").scrollIntoView({block:"nearest"});return}
+    if(S.hasResult)S.version++;S.hasResult=true;S.stale=false;S.resultTab="tables";closeDialog();S.dock=S.dock==="guide"?"explain":S.dock;go("output");toast("Analysis complete. Output added.")};
+  dl.querySelector("[data-paste]").onclick=()=>{if(!valid()){renderDialog();return}closeDialog();go("syntax");toast("Pasted the operation to the Syntax tab. Nothing was computed.")};
+  dl.onkeydown=e=>{if(e.key==="Escape"){e.preventDefault();closeDialog()}
+    if(e.key==="Tab"){const f=[...dl.querySelectorAll('button,input,select,a[href],[tabindex="0"],summary')].filter(x=>!x.disabled&&x.offsetParent);const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}};
+}
+function focusSel(){const s=document.querySelector('#availList li[tabindex="0"]');s?s.focus():document.querySelector("#dialog [data-run]").focus()}
+
+/* ---------- output ---------- */
+/* Mockup arithmetic only: computed from the synthetic data so every screen agrees. Not a validated implementation. */
+function lgamma(x){const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,.1208650973866179e-2,-.5395239384953e-5];let y=x,t=x+5.5;t-=(x+.5)*Math.log(t);let s=1.000000000190015;for(const k of c)s+=k/++y;return -t+Math.log(2.5066282746310005*s/x)}
+function betacf(a,b,x){let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;d=1/d;let h=d;for(let m=1;m<=200;m++){let m2=2*m,aa=m*(b-m)*x/((qam+m2)*(a+m2));d=1+aa*d;c=1+aa/c;d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;c=1+aa/c;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<3e-12)break}return h}
+function ibeta(a,b,x){if(x<=0)return 0;if(x>=1)return 1;const bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b}
+const tTwoSided=(t,df)=>ibeta(df/2,.5,df/(df+t*t));
+function tQuant(p,df){let lo=0,hi=50;for(let i=0;i<100;i++){const m=(lo+hi)/2;(1-tTwoSided(m,df)/2<p)?lo=m:hi=m}return (lo+hi)/2}
+function q7(xs,p){const s=[...xs].sort((a,b)=>a-b),h=(s.length-1)*p,f=Math.floor(h);return s[f]+(h-f)*((s[f+1]??s[f])-s[f])}
+const f2=x=>x.toFixed(2), fp=p=>p<.001?"< .001":"= "+p.toFixed(3).replace(/^0/,"");
+function calc(){
+  const D=S.dlg,y=(D.tests[0]||"stress_mean"),gv=D.group||"group";
+  const grp=k=>ROWS.filter(r=>r[gv]===k&&r[y]!==null&&r[y]!==undefined).map(r=>r[y]);
+  const st=x=>{const n=x.length,m=x.reduce((a,b)=>a+b,0)/n,sd=Math.sqrt(x.reduce((a,b)=>a+(b-m)**2,0)/(n-1));return{n,m,sd,se:sd/Math.sqrt(n),x}};
+  const c=st(grp(D.g1)),t=st(grp(D.g2)),diff=c.m-t.m,lvl=D.ci/100;
+  const vc=c.sd**2/c.n,vt=t.sd**2/t.n,seW=Math.sqrt(vc+vt),dfW=(vc+vt)**2/(vc**2/(c.n-1)+vt**2/(t.n-1));
+  const dfS=c.n+t.n-2,sp=Math.sqrt(((c.n-1)*c.sd**2+(t.n-1)*t.sd**2)/dfS),seS=sp*Math.sqrt(1/c.n+1/t.n);
+  const W=S.estimator==="welch",se=W?seW:seS,df=W?dfW:dfS,tv=diff/se,p=tTwoSided(Math.abs(tv),df),q=tQuant((1+lvl)/2,df);
+  const d=diff/sp,g=d*(1-3/(4*dfS-1)),seg=Math.sqrt((c.n+t.n)/(c.n*t.n)+g*g/(2*(c.n+t.n))),z=tQuant((1+lvl)/2,1e6);
+  const vgv=VARS.find(v=>v.name===gv);
+  const missY=ROWS.filter(r=>r[y]===null).length, missG=ROWS.filter(r=>r[gv]===null).length;
+  const other=ROWS.filter(r=>r[gv]!==null&&r[gv]!==D.g1&&r[gv]!==D.g2).length;
+  const analyzed=c.n+t.n,excl=ROWS.length-analyzed;
+  return{y,gv,c,t,diff,lo:diff-q*se,hi:diff+q*se,tv,df,dfTxt:W?dfW.toFixed(1):String(dfS),p,g,glo:g-z*seg,ghi:g+z*seg,
+    total:ROWS.length,analyzed,excl,missY,missG,other,lab1:vgv.values[D.g1],lab2:vgv.values[D.g2],ylab:VARS.find(v=>v.name===y).label,
+    sdRatio:Math.max(c.sd,t.sd)/Math.min(c.sd,t.sd),q:x=>[q7(x,0),q7(x,.25),q7(x,.5),q7(x,.75),q7(x,1)]};
+}
+function exclNote(R){const parts=[];if(R.missY)parts.push(`${R.missY} missing ${R.y}`);if(R.missG)parts.push(`${R.missG} missing ${R.gv}`);if(R.other)parts.push(`${R.other} in other ${R.gv} categories`);return `${R.excl} cases excluded${parts.length?" ("+parts.join("; ")+")":""}`}
+function vOutput(v){
+  if(!S.hasResult){v.innerHTML=`<div class="card" style="padding:30px;text-align:center;max-width:560px;margin:30px auto"><h2>No output yet</h2><p class="muted">Results appear here after you run an analysis. Try <b>Analyze › Compare Means › Independent-Samples T Test</b>, or search for “t test”.</p><button class="btn primary" data-o>${ic("run")}Open Independent-Samples T Test</button></div>`;v.querySelector("[data-o]").onclick=()=>openTTest();return}
+  const R=calc(), en=S.estimator==="welch"?"Welch":"Student (pooled)";
+  v.innerHTML=`<div class="outgrid">
+   <nav class="card outline" aria-label="Output outline"><div class="muted" style="font-size:12px;padding:4px 8px">OUTPUT</div><ul>
+     <li><button>${ic("file")}Log</button></li>
+     <li><button aria-current="true">${ic("compare")}Independent-Samples T Test</button><ul>
+       <li><button data-ot="tables">Group statistics</button></li><li><button data-ot="tables">Test result</button></li><li><button data-ot="tables">Effect size</button></li><li><button data-ot="diagnostics">Diagnostics</button></li><li><button data-ot="interp">Interpretation</button></li></ul></li></ul></nav>
+   <article class="card result" aria-labelledby="resTitle">
+     <div class="rhead"><h2 id="resTitle"><button data-reopen title="Reopen settings">Independent-Samples T Test: ${R.y} by ${R.gv}</button></h2>
+       ${S.stale?`<span class="status stale">${ic("refresh")}Stale: data changed</span>`:`<span class="status ok">${ic("check")}Completed</span>`}<span class="placeholder">Placeholder values</span>
+       <div class="ractions"><button class="tb" data-explain>${ic("info")}Explain this result</button><button class="tb" data-dup>${ic("copy")}Duplicate</button><button class="tb" data-cmp>${ic("compare")}Compare versions</button><button class="tb" data-add>${ic("report")}Add to report</button><button class="tb" data-stale title="Simulate a data edit">${ic("refresh")}Simulate data edit</button></div></div>
+     <div class="rmeta">Version ${S.version} · ${en} · ${S.dlg.ci}% CI · Dataset wellbeing v3 · Groups: ${S.dlg.g1} = ${esc(R.lab1)}, ${S.dlg.g2} = ${esc(R.lab2)} · Run today 2:31 PM</div>
+     ${S.stale?`<div class="callout warn" style="margin:0 16px 10px">${ic("warn")}<div>The data this result used has changed (an edit to <b>stress_4</b>, case 57). The numbers below are from version ${S.version} and may no longer match the data. <button class="btn" style="margin-left:6px;padding:3px 10px" data-rerun>${ic("refresh")}Run again</button></div></div>`:""}
+     <div class="tabs" role="tablist" aria-label="Result sections">${[["tables","Tables"],["diagnostics","Diagnostics"],["interp","Interpretation"],["method","Method"],["syntax","Syntax"]].map(([k,l])=>`<button role="tab" aria-selected="${S.resultTab===k}" data-rt="${k}">${l}</button>`).join("")}</div>
+     <div class="tabpanel" role="tabpanel">${resultTab(R)}</div>
+   </article></div>`;
+  v.querySelectorAll("[data-rt]").forEach(b=>b.onclick=()=>{S.resultTab=b.dataset.rt;vOutput(v);v.querySelector(`[data-rt="${S.resultTab}"]`).focus()});
+  v.querySelectorAll("[data-ot]").forEach(b=>b.onclick=()=>{S.resultTab=b.dataset.ot;vOutput(v)});
+  v.querySelector("[data-reopen]").onclick=()=>openTTest();
+  v.querySelector("[data-explain]").onclick=()=>{S.dock="explain";renderDock();focusDock()};
+  v.querySelector("[data-dup]").onclick=()=>toast("Duplicate creates a separate analysis with its own ID, so you can compare settings.");
+  v.querySelector("[data-cmp]").onclick=()=>toast(S.version>1?`Compare versions 1–${S.version}: settings differences are shown side by side.`:"Only one version so far. Change an option and run again to compare.");
+  v.querySelector("[data-add]").onclick=()=>{go("report");toast("Added version "+S.version+" to the report.")};
+  v.querySelector("[data-stale]").onclick=()=>{S.stale=true;render()};
+  const rr=v.querySelector("[data-rerun]");if(rr)rr.onclick=()=>doAct("rerun");
+  const sb=v.querySelector("[data-sb]");if(sb)bindStudent(v);
+}
+function resultTab(R){
+  const t=S.resultTab, ci=S.dlg.ci;
+  if(t==="tables")return `
+   <table class="apa"><caption>Table 1 <i>Group statistics for ${esc(R.ylab.toLowerCase())}</i></caption><thead><tr><th>Group</th><th>n</th><th>M</th><th>SD</th><th>SE</th></tr></thead><tbody>
+    <tr><td>${esc(R.lab1)}</td><td>${R.c.n}</td><td>${f2(R.c.m)}</td><td>${f2(R.c.sd)}</td><td>${R.c.se.toFixed(3)}</td></tr><tr><td>${esc(R.lab2)}</td><td>${R.t.n}</td><td>${f2(R.t.m)}</td><td>${f2(R.t.sd)}</td><td>${R.t.se.toFixed(3)}</td></tr></tbody></table>
+   <p class="tnote">Note. N = ${R.total}; ${exclNote(R)}.</p>
+   <table class="apa"><caption>Table 2 <i>Independent-samples t test (${S.estimator==="welch"?"Welch":"Student, pooled variance"})</i></caption><thead><tr><th>Comparison</th><th>Difference</th><th>${ci}% CI</th><th>t</th><th>df</th><th>p</th></tr></thead><tbody>
+    <tr><td>${esc(R.lab1)} − ${esc(R.lab2)}</td><td>${f2(R.diff)}</td><td>[${f2(R.lo)}, ${f2(R.hi)}]</td><td>${f2(R.tv)}</td><td>${R.dfTxt}</td><td>${fp(R.p).replace("= ","")}</td></tr></tbody></table>
+   <p class="tnote">Note. Two-sided test. ${S.estimator==="welch"?"Welch–Satterthwaite degrees of freedom; equal variances not assumed.":"Pooled variance; equal variances assumed."} p values below .001 are shown as “< .001”.</p>
+   <table class="apa"><caption>Table 3 <i>Standardized effect size</i></caption><thead><tr><th>Measure</th><th>Estimate</th><th>${ci}% CI</th></tr></thead><tbody><tr><td>Hedges' g (pooled SD)</td><td>${f2(R.g)}</td><td>[${f2(R.glo)}, ${f2(R.ghi)}]</td></tr></tbody></table>
+   <p class="tnote">Note. Positive values mean ${esc(R.lab1)} scored higher. The interval uses a large-sample approximation. No small/medium/large label is applied; judge the size in the context of the measure.</p>`;
+  if(t==="diagnostics")return `<div class="diaglist">
+    <div class="diag"><b>Group distributions</b><span class="status ok">${ic("check")}No concern detected</span><p>Both groups are roughly symmetric with no extreme values beyond 3 IQR. See the boxplot below.</p></div>
+    <div class="diag"><b>Unequal group variances</b><span class="status na">${ic("minus")}Handled by the estimator</span><p>Welch's test doesn't assume equal variances. Ratio of larger to smaller SD = ${f2(R.sdRatio)}. ${S.estimator==="student"?"<b>You chose the pooled-variance test, which does assume this.</b>":""}</p></div>
+    <div class="diag"><b>Independence of observations</b><span class="status review">${ic("warn")}Review needed</span><p>This can't be checked from the data. Participants were recruited at 3 sites; if outcomes are related within a site, a multilevel model may be needed (later release). Confirm in Help me choose.</p></div>
+    <div class="diag"><b>Random assignment</b><span class="status na">${ic("minus")}Not assessed</span><p>Whether the difference reflects the treatment depends on how groups were formed. Recorded design: not yet stated.</p></div>
+    ${boxplot(R)}<p class="tnote">Figure. ${esc(R.ylab)} by group. Boxes show quartiles and the median; whiskers extend to the most extreme values within 1.5 × IQR. Treatment uses a dashed outline so the groups differ by more than color. <a href="#" onclick="toast('The data table alternative lists every plotted value with its group.');return false">View as data table</a></p></div>`;
+  if(t==="interp")return studentFirst();
+  if(t==="method")return `<h3>Method</h3><p>Stress scores were compared between the Control and Treatment groups using ${S.estimator==="welch"?"Welch's unequal-variances t test":"Student's pooled-variance t test"} (two-sided, ${ci}% confidence interval). The standardized difference is reported as Hedges' g using the pooled standard deviation. Cases missing the outcome or the group were excluded analysis by analysis (n = 5).</p>
+    <p class="muted" style="font-size:13px">Method ID <code>ttest.independent</code> v0.1 · Engine: Prism concept build (not validated) · Defaults set v0.1 · Validation record: none yet (mockup)</p>
+    <div class="callout">${ic("info")}<div><b>Comparing with other software.</b> Some packages print both the pooled and Welch rows, and some use pooled variance unless you ask; R's <code>t.test</code> uses Welch; JASP uses Student unless you tick Welch. Match the estimator before comparing numbers. <a href="#" onclick="toast('Opens Help › Statistical defaults compared.');return false">Full comparison</a></div></div>`;
+  return `<pre class="code">${opJSON()}</pre><p class="tnote">This is the recorded Prism operation. <a href="#" data-gosyn onclick="go('syntax');return false">Open in the Syntax tab</a> to see the R export.</p>`;
+}
+function boxplot(R){
+  const all=[...R.c.x,...R.t.x],mn=Math.floor(Math.min(...all)),mx=Math.ceil(Math.max(...all)),X=v=>60+(v-mn)/(mx-mn||1)*480;
+  const ticks=[];for(let k=mn;k<=mx;k+=Math.max(1,Math.round((mx-mn)/5)))ticks.push(k);
+  const one=(xs,y,lab,stroke,fill,med,dash)=>{const[,q1,q2,q3]=R.q(xs),iqr=q3-q1,lo=Math.min(...xs.filter(v=>v>=q1-1.5*iqr)),hi=Math.max(...xs.filter(v=>v<=q3+1.5*iqr));
+    return `<text x="8" y="${y+4}">${esc(lab)}</text><line x1="${X(lo)}" y1="${y}" x2="${X(hi)}" y2="${y}" stroke="${stroke}" stroke-width="1.5"/><line x1="${X(lo)}" y1="${y-7}" x2="${X(lo)}" y2="${y+7}" stroke="${stroke}" stroke-width="1.5"/><line x1="${X(hi)}" y1="${y-7}" x2="${X(hi)}" y2="${y+7}" stroke="${stroke}" stroke-width="1.5"/><rect x="${X(q1)}" y="${y-14}" width="${X(q3)-X(q1)}" height="28" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="1.5" ${dash?'stroke-dasharray="5 3"':""}/><line x1="${X(q2)}" y1="${y-14}" x2="${X(q2)}" y2="${y+14}" stroke="${med}" stroke-width="2.5"/>`};
+  const [, ,m1]=R.q(R.c.x),[, ,m2]=R.q(R.t.x);
+  return `<svg class="boxplot" viewBox="0 0 560 170" role="img" aria-label="Boxplots of ${esc(R.ylab)} by group. ${esc(R.lab1)} median ${f2(m1)}, ${esc(R.lab2)} median ${f2(m2)}." style="max-width:560px">
+    <line x1="60" y1="140" x2="540" y2="140" stroke="#C9C7DD"/>${ticks.map(k=>`<line x1="${X(k)}" y1="140" x2="${X(k)}" y2="145" stroke="#C9C7DD"/><text x="${X(k)}" y="160" text-anchor="middle">${k}</text>`).join("")}
+    ${one(R.c.x,48,R.lab1,"#6555C4","#EDEAFB","#4E3FB0",false)}${one(R.t.x,102,R.lab2,"#3D7BF2","#E6EEFD","#1F4FB8",true)}</svg>`;
+}
+function interpText(){const R=calc(),lower=R.diff>0,b=s=>`<span class="bound">${s}</span>`;
+  return `On average, ${esc(R.ylab.toLowerCase())} was ${b(f2(Math.abs(R.diff)))} points ${lower?"lower":"higher"} in the ${esc(R.lab2)} group (${b(`M = ${f2(R.t.m)}, SD = ${f2(R.t.sd)}, n = ${R.t.n}`)}) than in the ${esc(R.lab1)} group (${b(`M = ${f2(R.c.m)}, SD = ${f2(R.c.sd)}, n = ${R.c.n}`)}), ${S.dlg.ci}% CI for the difference ${b(`[${f2(R.lo)}, ${f2(R.hi)}]`)}, ${S.estimator==="welch"?"Welch's ":""}${b(`t(${R.dfTxt}) = ${f2(R.tv)}, p ${fp(R.p)}`)}, Hedges' ${b(`g = ${f2(R.g)}`)}. The interval runs from ${b(f2(R.lo))} to ${b(f2(R.hi))} points on the scale${R.lo>0||R.hi<0?", so the data are not consistent with a difference of zero":", which includes zero, so the data are also consistent with no difference"}. This analysis compares the groups as they were formed; whether the difference was caused by the treatment depends on how participants were assigned. ${b(R.excl)} cases were excluded because of missing values or other group codes.`}
+function studentFirst(){
+  return `<div class="studentbox"><label class="fieldlabel" for="stu">Your interpretation <span class="fieldhint">· write it before you look at the generated example (optional)</span></label>
+   <textarea id="stu" placeholder="In two sentences: which group was higher, by how much, and how sure can we be?">${esc(S.studentText)}</textarea>
+   <div style="display:flex;gap:8px;margin-top:8px;align-items:center"><button class="btn" data-sb>${S.revealed?"Hide":"Show"} generated example</button><span class="muted" style="font-size:12.5px">Your text and generated text are stored separately in the process record.</span></div></div>
+   ${S.revealed?`<div class="gen" style="margin-top:14px"><div class="tag">${ic("sparkle")}Generated statement · template v0.1 · bound to result v${S.version}</div><p style="margin:0">${interpText()}</p></div>
+   <div class="callout" style="margin-top:12px">${ic("info")}<div>A p value below .05 doesn't say how large or important the difference is. Use the estimate and its interval for that.</div></div>`:""}`;
+}
+function bindStudent(v){const ta=v.querySelector("#stu");ta.oninput=()=>S.studentText=ta.value;v.querySelector("[data-sb]").onclick=()=>{S.revealed=!S.revealed;vOutput(v)}}
+function explainHTML(){
+  const R=calc();
+  return `<header>${ic("info")}Explain this result<button class="iconbtn x" aria-label="Close Explain panel" data-x>${ic("close")}</button></header><div class="dockbody">
+   <p class="muted" style="margin-top:0;font-size:13px">Explanations don't change the analysis.</p>
+   <h3>What was tested</h3><p>Whether the average ${esc(R.ylab.toLowerCase())} differs between people in the ${esc(R.lab1)} and ${esc(R.lab2)} groups.</p>
+   <h3>What it found</h3><p>${esc(R.lab2)} averaged <b>${f2(Math.abs(R.diff))} points ${R.diff>0?"lower":"higher"}</b>. The ${S.dlg.ci}% interval runs from ${f2(R.lo)} to ${f2(R.hi)}${R.lo>0||R.hi<0?", so the data don't fit well with no difference at all":", which includes zero"}.</p>
+   <h3>How sure can we be?</h3><p>The interval shows the uncertainty. p ${fp(R.p)} says how unusual a difference this large would be if the true difference were zero. It doesn't measure size or importance.</p>
+   <h3>What it can't tell you</h3><ul style="padding-left:18px;margin:4px 0 12px"><li>Whether the treatment <i>caused</i> the difference. That depends on random assignment.</li><li>Whether people at the same site are related (see Diagnostics).</li></ul>
+   <div class="callout">${ic("learn")}<div><b>Glossary:</b> <a href="#" onclick="toast('Glossary entry: confidence interval');return false">confidence interval</a> · <a href="#" onclick="toast('Glossary entry: Welch t test');return false">Welch t test</a> · <a href="#" onclick="toast('Glossary entry: Hedges g');return false">Hedges' g</a></div></div></div>`;
+}
+function bindExplain(){}
+
+/* ---------- syntax ---------- */
+function opJSON(){
+  return `<span class="c">// Prism operation · schema 0.1 (concept)</span>
+{
+  <span class="k">"op"</span>: <span class="s">"analysis.run"</span>,
+  <span class="k">"id"</span>: <span class="s">"an_7Q2K"</span>, <span class="k">"version"</span>: <span class="n">${S.version}</span>,
+  <span class="k">"method"</span>: { <span class="k">"id"</span>: <span class="s">"ttest.independent"</span>, <span class="k">"version"</span>: <span class="s">"0.1"</span> },
+  <span class="k">"input"</span>: { <span class="k">"dataset"</span>: <span class="s">"ds_wellbeing"</span>, <span class="k">"data_version"</span>: <span class="n">3</span> },
+  <span class="k">"roles"</span>: {
+    <span class="k">"test"</span>: [${(S.dlg.tests.length?S.dlg.tests:["stress_mean"]).map(t=>`<span class="s">"var:${t}"</span>`).join(", ")}],
+    <span class="k">"group"</span>: <span class="s">"var:${S.dlg.group||"group"}"</span>, <span class="k">"levels"</span>: [<span class="n">${S.dlg.g1}</span>, <span class="n">${S.dlg.g2}</span>]
+  },
+  <span class="k">"options"</span>: {
+    <span class="k">"estimator"</span>: <span class="s">"${S.estimator}"</span>, <span class="k">"alternative"</span>: <span class="s">"two-sided"</span>,
+    <span class="k">"conf_level"</span>: <span class="n">${S.dlg.ci/100}</span>, <span class="k">"effect_size"</span>: <span class="s">"hedges_g_pooled"</span>,
+    <span class="k">"missing"</span>: <span class="s">"analysis_by_analysis"</span>
+  },
+  <span class="k">"defaults_set"</span>: <span class="s">"prism-defaults-0.1"</span>
+}`;
+}
+function vSyntax(v){
+  const steps=[["Import wellbeing.sav","Data · 240 cases, 16 variables · import report saved"],["Compute composite stress_mean","Transform · mean of 6 items, 3 and 6 reversed (1–5), ≥ 4 answered"],["Independent-samples t test","Analysis · stress_mean by group · v"+S.version]];
+  v.innerHTML=`<div class="syn">
+   <section class="card" aria-labelledby="hTitle"><div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)">${ic("history")}<h3 id="hTitle">History</h3></div>
+    <ol class="hist">${steps.map((s,i)=>`<li ${i===2?'aria-current="true"':""}><span class="n">${i+1}</span><div><b>${s[0]}</b><small>${s[1]}</small></div></li>`).join("")}</ol>
+    <div style="display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)"><button class="btn" style="flex:1" data-rs>${ic("run")}Run selected</button><button class="btn" style="flex:1" data-ra>Replay all</button></div></section>
+   <div class="panes">
+    <section class="card pane"><header><span class="eng prism">Prism operation</span><span class="muted" style="font-size:12.5px">What PrismStatistics runs and replays</span><span class="acts"><button class="tb" data-copy>${ic("copy")}Copy</button></span></header><pre class="code" tabindex="0" aria-label="Prism operation record">${opJSON()}</pre></section>
+    <section class="card pane"><header><span class="eng r">R export</span><span class="muted" style="font-size:12.5px"><b>Not run by PrismStatistics.</b> Open it in your own R to reproduce the analysis.</span><span class="acts"><button class="tb" data-saver>${ic("export")}Save .R file</button></span></header>
+<pre class="code" tabindex="0" aria-label="R export script"><span class="c"># R export from PrismStatistics (concept build) · ${new Date().toISOString().slice(0,10)}
+# Reproduces: Independent-samples t test, version ${S.version}. Not executed by PrismStatistics.
+# Requires: haven (>= 2.5)</span>
+library(haven)
+d <- <span class="k">read_sav</span>(<span class="s">"wellbeing.sav"</span>, user_na = <span class="k">TRUE</span>)
+d <- <span class="k">zap_missing</span>(d)   <span class="c"># user-missing codes (e.g. 8, 9) become NA</span>
+
+<span class="c"># Step 2: composite score, items 3 and 6 reversed on a 1-5 scale, at least 4 answered</span>
+items <- d[, <span class="k">paste0</span>(<span class="s">"stress_"</span>, 1:6)]
+items[, <span class="k">c</span>(3, 6)] <- 6 - items[, <span class="k">c</span>(3, 6)]
+answered <- <span class="k">rowSums</span>(!<span class="k">is.na</span>(items))
+d$stress_mean <- <span class="k">ifelse</span>(answered >= 4, <span class="k">rowMeans</span>(items, na.rm = <span class="k">TRUE</span>), <span class="k">NA</span>)
+
+<span class="c"># Step 3: independent-samples t test</span>
+sub <- <span class="k">subset</span>(d, !<span class="k">is.na</span>(stress_mean) & group %in% <span class="k">c</span>(${S.dlg.g1}, ${S.dlg.g2}))
+sub$group <- <span class="k">factor</span>(sub$group, levels = <span class="k">c</span>(${S.dlg.g1}, ${S.dlg.g2}))
+<span class="k">t.test</span>(stress_mean ~ group, data = sub,
+       var.equal = <span class="k">${S.estimator==="student"?"TRUE":"FALSE"}</span>, conf.level = <span class="n">${S.dlg.ci/100}</span>)</pre>
+     <div class="msgs" style="border-top:1px solid var(--line)"><b>Translation report</b>
+       <div class="inline-err" style="color:var(--ok-ink)">${ic("check")}<span>Import, composite score, case selection and the t test were translated.</span></div>
+       <div class="inline-err" style="color:var(--warn-ink)">${ic("warn")}<span>Hedges' g isn't in base R, so it wasn't translated. Add the <code>effectsize</code> package to reproduce it. This export is therefore <b>incomplete</b>.</span></div></div></section>
+   </div></div>`;
+  v.querySelector("[data-rs]").onclick=()=>toast("Runs step 3 and anything it depends on that has changed.");
+  v.querySelector("[data-ra]").onclick=()=>toast("Replays all 3 steps from the original file. The result matches version "+S.version+".");
+  v.querySelector("[data-copy]").onclick=()=>toast("Copied the operation record.");
+  v.querySelector("[data-saver]").onclick=()=>toast("Saves wellbeing_ttest.R. PrismStatistics never runs it.");
+}
+
+/* ---------- report ---------- */
+/* ---------- AI write-up (simulated: no model runs in this mockup) ---------- */
+const AISLOTS=`An independent-samples t test {method} compared {y.label} between the two study groups. Participants in the {g2.label} group had {dir} {y.label} (<i>M</i> = {g2.mean}, <i>SD</i> = {g2.sd}, <i>n</i> = {g2.n}) than participants in the {g1.label} group (<i>M</i> = {g1.mean}, <i>SD</i> = {g1.sd}, <i>n</i> = {g1.n}), <i>t</i>({df}) = {t}, <i>p</i> {p}. The mean difference was {diff} points, {ci}% CI [{lo}, {hi}], Hedges' <i>g</i> = {g}. In total, {excl} cases were excluded because of missing data. Because participants were recruited from {sites} sites, observations may not be fully independent, and this should be considered when interpreting the result.`;
+function aiSlots(R){return{"y.label":R.ylab.replace(/ \(.*\)/,"").toLowerCase()+"s",method:S.estimator==="welch"?"using Welch's correction for unequal variances":"assuming equal variances",dir:R.diff>0?"lower":"higher",
+  "g1.label":R.lab1,"g2.label":R.lab2,"g1.mean":f2(R.c.m),"g1.sd":f2(R.c.sd),"g1.n":R.c.n,"g2.mean":f2(R.t.m),"g2.sd":f2(R.t.sd),"g2.n":R.t.n,
+  df:R.dfTxt,t:f2(R.tv),p:fp(R.p),diff:f2(Math.abs(R.diff)),ci:S.dlg.ci,lo:f2(R.lo),hi:f2(R.hi),g:f2(R.g),excl:R.excl,sites:"three"}}
+const WORDSLOTS=new Set(["y.label","method","dir","sites","g1.label","g2.label"]);
+function aiText(R,raw){const s=aiSlots(R);return AISLOTS.replace(/\{([\w.]+)\}/g,(m,k)=>raw?`<code class="slot">{${k}}</code>`:WORDSLOTS.has(k)?esc(s[k]):`<span class="bound" title="Filled from result v${S.version}: ${k}">${esc(s[k])}</span>`)}
+function aiNumberCount(){return (AISLOTS.match(/\{[\w.]+\}/g)||[]).filter(x=>!WORDSLOTS.has(x.slice(1,-1))).length}
+function aiPanelHTML(){
+  const A=S.ai,R=calc();
+  const checks=[["Numbers",`All ${aiNumberCount()} numbers were filled from result v${S.version}; the model wrote none itself`,true],["Direction",`“${R.diff>0?"lower":"higher"}” matches the sign of the estimate`,true],["Required APA elements","Means, SDs, n, t, df, p, CI and effect size present",true],["Significance language","No “no effect”, “proves” or importance-from-p wording",true],["Causal language","None used; random assignment isn't recorded for this project",true],["Diagnostics","Mentions the independence concern flagged as Review needed",true],["Up to date",S.stale?"Result is stale. Run it again first":"Result is current",!S.stale]];
+  return `<header>${ic("sparkle")}Write up with AI<button class="iconbtn x" aria-label="Close Write up with AI" data-x>${ic("close")}</button></header><div class="dockbody">
+   <div class="card" style="padding:10px 12px;box-shadow:none;display:grid;gap:4px">
+     <div style="display:flex;gap:8px;align-items:center"><b>Local model</b><span class="placeholder">Simulated</span></div>
+     <div class="muted" style="font-size:12.5px">Example: 3B-parameter writer, 4-bit · Runs on this computer · Nothing is sent online · Reads result summaries only, never your raw data</div></div>
+   <fieldset style="border:0;padding:0;margin:12px 0 0"><legend class="fieldlabel">Analyses to write up</legend>
+     <label class="radio"><input type="checkbox" checked ${S.hasResult?"":"disabled"}><span>Independent-Samples T Test: ${R.y} by ${R.gv} (v${S.version})</span></label>
+     <label class="radio" style="color:#9A9EBB"><input type="checkbox" disabled><span>Wellbeing by group (not run yet)</span></label></fieldset>
+   <fieldset style="border:0;padding:0;margin:10px 0 0"><legend class="fieldlabel">Write</legend>
+     <label class="radio"><input type="checkbox" checked><span>Results paragraph (APA 7)</span></label>
+     <label class="radio"><input type="checkbox"><span>Method sentence</span></label></fieldset>
+   <button class="btn primary" style="width:100%;margin-top:12px" data-gen ${A.state==="running"||!S.hasResult?"disabled":""}>${ic("sparkle")}${A.state==="done"?"Generate again":"Generate draft"}</button>
+   <p class="muted" style="font-size:12px;margin:6px 0 0">The model writes wording only. Every number comes from the verified result.</p>
+   <div aria-live="polite" style="margin-top:12px">
+   ${A.state==="running"?`<div class="callout">${ic("sparkle")}<div>${["Reading result v"+S.version+"…","Drafting the paragraph…","Checking the draft…"][A.step]}</div></div>`:""}
+   ${A.state==="done"?`<h3 style="margin-top:4px">Checks on this draft</h3><ul class="checks" style="list-style:none;padding:0;margin:6px 0 0">${checks.map(([t,d,ok])=>`<li style="color:${ok?"var(--ok-ink)":"#9B1C34"}">${ic(ok?"check":"warn")}<span><b>${t}.</b> <span style="color:var(--ink)">${d}</span></span></li>`).join("")}</ul>
+     <label class="switch" style="margin-top:10px;font-size:13px"><input type="checkbox" data-slots ${A.showSlots?"checked":""}> Show what the model wrote (slots before filling)</label>`:""}
+   </div></div>`;
+}
+function bindAI(d){
+  const g=d.querySelector("[data-gen]");if(g)g.onclick=()=>{if(S.stale){toast("The result is stale. Run the analysis again before writing it up.");return}
+    S.ai={state:"running",step:0,status:"draft",showSlots:false};renderDock();if(S.screen==="report")vReport(document.getElementById("view"));
+    const fast=matchMedia("(prefers-reduced-motion: reduce)").matches;let k=0;const tick=()=>{k++;if(k<3){S.ai.step=k;renderDock();setTimeout(tick,fast?50:700)}else{S.ai.state="done";render();toast("AI draft added to section 3.1. Review it before exporting.")}};setTimeout(tick,fast?50:700)};
+  const sl=d.querySelector("[data-slots]");if(sl)sl.onchange=()=>{S.ai.showSlots=sl.checked;vReport(document.getElementById("view"))};
+}
+function aiBlock(R){
+  const A=S.ai;if(A.state!=="done"||A.status==="discarded")return "";
+  const st={draft:`<span class="status review">${ic("warn")}AI draft · needs review</span>`,accepted:`<span class="status ok">${ic("check")}Reviewed</span>`,edited:`<span class="status ok">${ic("pen")}Edited by author</span>`}[A.status];
+  return `<div class="gen ai" style="margin:6px 0 14px;border-style:${A.status==="draft"?"dashed":"solid"}">
+    <div class="tag" style="flex-wrap:wrap">${ic("sparkle")}AI draft · local model (simulated) · read result v${S.version} · ${st}</div>
+    <p style="margin:0" ${A.status!=="draft"?'contenteditable="true"':""} data-aitext>${aiText(R,A.showSlots)}</p>
+    ${A.status==="draft"?`<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn primary" style="padding:5px 12px" data-ai="accept">${ic("check")}Accept</button><button class="btn" style="padding:5px 12px" data-ai="edit">${ic("pen")}Edit</button><button class="btn" style="padding:5px 12px" data-ai="template">Use template version</button><button class="btn" style="padding:5px 12px" data-ai="discard">Discard</button></div>`:""}
+  </div>`;
+}
+
+function vReport(v){
+  const R=calc();
+  v.innerHTML=`<div class="rep">
+   <nav class="card repout" aria-label="Report outline"><div style="display:flex;align-items:center;gap:8px;padding:12px 14px 4px"><h3>Report outline</h3></div><ol>
+     <li><button>1. Introduction</button></li><li><button>2. Method</button></li><li><button>3. Results</button><ol><li><button aria-current="true">3.1 Stress by group</button></li><li><button>3.2 Wellbeing by group</button></li></ol></li><li><button>4. Discussion</button></li><li><button>References</button></li></ol>
+     <div style="padding:6px 12px 12px"><button class="btn" style="width:100%">${ic("plus")}Add section</button></div></nav>
+   <article class="card editor">
+     <div class="edbar" role="toolbar" aria-label="Formatting"><select aria-label="Paragraph style"><option>Heading 2</option><option>Normal</option></select><button aria-label="Bold">B</button><button aria-label="Italic"><i>I</i></button><button aria-label="Underline"><u>U</u></button><span class="tbsep"></span><button aria-label="Insert link">${ic("link")}</button><button aria-label="Insert table">${ic("data")}</button><button aria-label="Insert figure">${ic("chart")}</button><span class="tbsep"></span><button data-aiopen style="display:inline-flex;gap:6px;align-items:center;color:var(--accent-ink)">${ic("sparkle")}Write up with AI</button><span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="status ok">${ic("check")}Live: follows latest results</span><button class="btn" style="padding:4px 10px" data-freeze>Freeze snapshot</button></span></div>
+     <div class="page">
+       <h2 contenteditable="true">3.1 Stress by group</h2>
+       <p contenteditable="true">We expected participants in the treatment program to report lower stress than those in the control group.</p>
+       ${aiBlock(R)}
+       ${S.ai.state==="done"&&S.ai.status!=="discarded"?`<p class="muted" style="font-size:12.5px;margin:-6px 0 14px">Template version hidden while the AI text is used. <a href="#" data-ai="template">Switch back</a></p>`:`<div class="gen" style="margin:6px 0 14px">${S.stale?`<div class="status stale" style="margin-bottom:6px">${ic("refresh")}Needs review: result changed</div>`:""}<div class="tag">${ic("sparkle")}Generated statement · bound to Independent-Samples T Test v${S.version} · edits become author text</div><p style="margin:0">${S.hasResult?interpText():"<i>Run the analysis to fill in this statement.</i>"}</p></div>`}
+       <table class="apa" style="margin-top:8px"><caption>Table 1 <i>Stress score by group</i></caption><thead><tr><th>Group</th><th>n</th><th>M</th><th>SD</th></tr></thead><tbody><tr><td>${esc(R.lab1)}</td><td>${R.c.n}</td><td>${f2(R.c.m)}</td><td>${f2(R.c.sd)}</td></tr><tr><td>${esc(R.lab2)}</td><td>${R.t.n}</td><td>${f2(R.t.m)}</td><td>${f2(R.t.sd)}</td></tr></tbody></table>
+       <p class="tnote">Note. N = ${R.total}; ${exclNote(R)}. ${S.estimator==="welch"?"Welch's":"Student's"} t test, two-sided.</p>
+       <p contenteditable="true" style="border-left:3px solid var(--line);padding-left:10px;color:var(--muted)">Author text: add your discussion of what this difference means for the program here.</p>
+     </div></article>
+   <aside class="card checks checkscard" aria-labelledby="ckT"><h3 id="ckT">Export checks</h3><ul style="margin-top:8px">
+     <li style="color:var(--ok-ink)">${ic("check")}<span>All numbers bound to current results</span></li>
+     <li style="color:var(--ok-ink)">${ic("check")}<span>Sample sizes and missing data stated</span></li>
+     <li style="color:var(--warn-ink)">${ic("warn")}<span>Figure 1 has no alt text. <a href="#" onclick="toast('Opens the alt text editor for Figure 1.');return false">Add alt text</a></span></li>
+     <li style="color:var(--warn-ink)">${ic("warn")}<span>Method citation for Hedges' g missing</span></li>
+     ${S.stale?`<li style="color:#9B1C34">${ic("warn")}<span><b>Stale result in 3.1.</b> Run again before a final export.</span></li>`:""}
+     ${S.ai.state==="done"&&S.ai.status==="draft"?`<li style="color:#9B1C34">${ic("warn")}<span><b>AI draft in 3.1 not reviewed.</b> Accept or edit it before a final export.</span></li>`:""}
+    </ul>
+    <div style="display:grid;gap:8px;margin-top:12px"><button class="btn primary" data-ex="DOCX">${ic("export")}Export DOCX</button><button class="btn" data-ex="HTML">${ic("export")}Export accessible HTML</button><button class="btn" disabled title="Planned after accessibility tagging is verified">PDF: later release</button></div>
+    <p class="muted" style="font-size:12px;margin-top:10px">Exports include the software version, settings and data fingerprint.</p></aside>
+  </div>`;
+  v.querySelector("[data-aiopen]").onclick=()=>{if(!S.hasResult){toast("Run an analysis first. The AI writer only reads finished results.");return}S.dock="ai";renderDock();focusDock()};
+  v.querySelectorAll("[data-ai]").forEach(b=>b.onclick=e=>{e.preventDefault();const a=b.dataset.ai;
+    if(a==="accept"){S.ai.status="accepted";toast("Marked as reviewed. Numbers stay linked to result v"+S.version+".")}
+    if(a==="edit"){S.ai.status="edited";toast("You can now edit the text. Edited AI text is stored as author text in the process record.")}
+    if(a==="discard"||a==="template"){S.ai.status="discarded";toast(a==="template"?"Using the template version.":"AI draft discarded.")}
+    render();if(a==="edit"){const t=document.querySelector("[data-aitext]");t&&t.focus()}});
+  v.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>toast(S.ai.state==="done"&&S.ai.status==="draft"?`Can't make a final ${b.dataset.ex} export while the AI draft is unreviewed.`:S.stale?`Can't make a final ${b.dataset.ex} export while a result is stale. Run it again first, or export as a labeled draft.`:`Exported Wellbeing Study report.${b.dataset.ex.toLowerCase()} (2 warnings acknowledged).`));
+  v.querySelector("[data-freeze]").onclick=()=>toast("Frozen snapshot saved. It keeps result version "+S.version+" even if the analysis changes later.");
+}
+
+/* ---------- learn ---------- */
+function vLearn(v){
+  v.innerHTML=`<div style="max-width:900px;margin:0 auto"><h1 style="margin:6px 0 4px">Learn</h1><p class="muted">Worked examples, a glossary, and migration guides. Not part of this mockup's test tasks.</p>
+   <div class="tiles" style="margin-top:16px;grid-template-columns:repeat(3,1fr)">${[["Worked example: comparing two groups","learn"],["Glossary","text"],["Migration guide: menu-driven packages","transform"],["Migration guide: command-driven packages","transform"],["Migration guide: from JASP","transform"],["Statistical defaults compared","compare"]].map(([t,i])=>`<button class="tile" onclick="toast('${t.replace(/'/g,"")} isn\\'t part of this mockup.')">${ic(i)}${t}</button>`).join("")}</div></div>`;
+}
+
+/* ======================== screens jump list ======================== */
+const SCREENS=[
+ ["1 · Welcome",()=>{S.dock="variables";go("home")}],
+ ["2 · Data View",()=>{S.dataMode="data";S.dock="variables";go("data")}],
+ ["2 · Variable View",()=>{S.dataMode="vars";S.dock="variables";go("data")}],
+ ["3 · T test dialog",()=>{S.dataMode="data";go("data");openTTest()}],
+ ["4 · Output",()=>{S.hasResult=true;S.dlg.tests=S.dlg.tests.length?S.dlg.tests:["stress_mean"];S.dlg.group=S.dlg.group||"group";S.dock="explain";go("output")}],
+ ["5 · Help me choose",()=>{S.dataMode="data";S.guide={step:0,goal:null,outcome:null,design:null};S.dock="guide";go("data")}],
+ ["6 · Syntax",()=>{S.hasResult=true;S.dock=null;go("syntax")}],
+ ["7 · Report builder",()=>{S.hasResult=true;S.dock=null;go("report")}],
+ ["8 · Write up with AI",()=>{S.hasResult=true;S.dock="ai";go("report")}]
+];
+function buildScreens(){
+  const l=document.getElementById("screensList"),b=document.getElementById("screensBtn");
+  l.innerHTML=SCREENS.map((s,i)=>`<li><button data-s="${i}">${s[0]}</button></li>`).join("");
+  b.onclick=e=>{e.stopPropagation();const o=l.classList.toggle("open");b.setAttribute("aria-expanded",o)};
+  l.onclick=e=>{const x=e.target.closest("[data-s]");if(!x)return;l.classList.remove("open");b.setAttribute("aria-expanded","false");closeDialog();SCREENS[+x.dataset.s][1]()};
+}
+
+/* ======================== keyboard shortcuts ======================== */
+document.addEventListener("keydown",e=>{
+  const ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl&&e.key.toLowerCase()==="k"){e.preventDefault();document.getElementById("q").focus()}
+  else if(ctrl&&e.shiftKey&&e.key.toLowerCase()==="h"){e.preventDefault();doAct("guide")}
+  else if(ctrl&&e.key.toLowerCase()==="t"&&!e.shiftKey){e.preventDefault();S.dataMode=S.dataMode==="data"?"vars":"data";go("data")}
+  else if(ctrl&&["1","2","3","4"].includes(e.key)){e.preventDefault();go(["data","output","syntax","report"][+e.key-1])}
+  else if(e.key==="F10"){e.preventDefault();document.getElementById("mb0").focus()}
+  else if(e.key==="Escape"&&document.querySelector(".menu.open")){document.querySelectorAll(".menu.open").forEach(m=>m.classList.remove("open"))}
+});
+
+buildMenubar();buildRail();buildToolbar();buildScreens();render();
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+{
+  "id": "clinic_followup",
+  "rows": 80,
+  "title": "Clinic follow-up",
+  "description": "80 patients given the standard or a new treatment and followed for up to a year. Weeks until relapse, or until follow-up ended for those who had not relapsed (censored), and age at the start.",
+  "try": [
+    "Compare time to relapse between treatments (Kaplan-Meier with the log-rank test)",
+    "Add age as a predictor (Cox regression)"
+  ],
+  "variables": [
+    {
+      "name": "id",
+      "label": "Patient",
+      "measure": "nominal"
+    },
+    {
+      "name": "treatment",
+      "label": "Treatment",
+      "measure": "nominal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Standard"
+        },
+        {
+          "value": 2,
+          "label": "New"
+        }
+      ]
+    },
+    {
+      "name": "age",
+      "label": "Age at start (years)",
+      "measure": "scale"
+    },
+    {
+      "name": "weeks",
+      "label": "Weeks followed",
+      "measure": "scale"
+    },
+    {
+      "name": "relapsed",
+      "label": "Relapsed",
+      "measure": "nominal",
+      "value_labels": [
+        {
+          "value": 0,
+          "label": "No (censored)"
+        },
+        {
+          "value": 1,
+          "label": "Yes"
+        }
+      ]
+    }
+  ]
+}

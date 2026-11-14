@@ -1,0 +1,58 @@
+{
+  "id": "sleep_reaction",
+  "rows": 40,
+  "title": "Sleep and reaction time",
+  "description": "40 volunteers whose sleep was cut to five hours a night for four days. Reaction time was measured each day; half took caffeine each morning. Their usual hours of sleep were recorded beforehand.",
+  "try": [
+    "Compare reaction times across the four days (repeated-measures ANOVA, Friedman)",
+    "Compare day 1 with day 4 (paired-samples t test)",
+    "Add caffeine as a between-subjects factor (mixed ANOVA)"
+  ],
+  "variables": [
+    {
+      "name": "id",
+      "label": "Participant",
+      "measure": "nominal"
+    },
+    {
+      "name": "caffeine",
+      "label": "Caffeine each morning",
+      "measure": "nominal",
+      "value_labels": [
+        {
+          "value": 0,
+          "label": "No"
+        },
+        {
+          "value": 1,
+          "label": "Yes"
+        }
+      ]
+    },
+    {
+      "name": "rt_day1",
+      "label": "Reaction time, day 1 (ms)",
+      "measure": "scale"
+    },
+    {
+      "name": "rt_day2",
+      "label": "Reaction time, day 2 (ms)",
+      "measure": "scale"
+    },
+    {
+      "name": "rt_day3",
+      "label": "Reaction time, day 3 (ms)",
+      "measure": "scale"
+    },
+    {
+      "name": "rt_day4",
+      "label": "Reaction time, day 4 (ms)",
+      "measure": "scale"
+    },
+    {
+      "name": "usual_sleep",
+      "label": "Usual hours of sleep",
+      "measure": "scale"
+    }
+  ]
+}

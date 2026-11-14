@@ -1,0 +1,20 @@
+mockups/dist/
+
+# Local originals; the tracked copies live in docs/source/
+/PrismStatistics_Product_Specification.docx
+/PrismStatistics_Development_Checklist.xlsx
+
+# Rust build output
+/target/
+
+# Real data files shared for local testing only; never committed.
+samples-private/
+
+# Release builds (tools/release.py build)
+/release/
+
+# Local tool settings (the preview server configuration), not part of the project.
+/.claude/
+
+# R writes its plots here when a reference script draws one.
+Rplots.pdf
