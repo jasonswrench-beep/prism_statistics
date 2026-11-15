@@ -84,7 +84,7 @@ fn values(ds: &Dataset, name: &str) -> Result<(Vec<f64>, Tally, usize)> {
 }
 
 fn result(spec: &Spec, title: String, cases: crate::result::CaseAccounting, note: String) -> ResultBundle {
-    common::bundle(method_id(spec.kind), METHOD_VERSION, title, serde_json::to_value(spec).expect("a spec always serializes"), cases, format!("{note} Drawn by PrismStatistics with prismqda-stats {}.", super::STATS_VERSION))
+    common::bundle(method_id(spec.kind), METHOD_VERSION, title, serde_json::to_value(spec).expect("a spec always serializes"), cases, format!("{note} Drawn by PrismStatistics."))
 }
 
 fn chart(id: &str, title: &str, alt: String, svg: String) -> Chart {

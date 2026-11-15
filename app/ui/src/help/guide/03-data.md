@@ -35,7 +35,7 @@ Running an analysis only adds a result, so it isn't on the list. To keep a resul
 
 Variable View has one row per variable, with its name, label, type, measure, value labels and missing-value codes.
 
-- **Measure** decides how a variable is offered in dialogs. Nominal and ordinal variables can define groups. Scale variables are measured quantities.
+- **Measure** decides how a variable is offered in dialogs. Nominal and ordinal variables can define groups. Scale variables are measured quantities. A text or workbook file opens with numbers as scale and text as nominal, except that a column of identifiers (a different whole number for nearly every case) opens as nominal; check the measures before you analyze.
 - **Value labels** name codes (1 = "Agree"). Results show the labels.
 - **Missing values** are codes that mean "no answer" (−99, 999). Every analysis leaves them out.
 

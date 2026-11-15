@@ -2,6 +2,7 @@ import { Component, StrictMode, type ErrorInfo, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './styles.css';
+import { watchDialogs } from './dialogfocus';
 
 /** If something unexpected breaks a screen, say so in plain words instead of leaving a blank page. */
 class Fallback extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -28,6 +29,8 @@ class Fallback extends Component<{ children: ReactNode }, { error: Error | null 
 
 const root = document.getElementById('root');
 if (!root) throw new Error('The page has no #root element.');
+// Focus, Tab and the arrow keys in every dialog (dialogfocus.ts).
+watchDialogs(document);
 createRoot(root).render(
   <StrictMode>
     <Fallback>

@@ -84,3 +84,8 @@ export function parseCodes(text: string): { codes: number[]; error?: string } {
 export function fileName(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
 }
+
+/** A folder with the account's own folder (C:\Users\name, /home/name) put as "your user folder", so the account name isn't shown. */
+export function withoutAccount(path: string): string {
+  return path.replace(/^(?:[A-Za-z]:[\\/]Users|\/home|\/Users)[\\/][^\\/]+(?=[\\/]|$)/i, 'your user folder');
+}

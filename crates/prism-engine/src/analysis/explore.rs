@@ -125,7 +125,7 @@ fn run_one(ds: &Dataset, spec: &Spec, name: &str) -> Result<ResultBundle> {
         Some(f) => format!("Explore: {yl} by {f}"),
         None => format!("Explore: {yl}"),
     };
-    let mut b = common::bundle(METHOD_ID, METHOD_VERSION, title, serde_json::to_value(spec).expect("a spec always serializes"), tally.accounting(total, analyzed), format!("Descriptive statistics{}, with a {lv} t-based interval of the mean, the 5% trimmed mean, skewness (G1) and excess kurtosis (G2) with their standard errors. Percentiles by R's default (type 7). Normality: Shapiro-Wilk (Royston's algorithm, as R's shapiro.test) and Kolmogorov-Smirnov with Lilliefors' correction (as R's nortest::lillie.test). Computed by prismqda-stats {}.", fl.as_ref().map(|f| format!(" within each group of {f}")).unwrap_or_default(), super::STATS_VERSION));
+    let mut b = common::bundle(METHOD_ID, METHOD_VERSION, title, serde_json::to_value(spec).expect("a spec always serializes"), tally.accounting(total, analyzed), format!("Descriptive statistics{}, with a {lv} t-based interval of the mean, the 5% trimmed mean, skewness (G1) and excess kurtosis (G2) with their standard errors. Percentiles by R's default (type 7). Normality: Shapiro-Wilk (Royston's algorithm, as R's shapiro.test) and Kolmogorov-Smirnov with Lilliefors' correction (as R's nortest::lillie.test). Computed by PrismStatistics.", fl.as_ref().map(|f| format!(" within each group of {f}")).unwrap_or_default()));
     set_text(&mut b, "y.label", yl.clone());
     set(&mut b, "level", spec.level);
     set(&mut b, "k", groups.len() as f64);

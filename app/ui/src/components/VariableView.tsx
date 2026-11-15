@@ -57,7 +57,7 @@ export function VariableView({ dataset, onChange }: { dataset: DatasetInfo; onCh
                     {v.value_labels.length ? v.value_labels.slice(0, 2).map((l) => `${l.value} = ${l.label}`).join(', ') + (v.value_labels.length > 2 ? ', …' : '') : 'None'}
                   </button>
                 </td>
-                <td>
+                <td className="missing">
                   <input
                     aria-label={`Missing-value codes for ${v.name}`}
                     placeholder="None (e.g. -9, 99)"
@@ -75,7 +75,7 @@ export function VariableView({ dataset, onChange }: { dataset: DatasetInfo; onCh
                   />
                   {v.missing_ranges?.length ? <span className="fieldhint">{v.missing_values.length ? ' and ' : ''}{v.missing_ranges.map(([lo, hi]) => `${lo} to ${hi}`).join(', ')}</span> : null}
                 </td>
-                <td>
+                <td className="meas">
                   <span className="measure">
                     <Icon name={v.measure} />
                     <select aria-label={`Measure for ${v.name}`} value={v.measure} onChange={(e) => update(v.name, { measure: e.target.value as Measure })}>

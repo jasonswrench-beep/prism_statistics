@@ -159,7 +159,6 @@ pub fn independent_t_paragraph(r: &ResultBundle) -> Option<String> {
             }
         );
     }
-    text += &exclusion_sentence(r);
     Some(text)
 }
 

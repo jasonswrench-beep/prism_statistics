@@ -29,7 +29,7 @@ fn label(ds: &Dataset, name: &str) -> Result<String> {
 }
 
 fn mk(id: &str, title: String, spec: &impl Serialize, cases: crate::result::CaseAccounting, note: String) -> ResultBundle {
-    common::bundle(id, METHOD_VERSION, title, serde_json::to_value(spec).expect("a spec always serializes"), cases, format!("{note} Computed by prismqda-stats {}.", super::STATS_VERSION))
+    common::bundle(id, METHOD_VERSION, title, serde_json::to_value(spec).expect("a spec always serializes"), cases, format!("{note} Computed by PrismStatistics."))
 }
 
 // ---------------------------------------------------------------- chi-square goodness of fit

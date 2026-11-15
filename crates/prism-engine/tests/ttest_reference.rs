@@ -112,11 +112,11 @@ fn swapping_groups_flips_the_sign_only() {
 #[test]
 fn template_paragraph_reads_correctly() {
     let b = &run(&dataset(), &spec(Estimator::Welch, 0.95)).unwrap()[0];
-    let text = apa::independent_t_paragraph(b).unwrap();
+    let text = prism_engine::templates::paragraph(b).unwrap();
     assert!(text.starts_with("An independent-samples *t* test (Welch's unequal-variances t test) compared stress score between the Urban and Rural groups."), "{text}");
     assert!(text.contains("Stress score was higher in the Urban group (*M* = 5.91, *SD* = 1.20) than in the Rural group (*M* = 5.03, *SD* = 1.62)"), "{text}");
     assert!(text.contains("*t*(205.23) = 4.54, *p* < .001"), "{text}");
-    assert!(text.contains("In total, 47 cases were excluded"), "{text}");
+    assert_eq!(text.matches("In total, 47 cases were excluded").count(), 1, "said once: {text}");
 }
 
 #[test]

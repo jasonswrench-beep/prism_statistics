@@ -167,14 +167,13 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     let sstype = if spec.ss_type == SsType::Two { "Type II" } else { "Type III" };
     let lv_text = level_text(spec.level);
     let note = format!(
-        "{} of {y_label} by {}{}{}. {sstype} sums of squares{}. Effect size: partial eta squared (SS effect / (SS effect + SS error)). Equal spread checked with the Brown-Forsythe test (Levene's test from the cell medians). Cases were used when the outcome, every factor{} had valid values (listwise). Computed by prismqda-stats {}.",
+        "{} of {y_label} by {}{}{}. {sstype} sums of squares{}. Effect size: partial eta squared (SS effect / (SS effect + SS error)). Equal spread checked with the Brown-Forsythe test (Levene's test from the cell medians). Cases were used when the outcome, every factor{} had valid values (listwise). Computed by PrismStatistics.",
         if spec.covariates.is_empty() { "Factorial ANOVA" } else { "Factorial ANCOVA" },
         apa::series(&f_labels),
         if spec.interactions { " with every interaction" } else { ", main effects only" },
         if c_labels.is_empty() { String::new() } else { format!(", adjusting for {}", apa::series(&c_labels)) },
         if spec.ss_type == SsType::Two { ": each effect after the others it doesn't contain" } else { " from sum-to-zero (effect) coding: each effect is tested after all the others" },
-        if c_labels.is_empty() { "" } else { " and covariate" },
-        super::STATS_VERSION
+        if c_labels.is_empty() { "" } else { " and covariate" }
     );
     let title = format!("Factorial {}: {y_label} by {}", if spec.covariates.is_empty() { "ANOVA" } else { "ANCOVA" }, f_labels.join(" and "));
     let mut b = common::bundle(METHOD_ID, METHOD_VERSION, title, serde_json::to_value(spec).expect("a spec always serializes"), tally.accounting(total, used.len()), note);

@@ -199,10 +199,9 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     let (p, q, n) = (spec.set1.len(), spec.set2.len(), used.len());
     let (l1, l2) = (&labels[..p], &labels[p..]);
     let note = format!(
-        "Canonical correlation between the first set ({}) and the second set ({}), from the correlation matrix, so the weights are standardized canonical coefficients. Each dimension-reduction test asks whether that function and all later ones are zero, with Wilks' lambda and Rao's F approximation. Structure coefficients are each variable's correlation with its own set's canonical variate; a function's sign is arbitrary, and is chosen so the first set's structure coefficients sum to a positive number. Cases were used when every variable had a valid value (listwise). Computed by PrismStatistics with prismqda-stats {}.",
+        "Canonical correlation between the first set ({}) and the second set ({}), from the correlation matrix, so the weights are standardized canonical coefficients. Each dimension-reduction test asks whether that function and all later ones are zero, with Wilks' lambda and Rao's F approximation. Structure coefficients are each variable's correlation with its own set's canonical variate; a function's sign is arbitrary, and is chosen so the first set's structure coefficients sum to a positive number. Cases were used when every variable had a valid value (listwise). Computed by PrismStatistics.",
         apa::series(l1),
-        apa::series(l2),
-        super::STATS_VERSION
+        apa::series(l2)
     );
     let mut b = common::bundle(METHOD_ID, METHOD_VERSION, format!("Canonical Correlation: {} with {}", l1.join(", "), l2.join(", ")), serde_json::to_value(spec).expect("a spec always serializes"), tally.accounting(total, n), note);
     set(&mut b, "n", n as f64);

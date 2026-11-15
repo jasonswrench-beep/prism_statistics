@@ -67,6 +67,22 @@ fn first20(v: impl Iterator<Item = usize>) -> Vec<usize> {
     v.take(20).map(|i| i + 1).collect()
 }
 
+/// An identifier: nearly every case a different whole number, either running as a sequence (such as 1 to n) or under
+/// a name such as id or participant. Opening a text file or a workbook measures one as nominal, and Data Health flags
+/// one measured as scale.
+pub(crate) fn looks_like_identifier(name: &str, vals: &[f64]) -> bool {
+    if vals.is_empty() || !vals.iter().all(|x| x.fract() == 0.0) {
+        return false;
+    }
+    let mut uniq: Vec<u64> = vals.iter().map(|x| x.to_bits()).collect();
+    uniq.sort_unstable();
+    uniq.dedup();
+    let nearly_all = uniq.len() * 10 >= vals.len() * 9;
+    let (lo, hi) = (vals.iter().copied().fold(f64::INFINITY, f64::min), vals.iter().copied().fold(f64::NEG_INFINITY, f64::max));
+    let sequence = vals.len() >= 10 && nearly_all && hi - lo + 1.0 <= 1.2 * uniq.len() as f64;
+    sequence || id_like_name(name) && nearly_all
+}
+
 fn id_like_name(name: &str) -> bool {
     let n = name.to_ascii_lowercase();
     n == "id" || n.ends_with("_id") || n.ends_with("id") && n.len() <= 6 || n.starts_with("id_") || ["key", "case", "caseid", "respondent", "participant", "subject", "pid", "sid", "record"].contains(&n.as_str())
@@ -142,14 +158,10 @@ pub fn check(ds: &Dataset) -> Health {
                     }
                 }
                 // Identifiers.
-                // An identifier: nearly every case a different whole number, running as a sequence (such as 1 to n).
-                let integers = vals.iter().all(|x| x.fract() == 0.0);
-                let (lo, hi) = (min.unwrap_or(0.0), max.unwrap_or(0.0));
-                let sequence = integers && vals.len() >= 10 && uniq.len() * 10 >= vals.len() * 9 && hi - lo + 1.0 <= 1.2 * uniq.len() as f64;
                 if id_like_name(&name) && uniq.len() < vals.len() {
                     dup_finding(&mut findings, &name, (0..n).map(|r| v[r].map(|x| x.to_bits().to_string())).collect());
                 }
-                if var.measure == Measure::Scale && (sequence || id_like_name(&name) && integers && uniq.len() * 10 >= vals.len() * 9) {
+                if var.measure == Measure::Scale && looks_like_identifier(&name, &vals) {
                     findings.push(Finding { kind: "identifier", level: "note", variables: vec![name.clone()], message: format!("{name} looks like an identifier (a different whole number for nearly every case) but is measured as scale, so it could be averaged by mistake."), cases: Vec::new(), fix: Some(Fix::SetMeasure { name: name.clone(), measure: Measure::Nominal }) });
                 }
             }

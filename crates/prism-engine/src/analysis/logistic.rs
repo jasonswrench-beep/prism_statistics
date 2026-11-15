@@ -69,7 +69,7 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     set(&mut b, "level", spec.level);
     set(&mut b, "n", used.len() as f64);
     if present.len() != 2 {
-        b.method_note = format!("Binary logistic regression. Computed by prismqda-stats {}.", super::STATS_VERSION);
+        b.method_note = format!("Binary logistic regression. Computed by PrismStatistics.");
         fail(&mut b, format!("The outcome must have exactly two categories among the cases used; {y_label} has {}.", present.len()));
         return Ok(b);
     }
@@ -83,11 +83,10 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     let (columns, names, owner, references, block_ends, centered) = (pr.columns, pr.names, pr.owner, pr.references, pr.block_ends, pr.centered);
     let lv = level_text(spec.level);
     b.method_note = format!(
-        "Binary logistic regression of {y_label} = {ev} (against {nonev}), fitted by maximum likelihood (iteratively reweighted least squares). {}{}{}Coefficients are tested with Wald's z; odds ratios are e to the coefficient, with {lv} profile-likelihood intervals (a Wald limit is used, and marked, where the likelihood doesn't fall far enough for a profile limit). The likelihood-ratio tests compare the model with one that leaves out the predictor (all its dummies together). R² measures are Nagelkerke's, Cox and Snell's and McFadden's; the Hosmer-Lemeshow test uses 10 groups. Cases were used when every variable in the model had a valid value (listwise). Computed by prismqda-stats {}.",
+        "Binary logistic regression of {y_label} = {ev} (against {nonev}), fitted by maximum likelihood (iteratively reweighted least squares). {}{}{}Coefficients are tested with Wald's z; odds ratios are e to the coefficient, with {lv} profile-likelihood intervals (a Wald limit is used, and marked, where the likelihood doesn't fall far enough for a profile limit). The likelihood-ratio tests compare the model with one that leaves out the predictor (all its dummies together). R² measures are Nagelkerke's, Cox and Snell's and McFadden's; the Hosmer-Lemeshow test uses 10 groups. Cases were used when every variable in the model had a valid value (listwise). Computed by PrismStatistics.",
         if block_ends.len() > 1 { format!("Predictors were entered in {} blocks, each tested by the likelihood-ratio change. ", block_ends.len()) } else { "All predictors entered together. ".to_string() },
         if centered.is_empty() { String::new() } else { format!("{} {} mean-centered before forming the interaction terms. ", crate::apa::series(&centered), if centered.len() == 1 { "was" } else { "were" }) },
-        if references.is_empty() { String::new() } else { format!("Categorical predictors are dummy-coded against a reference category ({}). ", references.join("; ")) },
-        super::STATS_VERSION
+        if references.is_empty() { String::new() } else { format!("Categorical predictors are dummy-coded against a reference category ({}). ", references.join("; ")) }
     );
     set(&mut b, "blocks", block_ends.len() as f64);
     set_text(&mut b, "event.label", ev.clone());

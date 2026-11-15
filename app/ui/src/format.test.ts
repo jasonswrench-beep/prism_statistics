@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cellText, fileName, italicRuns, num, parseCodes, parseValueLabels, pCell, plainText } from './format';
+import { cellText, fileName, withoutAccount, italicRuns, num, parseCodes, parseValueLabels, pCell, plainText } from './format';
 
 test('numbers and p values read like the engine writes them', () => {
   assert.equal(num(-1.5, 2), '−1.50');
@@ -42,4 +42,10 @@ test('messages name a file without its folders', () => {
   assert.equal(fileName('C:\\Users\\someone\\Documents\\study.pstat'), 'study.pstat');
   assert.equal(fileName('/home/someone/report.docx'), 'report.docx');
   assert.equal(fileName('study.pstat'), 'study.pstat');
+});
+
+test('a folder is shown without the account name', () => {
+  assert.equal(withoutAccount('C:\\Users\\someone\\AppData\\Local\\PrismStatistics\\models'), 'your user folder\\AppData\\Local\\PrismStatistics\\models');
+  assert.equal(withoutAccount('/home/someone/.local/share/prism'), 'your user folder/.local/share/prism');
+  assert.equal(withoutAccount('D:\\Models'), 'D:\\Models');
 });

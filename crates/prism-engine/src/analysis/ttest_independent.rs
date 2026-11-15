@@ -114,7 +114,7 @@ fn run_one(ds: &Dataset, spec: &Spec, group_var: &crate::model::Variable, groups
         Estimator::Student => "Student's pooled-variance t test",
     };
     let method_note = format!(
-        "{method_name}, {}, {}% confidence interval for the difference ({} minus {}). Effect size: Hedges' g with the pooled standard deviation, with an exact interval from the noncentral t distribution. Groups were chosen by code ({} = {}, {} = {}). Cases were used when both the grouping and test variables had valid values. Computed by prismqda-stats {}.",
+        "{method_name}, {}, {}% confidence interval for the difference ({} minus {}). Effect size: Hedges' g with the pooled standard deviation, with an exact interval from the noncentral t distribution. Groups were chosen by code ({} = {}, {} = {}). Cases were used when both the grouping and test variables had valid values. Computed by PrismStatistics.",
         spec.alternative.words(),
         crate::apa::num(spec.level * 100.0, 0),
         label1,
@@ -122,8 +122,7 @@ fn run_one(ds: &Dataset, spec: &Spec, group_var: &crate::model::Variable, groups
         format_code(c1),
         label1,
         format_code(c2),
-        label2,
-        STATS_VERSION,
+        label2
     );
 
     let mut fields = BTreeMap::new();
@@ -294,8 +293,6 @@ fn run_one(ds: &Dataset, spec: &Spec, group_var: &crate::model::Variable, groups
     });
     Ok(bundle)
 }
-
-pub use super::STATS_VERSION;
 
 fn group_table(label1: &str, label2: &str, x1: &[f64], x2: &[f64]) -> Table {
     let row = |label: &str, x: &[f64]| {

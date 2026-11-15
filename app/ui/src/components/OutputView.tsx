@@ -1,7 +1,7 @@
 // The Output tab: one card per result with its tables, diagnostics, method note, case accounting and the template
 // APA paragraph. A failed result shows its reason and no interpretation (defaults table, row 16).
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { call } from '../bridge';
 import { cellText, italicRuns, plainText } from '../format';
 import { chooseItemPath, download } from '../files';
@@ -50,8 +50,23 @@ function showParam(e: React.MouseEvent<HTMLDivElement>) {
   }
 }
 
+/** The result just made, which gets the focus once it is drawn, so the keyboard lands on it after Run. */
+let focusNext: number | null = null;
+export function focusResult(items: OutputItem[]): void {
+  focusNext = items[0]?.id ?? null;
+}
+
 export function OutputView({ items, onCopied, onChanged, onExport, onEdit, aiReady }: { items: OutputItem[]; onCopied: (msg: string) => void; onChanged: () => void; onExport: (format: 'docx' | 'html' | 'pdf' | 'r') => void; onEdit?: (item: OutputItem) => void; aiReady: boolean }) {
   const [current, setCurrent] = useState<number | null>(null);
+  useEffect(() => {
+    if (focusNext === null) return;
+    const heading = document.getElementById(`rt-${focusNext}`);
+    if (!heading) return;
+    focusNext = null;
+    heading.setAttribute('tabindex', '-1');
+    heading.scrollIntoView({ block: 'start' });
+    heading.focus({ preventScroll: true });
+  });
   const [sample, setSample] = useState<string | null>(null);
   const [sampleError, setSampleError] = useState<string | null>(null);
   /** One figure (PNG, SVG) or table (CSV) on its own. */
@@ -184,7 +199,7 @@ export function OutputView({ items, onCopied, onChanged, onExport, onEdit, aiRea
           return (
             <article className="card result" key={it.id} id={`result-${it.id}`} aria-labelledby={`rt-${it.id}`}>
               <div className="rhead">
-                <h2 id={`rt-${it.id}`}>{b.title}</h2>
+                <h2 id={`rt-${it.id}`} tabIndex={-1}>{b.title}</h2>
                 {b.status.state === 'failed' ? <span className="status stale">Not computed</span> : null}
                 {it.command === 'regression' && b.status.state === 'ok' && (
                   <button

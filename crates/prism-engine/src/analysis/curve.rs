@@ -136,8 +136,7 @@ fn run_one(ds: &Dataset, spec: &Spec, outcome: &str) -> Result<ResultBundle> {
         }
     }
     let note = format!(
-        "Curve estimation: each curve is a least-squares regression of the outcome (on its natural logarithm for the power, exponential and S curves) on the transformed predictor, with {lv} confidence intervals for the coefficients. Cases were used when both variables had valid values. Computed by prismqda-stats {}.",
-        super::STATS_VERSION
+        "Curve estimation: each curve is a least-squares regression of the outcome (on its natural logarithm for the power, exponential and S curves) on the transformed predictor, with {lv} confidence intervals for the coefficients. Cases were used when both variables had valid values. Computed by PrismStatistics."
     );
     let mut b = common::bundle(
         METHOD_ID,

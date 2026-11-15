@@ -153,7 +153,7 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
         },
         tables: vec![Table { id: "descriptives".into(), title: "Descriptive statistics".into(), columns, rows, footnotes: vec!["Each variable uses its own valid values. SD and variance use n − 1. The median is Hyndman-Fan type 7.".into()] }],
         diagnostics: Vec::new(),
-        method_note: "Statistics are computed on each variable's valid values; user-missing codes and empty cells are left out and counted under Missing. Computed by prismqda-stats.".into(),
+        method_note: "Statistics are computed on each variable's valid values; user-missing codes and empty cells are left out and counted under Missing. Computed by PrismStatistics.".into(),
         fields,
         charts: Vec::new(),
     })

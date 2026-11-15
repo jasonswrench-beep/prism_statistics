@@ -16,7 +16,10 @@ pub struct ImportReport {
     pub renamed: Vec<(String, String)>,
     /// Rows that were shorter than the header and were padded with empty cells.
     pub short_rows: usize,
-    /// Fully empty rows that were left out (workbooks).
+    /// Rows that had more fields than the header; the extra fields were left out.
+    #[serde(default)]
+    pub long_rows: usize,
+    /// Fully empty rows that were left out.
     #[serde(default)]
     pub skipped_blank_rows: usize,
     /// The sheet that was read, for a workbook.
@@ -54,8 +57,15 @@ pub fn read_delimited<R: Read>(reader: R, delimiter: u8, name: &str) -> Result<(
     let mut rows = Vec::new();
     for record in rdr.records() {
         let record = record?;
+        // A line of nothing but spaces (or delimiters) is a blank row, left out like the empty lines the reader skips.
+        if record.iter().all(|f| f.trim().is_empty()) {
+            report.skipped_blank_rows += 1;
+            continue;
+        }
         if record.len() < headers.len() {
             report.short_rows += 1;
+        } else if record.iter().skip(headers.len()).any(|f| !f.trim().is_empty()) {
+            report.long_rows += 1;
         }
         rows.push(
             (0..headers.len())
@@ -71,8 +81,36 @@ pub fn read_delimited<R: Read>(reader: R, delimiter: u8, name: &str) -> Result<(
         );
     }
     let ds = build_dataset(name, &headers, rows, &mut report)?;
+    let rows = |n: usize| if n == 1 { "1 row".to_string() } else { format!("{n} rows") };
+    if report.short_rows > 0 {
+        report.notes.push(format!("{} had fewer fields than the header; the missing cells are empty.", rows(report.short_rows)));
+    }
+    if report.long_rows > 0 {
+        report.notes.push(format!("{} had more fields than the header; the extra fields were left out. Check the delimiter and any quotes in those rows.", rows(report.long_rows)));
+    }
+    if report.skipped_blank_rows > 0 {
+        let were = if report.skipped_blank_rows == 1 { "was" } else { "were" };
+        report.notes.push(format!("{} that {were} blank {were} left out.", rows(report.skipped_blank_rows)));
+    }
     Ok((ds, report))
 }
+
+/// The delimiter of a text file whose extension doesn't say: tab, semicolon or comma, whichever the first line has
+/// most of (comma when it has none).
+fn sniff_delimiter(bytes: &[u8]) -> u8 {
+    let first = bytes.split(|b| *b == b'\n').next().unwrap_or(&[]);
+    let count = |d: u8| first.iter().filter(|b| **b == d).count();
+    [b'\t', b';', b','].into_iter().max_by_key(|d| (count(*d), *d == b',')).filter(|d| count(*d) > 0).unwrap_or(b',')
+}
+
+/// Whether the bytes look like a binary file (a document, an archive, an image) rather than text.
+fn looks_binary(bytes: &[u8]) -> bool {
+    let head = &bytes[..bytes.len().min(8192)];
+    head.starts_with(b"PK\x03\x04") || head.starts_with(b"%PDF") || head.starts_with(b"\xD0\xCF\x11\xE0") || head.contains(&0)
+}
+
+/// The file types the reader opens, for messages.
+pub const OPENS: &str = ".csv, .tsv, .txt, .xlsx, .sav, .zsav, .dta, .sas7bdat and .jasp";
 
 /// Builds a dataset from a header row and rows of raw cells, deciding each column's type and repairing names.
 pub(crate) fn build_dataset(name: &str, headers: &[String], rows: Vec<Vec<RawCell>>, report: &mut ImportReport) -> Result<Dataset> {
@@ -92,6 +130,14 @@ pub(crate) fn build_dataset(name: &str, headers: &[String], rows: Vec<Vec<RawCel
             report.renamed.push((header.to_string(), used.clone()));
         }
         ds.add_variable(&used, to_column(&columns[c]))?;
+        // Numbers are measured as scale, except an identifier (a different whole number for nearly every case).
+        let last = ds.variables.len() - 1;
+        if let Column::Numeric(v) = &ds.columns[last] {
+            let vals: Vec<f64> = v.iter().flatten().copied().collect();
+            if crate::health::looks_like_identifier(&used, &vals) {
+                ds.variables[last].measure = crate::model::Measure::Nominal;
+            }
+        }
     }
     report.rows = ds.n_rows();
     report.variables = ds.variables.len();
@@ -114,9 +160,20 @@ pub fn read_bytes(file_name: &str, name: &str, bytes: &[u8], sheet: Option<&str>
         Some("dta") => crate::statfile::read_dta(bytes, name),
         Some("sas7bdat") => crate::statfile::read_sas7bdat(bytes, name),
         Some("jasp") => crate::statfile::read_jasp(bytes, name),
-        Some("tsv") | Some("tab") => read_delimited(bytes, b'\t', name),
-        _ => read_delimited(bytes, b',', name),
+        Some("tsv") | Some("tab") => text_data(bytes, b'\t', name),
+        Some("csv") => text_data(bytes, b',', name),
+        None | Some("txt") | Some("dat") | Some("data") => text_data(bytes, sniff_delimiter(bytes), name),
+        Some("json") => Err(Error::Invalid(format!("JSON files can't be opened as data. Save the table as .csv and open that. PrismStatistics opens {OPENS} files."))),
+        Some(other) => Err(Error::Invalid(format!("PrismStatistics can't open .{other} files as data. It opens {OPENS} files."))),
     }
+}
+
+/// A delimited text file, refused when it isn't text at all.
+fn text_data(bytes: &[u8], delimiter: u8, name: &str) -> Result<(Dataset, ImportReport)> {
+    if looks_binary(bytes) {
+        return Err(Error::Invalid(format!("This file isn't a text data file (it looks like a document, an archive or an image). PrismStatistics opens {OPENS} files.")));
+    }
+    read_delimited(bytes, delimiter, name)
 }
 
 pub fn extension(file_name: &str) -> Option<String> {
@@ -190,5 +247,34 @@ mod tests {
         let names: Vec<_> = ds.variables.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names, ["Age__years", "age", "V3", "V_2nd"]);
         assert_eq!(report.renamed.len(), 3);
+    }
+
+    #[test]
+    fn says_what_happened_to_short_long_and_blank_rows() {
+        let data = "a,b,c,d\n1,2,3,4\n5,6\n\n   \n7,8,9,10,11\n12,13,14,15\n";
+        let (ds, report) = read_bytes("t.csv", "t", data.as_bytes(), None).unwrap();
+        assert_eq!((report.rows, report.short_rows, report.long_rows, report.skipped_blank_rows), (4, 1, 1, 1));
+        assert_eq!(ds.n_rows(), 4);
+        let notes = report.notes.join(" ");
+        assert!(notes.contains("1 row had fewer fields") && notes.contains("1 row had more fields") && notes.contains("blank was left out"), "{notes}");
+    }
+
+    #[test]
+    fn refuses_files_that_are_not_data() {
+        for (name, bytes) in [("notes.docx", &b"PK\x03\x04rest"[..]), ("a.json", b"{\"x\": 1}"), ("a.pdf", b"%PDF-1.7")] {
+            let e = read_bytes(name, "t", bytes, None).unwrap_err().to_string();
+            assert!(e.contains("opens .csv"), "{name}: {e}");
+        }
+        // A document renamed to .csv is refused too.
+        let e = read_bytes("renamed.csv", "t", b"PK\x03\x04\0\0", None).unwrap_err().to_string();
+        assert!(e.contains("isn't a text data file"), "{e}");
+    }
+
+    #[test]
+    fn a_text_file_gets_the_delimiter_its_first_line_uses() {
+        let (ds, _) = read_bytes("t.txt", "t", b"a\tb\tc\n1\t2\t3\n", None).unwrap();
+        assert_eq!(ds.variables.len(), 3);
+        let (ds, _) = read_bytes("t.txt", "t", b"a;b\n1,5;2\n", None).unwrap();
+        assert_eq!(ds.variables.len(), 2);
     }
 }

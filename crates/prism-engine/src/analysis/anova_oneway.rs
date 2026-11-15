@@ -232,10 +232,9 @@ fn run_one(ds: &Dataset, spec: &Spec, name: &str) -> Result<ResultBundle> {
         PostHoc::Scheffe => Some("Scheffé's test, on the pooled variance"),
     };
     let note = format!(
-        "One-way analysis of variance with {test_name}. Effect sizes: omega squared (less biased) and eta squared (SS between / SS total). Levene's test uses deviations from the group medians (Brown-Forsythe). {}Groups are the categories of {} with data. Cases were used when both the factor and the dependent variable had valid values. Computed by prismqda-stats {}.",
+        "One-way analysis of variance with {test_name}. Effect sizes: omega squared (less biased) and eta squared (SS between / SS total). Levene's test uses deviations from the group medians (Brown-Forsythe). {}Groups are the categories of {} with data. Cases were used when both the factor and the dependent variable had valid values. Computed by PrismStatistics.",
         post_name.map_or(String::new(), |p| format!("Pairs of groups compared by {p}, with {lv} simultaneous intervals. ")),
-        f_var.display_name(),
-        super::STATS_VERSION
+        f_var.display_name()
     );
     let mut b = common::bundle(
         METHOD_ID,

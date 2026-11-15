@@ -60,11 +60,10 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     let controls: Vec<Vec<f64>> = (k..all.len()).map(col).collect();
     let lv = level_text(spec.level);
     let note = format!(
-        "Partial Pearson correlations controlling for {}: each variable's linear relationship with the controls is removed (least-squares residuals) and the residuals are correlated. Two-sided t tests with N − 2 − {} degrees of freedom; {lv} confidence intervals from Fisher's z with N − 3 − {} in the standard error. Cases were used when every variable and control had a valid value (listwise). Computed by prismqda-stats {}.",
+        "Partial Pearson correlations controlling for {}: each variable's linear relationship with the controls is removed (least-squares residuals) and the residuals are correlated. Two-sided t tests with N − 2 − {} degrees of freedom; {lv} confidence intervals from Fisher's z with N − 3 − {} in the standard error. Cases were used when every variable and control had a valid value (listwise). Computed by PrismStatistics.",
         common_series(&control_labels),
         controls.len(),
-        controls.len(),
-        super::STATS_VERSION
+        controls.len()
     );
     let mut b = common::bundle(METHOD_ID, METHOD_VERSION, format!("Partial Correlations controlling for {}", control_labels.join(", ")), serde_json::to_value(spec).expect("a spec always serializes"), tally.accounting(total, used.len()), note);
     set(&mut b, "level", spec.level);

@@ -93,7 +93,11 @@ pub fn paragraph(r: &ResultBundle) -> Option<String> {
         classic_np::KS2 => ks2_paragraph(r),
         _ => None,
     }
-    .map(|text| text + &bayes_sentence(r) + &exclusion_sentence(r))
+    .map(|text| {
+        // Added here once for every paragraph, so a template never writes it itself.
+        let excluded = if text.contains(" In total, ") { String::new() } else { exclusion_sentence(r) };
+        text + &bayes_sentence(r) + &excluded
+    })
 }
 
 /// " A Bayes factor gave BF₁₀ = 4.21, moderate evidence for an effect (prior: ...)." when the result has one.

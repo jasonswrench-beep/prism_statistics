@@ -27,7 +27,7 @@ import { ReportView } from './components/ReportView';
 import { DescribeDialog, type DescribeKind } from './components/DescribeDialog';
 import { Icon } from './components/Icon';
 import { MenuBar, type Menu } from './components/MenuBar';
-import { OutputView } from './components/OutputView';
+import { focusResult, OutputView } from './components/OutputView';
 import { TTestDialog } from './components/TTestDialog';
 import { ComputeDialog, RecodeDialog, ScaleDialog } from './components/TransformDialogs';
 import { DateDialog, RankDialog, ReverseDialog, SortDialog, StandardizeDialog } from './components/MoreTransforms';
@@ -458,7 +458,7 @@ export function App() {
           <span>PrismStatistics</span>
         </span>
         <span className="sep" aria-hidden="true" />
-        <span className="proj" title={project?.path ?? undefined}>
+        <span className="proj" title={project?.path ? fileName(project.path) : undefined}>
           {project?.name ?? (dataset ? dataset.name : 'No data open')}
         </span>
         <span className="sep" aria-hidden="true" />
@@ -597,7 +597,7 @@ export function App() {
         {dataset ? (
           <>
             <span>
-              Dataset <b>{dataset.name}</b>
+              Data <b>{project?.name ?? dataset.name}</b>
             </span>
             <span className="chip">{dataset.rows.toLocaleString()} cases</span>
             {settingChips(cases).map((text, i) => (
@@ -658,6 +658,7 @@ export function App() {
           onClose={() => setDialog(null)}
           onDone={(items) => {
             setOutput((o) => [...o, ...items]);
+            focusResult(items);
             setDialog(null);
             setScreen('output');
             refresh();
@@ -673,6 +674,7 @@ export function App() {
           onClose={() => setDialog(null)}
           onDone={(items) => {
             setOutput((o) => [...o, ...items]);
+            focusResult(items);
             setDialog(null);
             setScreen('output');
             refresh();
@@ -690,6 +692,7 @@ export function App() {
           }}
           onDone={(items) => {
             setOutput((o) => [...o, ...items]);
+            focusResult(items);
             setDialog(null);
             setScreen('output');
             refresh();
@@ -708,6 +711,7 @@ export function App() {
           onClose={() => setDialog(null)}
           onDone={(items) => {
             setOutput((o) => [...o, ...items]);
+            focusResult(items);
             setDialog(null);
             setScreen('output');
             refresh();
@@ -724,6 +728,7 @@ export function App() {
           onClose={() => setDialog(null)}
           onDone={(items) => {
             setOutput((o) => [...o, ...items]);
+            focusResult(items);
             setDialog(null);
             setScreen('output');
             refresh();
@@ -766,6 +771,7 @@ export function App() {
           onClose={() => setDialog(null)}
           onDone={(items) => {
             setOutput((o) => [...o, ...items]);
+            focusResult(items);
             setDialog(null);
             setScreen('output');
             refresh();

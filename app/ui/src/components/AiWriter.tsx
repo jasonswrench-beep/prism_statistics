@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { call } from '../bridge';
-import { italicRuns, plainText } from '../format';
+import { italicRuns, plainText, withoutAccount } from '../format';
 import type { AiDraft, AiStatus, OutputItem } from '../types';
 import { Icon } from './Icon';
 import { Modal } from './Modal';
@@ -81,7 +81,7 @@ export function AiSettingsDialog({ onClose, onChange }: { onClose: () => void; o
                   Download the model ({GB(s.size)})
                 </button>
                 <p className="fieldhint" style={{ margin: '6px 0 0' }}>
-                  A one-time download from the model's publisher, checked against its recorded checksum. It is saved in {s.folder}.
+                  A one-time download from the model's publisher, checked against its recorded checksum. It is saved in {withoutAccount(s.folder)}.
                 </p>
               </div>
             )}

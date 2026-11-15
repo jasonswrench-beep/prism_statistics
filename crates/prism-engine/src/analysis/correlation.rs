@@ -182,7 +182,7 @@ fn run_one(
     };
     let lv = level_text(spec.level);
     let note = format!(
-        "{}, {} tests{}{}. Missing values: {}. Computed by prismqda-stats {}.",
+        "{}, {} tests{}{}. Missing values: {}. Computed by PrismStatistics.",
         kind.name(),
         spec.alternative.words(),
         match spec.adjust {
@@ -197,8 +197,7 @@ fn run_one(
         match spec.missing {
             Missing::Listwise => "listwise (only cases with every variable valid are used, so every coefficient uses the same cases)",
             Missing::Pairwise => "pairwise (each pair of variables uses every case valid on both, so N can differ between pairs)",
-        },
-        super::STATS_VERSION
+        }
     );
     let title = format!("Correlations ({})", kind.name());
     let mut b = common::bundle(

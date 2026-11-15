@@ -168,11 +168,10 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
 
     let mixed = spec.between.is_some();
     let note = format!(
-        "{} ANOVA with {factor} ({k} measures) as the within-subjects factor{}. Sums of squares are Type III from the multivariate linear model with sum-to-zero coding, as R's car and afex give them. Sphericity: Mauchly's test; corrections: Greenhouse-Geisser and Huynh-Feldt (with Lecoutre's correction) epsilon. Effect sizes: partial eta squared and generalized eta squared (every factor treated as manipulated). Cases were used when every measure{} had a valid value. Computed by PrismStatistics with prismqda-stats {}.",
+        "{} ANOVA with {factor} ({k} measures) as the within-subjects factor{}. Sums of squares are Type III from the multivariate linear model with sum-to-zero coding, as R's car and afex give them. Sphericity: Mauchly's test; corrections: Greenhouse-Geisser and Huynh-Feldt (with Lecoutre's correction) epsilon. Effect sizes: partial eta squared and generalized eta squared (every factor treated as manipulated). Cases were used when every measure{} had a valid value. Computed by PrismStatistics.",
         if mixed { "Mixed" } else { "Repeated-measures" },
         between_label.as_ref().map_or(String::new(), |b| format!(" and {b} as the between-subjects factor")),
-        if mixed { " and the between-subjects factor" } else { "" },
-        super::STATS_VERSION
+        if mixed { " and the between-subjects factor" } else { "" }
     );
     let title = match &between_label {
         Some(b) => format!("Mixed ANOVA: {factor} × {b}"),

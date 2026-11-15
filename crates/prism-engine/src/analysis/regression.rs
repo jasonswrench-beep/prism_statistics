@@ -236,11 +236,10 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     let Prepared { used, total, tally, y, y_label, columns, names, owner, references, pred_labels, block_ends, centered } = prepare(ds, spec)?;
     let lv = level_text(spec.level);
     let note = format!(
-        "Ordinary least squares with an intercept, fitted by QR decomposition. {}{}{}{lv} confidence intervals. Standardized coefficients (β) use the SDs of the predictor column and the outcome. Equal error variance is checked with Koenker's studentized Breusch-Pagan test. Cases were used when every variable in the model had a valid value (listwise). Computed by prismqda-stats {}.",
+        "Ordinary least squares with an intercept, fitted by QR decomposition. {}{}{}{lv} confidence intervals. Standardized coefficients (β) use the SDs of the predictor column and the outcome. Equal error variance is checked with Koenker's studentized Breusch-Pagan test. Cases were used when every variable in the model had a valid value (listwise). Computed by PrismStatistics.",
         if references.is_empty() { String::new() } else { format!("Categorical predictors are dummy-coded against a reference category ({}). ", references.join("; ")) },
         if block_ends.len() > 1 { format!("Predictors were entered in {} blocks, each tested by the F test of its R² change{}. ", block_ends.len(), if spec.interactions.is_empty() { "" } else { " (the interactions form the last block)" }) } else { String::new() },
-        if centered.is_empty() { String::new() } else { format!("{} {} mean-centered before forming the interaction terms. ", crate::apa::series(&centered), if centered.len() == 1 { "was" } else { "were" }) },
-        super::STATS_VERSION
+        if centered.is_empty() { String::new() } else { format!("{} {} mean-centered before forming the interaction terms. ", crate::apa::series(&centered), if centered.len() == 1 { "was" } else { "were" }) }
     );
     let mut b = common::bundle(METHOD_ID, METHOD_VERSION, format!("Linear Regression: {y_label}"), serde_json::to_value(spec).expect("a spec always serializes"), tally.accounting(total, used.len()), note);
     let y_var_name = y_label.clone();

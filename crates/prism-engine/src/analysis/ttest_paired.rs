@@ -78,9 +78,8 @@ fn run_one(ds: &Dataset, spec: &Spec, first: &str, second: &str) -> Result<Resul
     let (x, y, tally, total) = matched(ds, first, second)?;
     let lv = level_text(spec.level);
     let note = format!(
-        "Paired-samples t test of the mean difference ({l1} minus {l2}) against zero, {}, {lv} confidence interval. Effect size: Cohen's d_z (mean difference divided by the SD of the differences) and Hedges' g_z, with exact intervals from the noncentral t distribution. Cases were used when both variables had valid values. Computed by prismqda-stats {}.",
-        spec.alternative.words(),
-        super::STATS_VERSION
+        "Paired-samples t test of the mean difference ({l1} minus {l2}) against zero, {}, {lv} confidence interval. Effect size: Cohen's d_z (mean difference divided by the SD of the differences) and Hedges' g_z, with exact intervals from the noncentral t distribution. Cases were used when both variables had valid values. Computed by PrismStatistics.",
+        spec.alternative.words()
     );
     let mut b = common::bundle(
         METHOD_ID,

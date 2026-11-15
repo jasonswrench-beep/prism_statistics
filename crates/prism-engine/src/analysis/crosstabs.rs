@@ -121,7 +121,7 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
         .collect();
 
     let note = format!(
-        "Counts of cases by {rl} (rows) and {cl} (columns). {}Categories are never merged. Cases were used when both variables had valid values. Computed by prismqda-stats {}.",
+        "Counts of cases by {rl} (rows) and {cl} (columns). {}Categories are never merged. Cases were used when both variables had valid values. Computed by PrismStatistics.",
         if spec.chi_square {
             format!(
                 "Pearson's chi-square test of independence{}; effect size Cramér's V{}. ",
@@ -130,8 +130,7 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
             )
         } else {
             String::new()
-        },
-        super::STATS_VERSION
+        }
     );
     let mut b = common::bundle(
         METHOD_ID,

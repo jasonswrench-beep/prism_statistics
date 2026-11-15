@@ -62,10 +62,9 @@ fn run_one(ds: &Dataset, spec: &Spec, name: &str) -> Result<ResultBundle> {
     let mu = spec.test_value;
     let lv = level_text(spec.level);
     let note = format!(
-        "One-sample t test of the mean against {}, {}, {lv} confidence interval for the mean difference. Effect size: Cohen's d (mean difference divided by the SD) and Hedges' g, with exact intervals from the noncentral t distribution. Cases were used when the test variable had a valid value. Computed by prismqda-stats {}.",
+        "One-sample t test of the mean against {}, {}, {lv} confidence interval for the mean difference. Effect size: Cohen's d (mean difference divided by the SD) and Hedges' g, with exact intervals from the noncentral t distribution. Cases were used when the test variable had a valid value. Computed by PrismStatistics.",
         apa::plain(mu),
-        spec.alternative.words(),
-        super::STATS_VERSION
+        spec.alternative.words()
     );
     let mut b = common::bundle(
         METHOD_ID,

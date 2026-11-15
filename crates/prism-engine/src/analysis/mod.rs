@@ -56,5 +56,3 @@ pub mod ttest_independent;
 pub mod ttest_one_sample;
 pub mod ttest_paired;
 
-/// The version of the shared statistics crate, recorded in every method note (REP-05).
-pub const STATS_VERSION: &str = "0.1.0 (PrismQDA 5ad8fe2)";

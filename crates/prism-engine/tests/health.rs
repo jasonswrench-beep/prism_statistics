@@ -23,6 +23,9 @@ fn messy() -> Dataset {
 10,110,49000,44,Female,1,,3\n\
 3,103,-99,41,Female,1,,3\n";
     let (mut ds, _) = read_bytes("messy.csv", "messy", csv.as_bytes(), None).unwrap();
+    // Opening the file measures the identifier as nominal; set it back to scale, as a user might, for Data Health.
+    assert_eq!(ds.variable_mut("code").unwrap().measure, Measure::Nominal);
+    ds.variable_mut("code").unwrap().measure = Measure::Scale;
     let r = ds.variable_mut("rating").unwrap();
     r.measure = Measure::Ordinal;
     r.value_labels = (1..=5).map(|v| ValueLabel { value: v as f64, label: format!("level {v}") }).collect();

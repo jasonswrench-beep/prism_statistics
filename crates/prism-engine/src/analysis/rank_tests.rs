@@ -70,9 +70,8 @@ fn mann_whitney_one(ds: &Dataset, spec: &MannWhitneySpec, name: &str) -> Result<
     }
     let (l1, l2) = (g_var.value_text(c1), g_var.value_text(c2));
     let note = format!(
-        "Mann-Whitney U test (Wilcoxon rank-sum test), {}. The p value is exact when both groups have fewer than 50 values and there are no ties; otherwise it uses the normal approximation with continuity and tie corrections. Effect size: the rank-biserial correlation ({l1} relative to {l2}). Groups were chosen by code. Computed by prismqda-stats {}.",
-        spec.alternative.words(),
-        super::STATS_VERSION
+        "Mann-Whitney U test (Wilcoxon rank-sum test), {}. The p value is exact when both groups have fewer than 50 values and there are no ties; otherwise it uses the normal approximation with continuity and tie corrections. Effect size: the rank-biserial correlation ({l1} relative to {l2}). Groups were chosen by code. Computed by PrismStatistics.",
+        spec.alternative.words()
     );
     let mut b = common::bundle(
         MANN_WHITNEY,
@@ -161,7 +160,7 @@ fn mann_whitney_one(ds: &Dataset, spec: &MannWhitneySpec, name: &str) -> Result<
         title: "Mann-Whitney U test".into(),
         columns: vec!["Test variable".into(), "U".into(), "z".into(), format!("p ({})", spec.alternative.words()), "p method".into()],
         rows: vec![vec![text(y_var.display_name()), num(m.u, 1), opt(m.z, 3), p(m.p), text(if m.exact { "Exact" } else { "Normal approximation" })]],
-        footnotes: vec![format!("U counts the pairs in which a {l1} value is above a {l2} value (ties count half). For {l2} relative to {l1} it is {}.", crate::apa::num(nn - m.u, 1))],
+        footnotes: vec![format!("U counts the pairs of cases, one from each group, in which the {l1} case has the higher value (ties count half). For {l2} relative to {l1} it is {}.", crate::apa::num(nn - m.u, 1))],
     });
     b.tables.push(Table {
         id: "effect".into(),
@@ -170,7 +169,7 @@ fn mann_whitney_one(ds: &Dataset, spec: &MannWhitneySpec, name: &str) -> Result<
         rows: vec![
             vec![text("Rank-biserial correlation"), num(m.rank_biserial, 3)],
             vec![
-                text(format!("Probability a {l1} value is above a {l2} value")),
+                text(format!("Probability the {l1} case is higher, in a pair with one case from each group")),
                 num(m.probability_of_superiority, 3),
             ],
         ],
@@ -220,9 +219,8 @@ fn wilcoxon_one(
     );
     let (x, y, tally, total) = super::ttest_paired::matched(ds, first, second)?;
     let note = format!(
-        "Wilcoxon signed-rank test of the differences ({l1} minus {l2}), {}. Zero differences are dropped (Wilcoxon's method). The p value is exact below 50 pairs when there are no ties or zero differences; otherwise it uses the normal approximation with continuity and tie corrections. Effect size: the matched-pairs rank-biserial correlation. Computed by prismqda-stats {}.",
-        spec.alternative.words(),
-        super::STATS_VERSION
+        "Wilcoxon signed-rank test of the differences ({l1} minus {l2}), {}. Zero differences are dropped (Wilcoxon's method). The p value is exact below 50 pairs when there are no ties or zero differences; otherwise it uses the normal approximation with continuity and tie corrections. Effect size: the matched-pairs rank-biserial correlation. Computed by PrismStatistics.",
+        spec.alternative.words()
     );
     let mut b = common::bundle(
         WILCOXON,
@@ -436,7 +434,7 @@ fn kruskal_one(ds: &Dataset, spec: &KruskalSpec, name: &str) -> Result<ResultBun
     } = super::anova_oneway::split(ds, name, &spec.factor)?;
     let analyzed: usize = groups.iter().map(Vec::len).sum();
     let note = format!(
-        "Kruskal-Wallis rank-sum test with the correction for ties. Effect size: epsilon squared (H / (N − 1)). {}Groups are the categories of {} with data. Computed by prismqda-stats {}.",
+        "Kruskal-Wallis rank-sum test with the correction for ties. Effect size: epsilon squared (H / (N − 1)). {}Groups are the categories of {} with data. Computed by PrismStatistics.",
         if spec.post_hoc == KruskalPostHoc::Dunn {
             match spec.dunn_adjust {
                 DunnAdjust::None => "Pairs of groups compared by Dunn's test (with the tie correction), p values not adjusted. ".to_string(),
@@ -445,8 +443,7 @@ fn kruskal_one(ds: &Dataset, spec: &KruskalSpec, name: &str) -> Result<ResultBun
         } else {
             String::new()
         },
-        f_var.display_name(),
-        super::STATS_VERSION
+        f_var.display_name()
     );
     let mut b = common::bundle(
         KRUSKAL,

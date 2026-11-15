@@ -317,7 +317,7 @@ pub fn run(spec: &Spec) -> Result<ResultBundle> {
     };
     let sym = symbol(spec.test);
     let note = format!(
-        "Power analysis for {}{} at α = {}, with the effect given {given}. {}Equal group sizes. Computed by PrismStatistics with prismqda-stats {}.",
+        "Power analysis for {}{} at α = {}, with the effect given {given}. {}Equal group sizes. Computed by PrismStatistics.",
         if spec.test == Test::Anova { "" } else { "a two-sided " },
         if spec.test == Test::Anova { with_article(test_name(spec.test)) } else { test_name(spec.test).to_string() },
         apa::no_leading_zero(spec.alpha, 3).trim_end_matches('0').trim_end_matches('.'),
@@ -326,8 +326,7 @@ pub fn run(spec: &Spec) -> Result<ResultBundle> {
             Test::Anova => "Power from the noncentral F distribution with λ = f² × N. ",
             Test::Correlation => "Power from Fisher's z approximation with the critical r taken from the t distribution (as R's pwr.r.test). ",
             _ => "Power from the normal approximation on the arcsine scale (as R's pwr). ",
-        },
-        super::STATS_VERSION
+        }
     );
     let title = match spec.solve_for {
         Solve::N => format!("Power Analysis: sample size for {}", with_article(test_name(spec.test))),

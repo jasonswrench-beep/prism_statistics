@@ -261,7 +261,11 @@ export function DataView({ dataset, onEdited, onGrew, request }: { dataset: Data
 
   const show = (v: VariableInfo, c: CellValue): { text: string; cls: string } => {
     if (c === null) return { text: '', cls: 'miss' };
-    if (typeof c === 'object') return { text: String(c.missing), cls: 'umiss' };
+    if (typeof c === 'object') {
+      // A user-missing code keeps its amber italics, and shows its label ("Prefers not to say") like any other code.
+      const l = labels && typeof c.missing === 'number' ? v.value_labels.find((x) => x.value === c.missing) : undefined;
+      return { text: l ? l.label : String(c.missing), cls: 'umiss' };
+    }
     if (typeof c === 'number') {
       if (labels) {
         const l = v.value_labels.find((x) => x.value === c);

@@ -13,6 +13,24 @@ Timed with simulated files of up to 1,000,000 cases and up to 500 variables.
 - Mixed models stop searching when the fit stops improving relative to its size; on 100,000 cases a model that took over nine minutes takes about a second.
 - Scatterplots, box plot outliers and ROC curves draw a mark once for each spot on the chart, so a chart of 1,000,000 cases is 1.8 MB instead of 45 MB, and looks the same.
 
+### Keyboard
+
+- Every dialog takes the keyboard focus when it opens and gives it back when it closes, and Tab and Shift+Tab stay inside it.
+- Each variable list is one tab stop: the arrow keys (and Home and End) move through it, Enter picks a variable and Enter again moves it, and the focus stays in the list after a move.
+- After Run, the focus is on the new result's heading.
+
+### Fixes
+
+- The "In total, N cases were excluded" sentence appears once in the independent-samples t test paragraph, not twice.
+- The Mann-Whitney note no longer reads "a Online value"; it describes pairs of cases, one from each group.
+- Every method note ends "Computed by PrismStatistics." (some named the shared statistics crate and its version).
+- Opening a text file says how many rows were short, how many had extra fields (which were left out) and how many blank rows were skipped.
+- A document, a JSON file or another file that isn't data is refused with a message listing the types that open, instead of opening as an empty or one-column dataset. A .txt file is read with the delimiter its first line uses.
+- A numeric column that looks like an identifier (a different whole number for nearly every case) opens as nominal, not scale, matching Data Health.
+- With value labels on, a user-missing code shows its label (in amber italics), such as "Prefers not to say".
+- The status bar names the data as the title bar does.
+- Variable View's Missing and Measure columns are wide enough for their contents again, and the AI writer names the model folder without the account name.
+
 ## 0.1.1 (teaching preview)
 
 Fixes for faults found while writing the user manual. The installer and the program are code-signed.

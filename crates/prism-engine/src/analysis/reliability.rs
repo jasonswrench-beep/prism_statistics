@@ -93,7 +93,7 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     let rev_names: Vec<String> = labels.iter().zip(&reversed).filter(|(_, r)| **r).map(|(l, _)| l.clone()).collect();
     let lv = level_text(spec.level);
     let note = format!(
-        "Cronbach's alpha for {k} items, with a {lv} confidence interval by Feldt's method (from the F distribution with N − 1 and (N − 1)(k − 1) degrees of freedom). Standardized alpha uses the mean inter-item correlation. The corrected item-total correlation is each item's correlation with the sum of the other items. {}Cases were used when every item had a valid value (listwise). Computed by prismqda-stats {} and PrismStatistics.",
+        "Cronbach's alpha for {k} items, with a {lv} confidence interval by Feldt's method (from the F distribution with N − 1 and (N − 1)(k − 1) degrees of freedom). Standardized alpha uses the mean inter-item correlation. The corrected item-total correlation is each item's correlation with the sum of the other items. {}Cases were used when every item had a valid value (listwise). Computed by PrismStatistics.",
         if rev_names.is_empty() {
             String::new()
         } else {
@@ -105,8 +105,7 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
                 apa::plain(hi),
                 if spec.scale_min.is_none() || spec.scale_max.is_none() { ", using the lowest and highest values found among the items" } else { "" }
             )
-        },
-        super::STATS_VERSION
+        }
     );
     let mut b = common::bundle(METHOD_ID, METHOD_VERSION, format!("Reliability: {} items", k), serde_json::to_value(spec).expect("a spec always serializes"), tally.accounting(total, n), note);
     set(&mut b, "k", k as f64);

@@ -131,14 +131,13 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
         Statistic::Regression => "regression coefficients",
     };
     let note = format!(
-        "Bootstrap of the {what}: {} resamples of the cases drawn with replacement (seed {}), with {lv} percentile and bias-corrected and accelerated (BCa) intervals; BCa uses the jackknife for its acceleration. {}Computed by prismqda-stats {}.",
+        "Bootstrap of the {what}: {} resamples of the cases drawn with replacement (seed {}), with {lv} percentile and bias-corrected and accelerated (BCa) intervals; BCa uses the jackknife for its acceleration. {}Computed by PrismStatistics.",
         spec.resamples,
         spec.seed,
         match spec.statistic {
             Statistic::Mean | Statistic::Median | Statistic::TrimmedMean | Statistic::Sd => "Each variable uses its own valid values. ",
             _ => "Cases were used when every variable had a valid value. ",
-        },
-        super::STATS_VERSION
+        }
     );
 
     // The rows: a name, the interval, and a field prefix.

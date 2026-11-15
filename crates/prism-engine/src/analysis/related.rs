@@ -45,8 +45,7 @@ fn mcnemar_one(ds: &Dataset, spec: &McNemarSpec, first: &str, second: &str) -> R
     codes.sort_by(f64::total_cmp);
     codes.dedup();
     let note = format!(
-        "McNemar's test of whether the share of cases in each category changed from {l1} to {l2}, using only the cases that changed. Chi-square with the continuity correction, and the exact two-sided p value (a binomial test of the changes at one half); with fewer than {EXACT_BELOW} changed cases the exact p value is the one to report. Cases were used when both variables had valid values. Computed by prismqda-stats {}.",
-        super::STATS_VERSION
+        "McNemar's test of whether the share of cases in each category changed from {l1} to {l2}, using only the cases that changed. Chi-square with the continuity correction, and the exact two-sided p value (a binomial test of the changes at one half); with fewer than {EXACT_BELOW} changed cases the exact p value is the one to report. Cases were used when both variables had valid values. Computed by PrismStatistics."
     );
     let mut b = common::bundle(MCNEMAR, METHOD_VERSION, format!("McNemar Test: {l1} and {l2}"), serde_json::to_value(spec).expect("a spec always serializes"), tally.accounting(total, x.len()), note);
     set_text(&mut b, "x1.label", l1.clone());
@@ -130,9 +129,8 @@ pub fn friedman(ds: &Dataset, spec: &FriedmanSpec) -> Result<ResultBundle> {
     let columns: Vec<Vec<f64>> = cells.iter().map(|c| used.iter().map(|&r| c[r].value().expect("checked")).collect()).collect();
     let k = labels.len();
     let note = format!(
-        "Friedman's rank test of whether {} measures of the same cases differ: each case's values are ranked among themselves (ties get average ranks) and the rank sums compared, with the correction for ties. Effect size: Kendall's W. Cases were used when every measure had a valid value (listwise). Computed by prismqda-stats {}.",
-        k,
-        super::STATS_VERSION
+        "Friedman's rank test of whether {} measures of the same cases differ: each case's values are ranked among themselves (ties get average ranks) and the rank sums compared, with the correction for ties. Effect size: Kendall's W. Cases were used when every measure had a valid value (listwise). Computed by PrismStatistics.",
+        k
     );
     let mut b = common::bundle(FRIEDMAN, METHOD_VERSION, format!("Friedman Test: {}", labels.join(", ")), serde_json::to_value(spec).expect("a spec always serializes"), tally.accounting(total, used.len()), note);
     set(&mut b, "k", k as f64);
