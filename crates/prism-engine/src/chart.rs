@@ -204,8 +204,12 @@ pub fn boxplot(boxes: &[BoxDraw], xlabel: &str, ylabel: &str, alt: &str) -> Stri
         let _ = write!(out, "<line x1=\"{:.2}\" y1=\"{ylo:.2}\" x2=\"{:.2}\" y2=\"{ylo:.2}\"/><line x1=\"{:.2}\" y1=\"{yhi:.2}\" x2=\"{:.2}\" y2=\"{yhi:.2}\"/>", c - half / 2.0, c + half / 2.0, c - half / 2.0, c + half / 2.0);
         let _ = write!(out, "<rect x=\"{:.2}\" y=\"{yq3:.2}\" width=\"{:.2}\" height=\"{:.2}\" fill=\"{FILL}\"/>", c - half, 2.0 * half, (yq1 - yq3).max(0.5));
         let _ = write!(out, "<line x1=\"{:.2}\" y1=\"{ymd:.2}\" x2=\"{:.2}\" y2=\"{ymd:.2}\" stroke-width=\"2.5\"/>", c - half, c + half);
+        let mut drawn = Drawn::default();
         for o in &b.outliers {
-            let _ = write!(out, "<circle cx=\"{c:.2}\" cy=\"{:.2}\" r=\"3.5\" fill=\"#FFFFFF\"/>", ys.at(*o));
+            let cy = ys.at(*o);
+            if drawn.first(c, cy) {
+                let _ = write!(out, "<circle cx=\"{c:.2}\" cy=\"{cy:.2}\" r=\"3.5\" fill=\"#FFFFFF\"/>");
+            }
         }
         let _ = write!(out, "<line x1=\"{c:.2}\" y1=\"{}\" x2=\"{c:.2}\" y2=\"{}\"/>", HEIGHT - BOTTOM, HEIGHT - BOTTOM + 5.0);
     }
@@ -281,6 +285,38 @@ pub fn bars(cats: &[(String, f64)], errors: Option<&[(f64, f64)]>, xlabel: &str,
 }
 
 /// A scatterplot with an optional straight line (intercept, slope) drawn across the x range.
+/// Marks already drawn, by the 1-pixel spot they fall on. With many cases most marks land on top of others, and a
+/// mark (a circle 6 to 7 pixels across) less than a pixel from one already drawn looks the same: drawing it once keeps
+/// a chart of a million cases to a size a page can show, without changing how it looks.
+#[derive(Default)]
+struct Drawn(std::collections::HashSet<(i64, i64)>);
+
+impl Drawn {
+    /// True the first time a spot is seen.
+    fn first(&mut self, x: f64, y: f64) -> bool {
+        self.0.insert((x.round() as i64, y.round() as i64))
+    }
+}
+
+/// A line's points in pixels, leaving out each point less than half a pixel from the last one kept (the line looks
+/// the same), but always keeping the last.
+fn line_points(points: impl IntoIterator<Item = (f64, f64)>) -> String {
+    let pts: Vec<(f64, f64)> = points.into_iter().collect();
+    let mut out = String::new();
+    let mut last: Option<(f64, f64)> = None;
+    for (i, &(x, y)) in pts.iter().enumerate() {
+        let near = last.is_some_and(|(a, b)| (x - a).abs() < 0.5 && (y - b).abs() < 0.5);
+        if !near || i + 1 == pts.len() {
+            if !out.is_empty() {
+                out.push(' ');
+            }
+            let _ = write!(out, "{x:.2},{y:.2}");
+            last = Some((x, y));
+        }
+    }
+    out
+}
+
 pub fn scatter(points: &[(f64, f64)], line: Option<(f64, f64)>, xlabel: &str, ylabel: &str, alt: &str) -> String {
     let (x0, x1) = bounds(points.iter().map(|p| p.0)).unwrap_or((0.0, 1.0));
     let (y0, y1) = bounds(points.iter().map(|p| p.1)).unwrap_or((0.0, 1.0));
@@ -288,8 +324,12 @@ pub fn scatter(points: &[(f64, f64)], line: Option<(f64, f64)>, xlabel: &str, yl
     let yt = ticks(y0, y1, 6);
     let mut fr = frame(alt, &xt, &yt, xlabel, ylabel);
     fr.out.push_str("<g fill=\"none\" stroke=\"#000\" stroke-width=\"1\">");
+    let mut drawn = Drawn::default();
     for (x, y) in points {
-        let _ = write!(fr.out, "<circle cx=\"{:.2}\" cy=\"{:.2}\" r=\"3.5\"/>", fr.x.at(*x), fr.y.at(*y));
+        let (cx, cy) = (fr.x.at(*x), fr.y.at(*y));
+        if drawn.first(cx, cy) {
+            let _ = write!(fr.out, "<circle cx=\"{cx:.2}\" cy=\"{cy:.2}\" r=\"3.5\"/>");
+        }
     }
     fr.out.push_str("</g>");
     if let Some((a, b)) = line {
@@ -319,8 +359,12 @@ pub fn scatter_curves(points: &[(f64, f64)], curves: &[(String, Vec<(f64, f64)>)
     let (ylo, yhi) = (yt[0], yt[yt.len() - 1]);
     let mut fr = frame(alt, &xt, &yt, xlabel, ylabel);
     fr.out.push_str("<g fill=\"none\" stroke=\"#7A7A7A\" stroke-width=\"1\">");
+    let mut drawn = Drawn::default();
     for (x, y) in points {
-        let _ = write!(fr.out, "<circle cx=\"{:.2}\" cy=\"{:.2}\" r=\"3\"/>", fr.x.at(*x), fr.y.at(*y));
+        let (cx, cy) = (fr.x.at(*x), fr.y.at(*y));
+        if drawn.first(cx, cy) {
+            let _ = write!(fr.out, "<circle cx=\"{cx:.2}\" cy=\"{cy:.2}\" r=\"3\"/>");
+        }
     }
     fr.out.push_str("</g>");
     for (k, (_, pts)) in curves.iter().enumerate() {
@@ -366,8 +410,8 @@ pub fn line_xy(points: &[(f64, f64)], diagonal: bool, xlabel: &str, ylabel: &str
     if diagonal {
         let _ = write!(fr.out, "<line x1=\"{:.2}\" y1=\"{:.2}\" x2=\"{:.2}\" y2=\"{:.2}\" stroke=\"{DARK}\" stroke-width=\"1\" stroke-dasharray=\"5 4\"/>", fr.x.at(0.0), fr.y.at(0.0), fr.x.at(1.0), fr.y.at(1.0));
     }
-    let pts: Vec<String> = points.iter().map(|(x, y)| format!("{:.2},{:.2}", fr.x.at(*x), fr.y.at(*y))).collect();
-    let _ = write!(fr.out, "<polyline fill=\"none\" stroke=\"#000\" stroke-width=\"1.75\" points=\"{}\"/>", pts.join(" "));
+    let pts = line_points(points.iter().map(|(x, y)| (fr.x.at(*x), fr.y.at(*y))));
+    let _ = write!(fr.out, "<polyline fill=\"none\" stroke=\"#000\" stroke-width=\"1.75\" points=\"{pts}\"/>");
     close(fr.out)
 }
 
@@ -746,6 +790,23 @@ mod tests {
 
 #[cfg(test)]
 mod slanted_label_tests {
+    #[test]
+    fn a_mark_is_drawn_once_per_spot_however_many_cases_share_it() {
+        // 100,000 cases on 200 distinct values of x and y.
+        let pts: Vec<(f64, f64)> = (0..100_000).map(|i| ((i % 200) as f64, ((i * 7) % 200) as f64)).collect();
+        let svg = super::scatter(&pts, None, "x", "y", "test");
+        let marks = svg.matches("<circle").count();
+        assert!(marks <= 200 * 200 && marks > 100, "{marks} marks");
+        assert!(svg.len() < 2_000_000, "{} bytes", svg.len());
+        // A few cases: every one is drawn.
+        let few = [(1.0, 1.0), (2.0, 5.0), (3.0, 2.0)];
+        assert_eq!(super::scatter(&few, None, "x", "y", "t").matches("<circle").count(), 3);
+        // A line through many points keeps its ends.
+        let line: Vec<(f64, f64)> = (0..=10_000).map(|i| (i as f64 / 10_000.0, (i as f64 / 10_000.0).sqrt())).collect();
+        let svg = super::line_xy(&line, true, "x", "y", "roc");
+        assert!(svg.len() < 60_000, "{} bytes", svg.len());
+    }
+
     use super::*;
 
     #[test]

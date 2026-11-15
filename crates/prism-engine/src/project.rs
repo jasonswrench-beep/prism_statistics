@@ -50,6 +50,11 @@ pub struct StoredResult {
     /// An AI draft for this result (prism-ai's Draft), with its checks, model and review status.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ai: Option<Value>,
+    /// When the project was saved: a fingerprint of the data and settings the result reads (prism-api's recheck), and
+    /// whether it was out of date then. An opened project needn't run every analysis again to show which results are
+    /// out of date. Only a hint: a fingerprint that doesn't match the data means the result is checked again.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub checked: Option<(u64, bool)>,
 }
 
 /// One block of the Report Builder's layout.

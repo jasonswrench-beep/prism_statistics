@@ -4,6 +4,8 @@
 //! missing (an empty cell). User-missing codes (such as -99 for "refused") stay in the data as numbers and are listed on
 //! the variable, so they can be shown, reported and switched off, but never silently used as real values (MIG-03).
 
+use std::sync::Arc;
+
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
@@ -117,18 +119,149 @@ pub fn valid_name(name: &str) -> bool {
     name.chars().count() <= 64 && chars.all(|c| c.is_alphanumeric() || c == '_')
 }
 
+/// A dataset's columns. Each is shared between copies of the dataset (Undo keeps one copy per change) and copied only
+/// when a copy changes it, so editing one cell copies one column, not the whole dataset. Reading and writing look like
+/// a `Vec<Column>`: `columns[i]`, `&mut columns[i]`, `iter()`, `push`.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Columns(Vec<Arc<Column>>);
+
+fn shared(c: &Arc<Column>) -> &Column {
+    c
+}
+
+fn own(c: &mut Arc<Column>) -> &mut Column {
+    Arc::make_mut(c)
+}
+
+impl Columns {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn first(&self) -> Option<&Column> {
+        self.0.first().map(shared)
+    }
+
+    pub fn get(&self, i: usize) -> Option<&Column> {
+        self.0.get(i).map(shared)
+    }
+
+    pub fn get_mut(&mut self, i: usize) -> Option<&mut Column> {
+        self.0.get_mut(i).map(own)
+    }
+
+    pub fn iter(&self) -> std::iter::Map<std::slice::Iter<'_, Arc<Column>>, fn(&Arc<Column>) -> &Column> {
+        self.0.iter().map(shared)
+    }
+
+    /// Every column, each made this copy's own: use only to change them all.
+    pub fn iter_mut(&mut self) -> std::iter::Map<std::slice::IterMut<'_, Arc<Column>>, fn(&mut Arc<Column>) -> &mut Column> {
+        self.0.iter_mut().map(own)
+    }
+
+    pub fn push(&mut self, c: Column) {
+        self.0.push(Arc::new(c));
+    }
+
+    pub fn insert(&mut self, i: usize, c: Column) {
+        self.0.insert(i, Arc::new(c));
+    }
+
+    pub fn remove(&mut self, i: usize) -> Column {
+        Arc::unwrap_or_clone(self.0.remove(i))
+    }
+
+    pub fn pop(&mut self) -> Option<Column> {
+        self.0.pop().map(Arc::unwrap_or_clone)
+    }
+
+    pub fn swap(&mut self, a: usize, b: usize) {
+        self.0.swap(a, b);
+    }
+
+    pub fn truncate(&mut self, n: usize) {
+        self.0.truncate(n);
+    }
+
+    pub fn clear(&mut self) {
+        self.0.clear();
+    }
+
+    /// Whether two datasets hold the very same column (the same shared copy), as after an undo copy that left it alone.
+    pub fn same(&self, other: &Columns, i: usize) -> bool {
+        matches!((self.0.get(i), other.0.get(i)), (Some(a), Some(b)) if Arc::ptr_eq(a, b))
+    }
+}
+
+impl std::ops::Index<usize> for Columns {
+    type Output = Column;
+    fn index(&self, i: usize) -> &Column {
+        &self.0[i]
+    }
+}
+
+impl std::ops::IndexMut<usize> for Columns {
+    fn index_mut(&mut self, i: usize) -> &mut Column {
+        Arc::make_mut(&mut self.0[i])
+    }
+}
+
+impl<'a> IntoIterator for &'a Columns {
+    type Item = &'a Column;
+    type IntoIter = std::iter::Map<std::slice::Iter<'a, Arc<Column>>, fn(&Arc<Column>) -> &Column>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Columns {
+    type Item = &'a mut Column;
+    type IntoIter = std::iter::Map<std::slice::IterMut<'a, Arc<Column>>, fn(&mut Arc<Column>) -> &mut Column>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+impl FromIterator<Column> for Columns {
+    fn from_iter<I: IntoIterator<Item = Column>>(it: I) -> Self {
+        Columns(it.into_iter().map(Arc::new).collect())
+    }
+}
+
+impl From<Vec<Column>> for Columns {
+    fn from(v: Vec<Column>) -> Self {
+        v.into_iter().collect()
+    }
+}
+
+impl Serialize for Columns {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> std::result::Result<S::Ok, S::Error> {
+        s.collect_seq(self.iter())
+    }
+}
+
+impl<'de> Deserialize<'de> for Columns {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> std::result::Result<Self, D::Error> {
+        Vec::<Column>::deserialize(d).map(Columns::from)
+    }
+}
+
 /// A rectangular dataset.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct Dataset {
     pub name: String,
     pub variables: Vec<Variable>,
-    pub columns: Vec<Column>,
+    pub columns: Columns,
     next_id: u32,
 }
 
 impl Dataset {
     pub fn new(name: impl Into<String>) -> Self {
-        Dataset { name: name.into(), variables: Vec::new(), columns: Vec::new(), next_id: 1 }
+        Dataset { name: name.into(), variables: Vec::new(), columns: Columns::default(), next_id: 1 }
     }
 
     pub fn n_rows(&self) -> usize {
@@ -218,5 +351,29 @@ impl Dataset {
                 .collect()),
             Column::Text(_) => Err(Error::NotNumeric(var.name.clone())),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_copy_shares_the_columns_it_does_not_change() {
+        let mut a = Dataset::new("t");
+        a.add_variable("x", Column::Numeric(vec![Some(1.0), Some(2.0)])).unwrap();
+        a.add_variable("y", Column::Numeric(vec![Some(3.0), Some(4.0)])).unwrap();
+        a.add_variable("s", Column::Text(vec![Some("a".into()), None])).unwrap();
+        let before = a.clone();
+        if let Column::Numeric(v) = &mut a.columns[1] {
+            v[0] = Some(9.0);
+        }
+        assert!(a.columns.same(&before.columns, 0) && a.columns.same(&before.columns, 2), "untouched columns stay shared");
+        assert!(!a.columns.same(&before.columns, 1), "the edited column is this copy's own");
+        assert_eq!(before.columns[1], Column::Numeric(vec![Some(3.0), Some(4.0)]), "the copy kept the old values");
+        assert_eq!(a.columns[1], Column::Numeric(vec![Some(9.0), Some(4.0)]));
+        // Saved and read back as a plain list of columns.
+        let json = serde_json::to_string(&a).unwrap();
+        assert_eq!(serde_json::from_str::<Dataset>(&json).unwrap(), a);
     }
 }

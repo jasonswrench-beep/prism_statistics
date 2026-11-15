@@ -94,6 +94,10 @@ impl Session {
         if self.nesting > 0 {
             return run(self);
         }
+        // Other data or another project: its results are checked afresh, never against answers kept for these.
+        if opens(command) {
+            self.forget_checks();
+        }
         let before = label(command).and_then(|_| self.project.clone());
         let edits = self.edits;
         self.nesting += 1;

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Large data
+
+Timed with simulated files of up to 1,000,000 cases and up to 500 variables.
+
+- Data View draws only the cells in view, so wide and long data scroll and edit as quickly as small data. Scrolling 500 cases by 500 variables went from about a quarter of a second per step to a few hundredths.
+- Undo keeps the columns a change didn't touch shared with the data, so each change keeps a copy of one column rather than of the whole dataset. Memory after 15 changes to 1,000,000 cases by 20 variables went from 5.8 GB to 0.7 GB.
+- Out-of-date checks are kept until the data an analysis reads change, and run several at a time. Adding a result, opening a project and exporting no longer run every earlier analysis again; a saved project keeps each result's check.
+- An analysis that takes more than a second is marked out of date when its data change, instead of being run again to check.
+- Mixed models stop searching when the fit stops improving relative to its size; on 100,000 cases a model that took over nine minutes takes about a second.
+- Scatterplots, box plot outliers and ROC curves draw a mark once for each spot on the chart, so a chart of 1,000,000 cases is 1.8 MB instead of 45 MB, and looks the same.
+
 ## 0.1.1 (teaching preview)
 
 Fixes for faults found while writing the user manual. The installer and the program are code-signed.

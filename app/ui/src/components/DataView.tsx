@@ -1,9 +1,13 @@
 // Data View: the cases as a grid. Empty cells and user-missing codes look different from values, so they're never
 // mistaken for data. Value labels can be shown in place of codes. The grid is browse-only until that switch is turned
 // off; then a double-click (or Enter) edits a cell, and every edit is recorded like any other change.
+//
+// Only the cells in view (and a margin) are drawn, so wide and long data scroll as quickly as small data
+// (gridwindow.ts); empty spacer cells keep the scroll bars the size of the whole grid.
 
-import { useEffect, useRef, useState, type KeyboardEvent as KeyEvent } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as KeyEvent } from 'react';
 import { call } from '../bridge';
+import { columnWidth, offsets, visibleColumns, visibleRows } from '../gridwindow';
 import type { CellValue, DatasetInfo, RowsPage, VariableInfo } from '../types';
 import { Modal } from './Modal';
 import { getSettings } from '../settings';
@@ -39,9 +43,38 @@ export function DataView({ dataset, onEdited, onGrew, request }: { dataset: Data
   const findRef = useRef<HTMLInputElement>(null);
   const gotoRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // The part of the grid in view, and the sizes the window sums need (measured once drawn).
+  const [view, setView] = useState({ top: 0, left: 0, width: 1200, height: 800 });
+  const [measured, setSizes] = useState({ row: 31, head: 48 });
+  // The case-number column fits the largest case number.
+  const sizes = { ...measured, rn: Math.max(52, String(dataset.rows).length * 8 + 24) };
+  const focusNext = useRef<{ row: number; col: number } | null>(null);
+  // Column widths from each variable's name and label and the first page of cases, fixed so the window can be summed.
+  const sampled = rows.length > 0;
+  const widths = useMemo(() => dataset.variables.map((v, j) => columnWidth(v, rows.map((r) => r[j]))), [dataset, sampled]); // eslint-disable-line react-hooks/exhaustive-deps
+  const edges = useMemo(() => offsets(widths), [widths]);
+  const [c0, c1] = visibleColumns(edges, view.left, Math.max(0, view.width - sizes.rn));
+  const [r0, r1] = visibleRows(rows.length, sizes.row, view.top, Math.max(0, view.height - sizes.head));
+  /** Scrolls so the cell is drawn and in view (centred when it was out of view). */
+  const reveal = (row: number, col: number) => {
+    const sc = scrollRef.current;
+    if (!sc) return;
+    const y = sizes.head + row * sizes.row;
+    if (y < sc.scrollTop + sizes.head || y + sizes.row > sc.scrollTop + sc.clientHeight) sc.scrollTop = Math.max(0, y - sc.clientHeight / 2);
+    const x = sizes.rn + (edges[col] ?? 0);
+    const w = widths[col] ?? 0;
+    if (x < sc.scrollLeft + sizes.rn || x + w > sc.scrollLeft + sc.clientWidth) sc.scrollLeft = Math.max(0, x - sc.clientWidth / 2);
+    setView((v) => ({ ...v, top: sc.scrollTop, left: sc.scrollLeft }));
+  };
   // Editing: one cell at a time is a tab stop (the last one used, else the first), and the arrow keys move between cells.
   // One stop and shared handlers instead of one per cell keep large data quick when Browse only is turned off.
   const stop = focus ?? { row: 0, col: 0 };
+  // The tab stop is drawn only while it's in view; otherwise the first cell in view is the stop.
+  const stopAt = (() => {
+    const [a, b] = visibleColumns(edges, view.left, Math.max(0, view.width - sizes.rn));
+    const [p, q] = visibleRows(rows.length, sizes.row, view.top, Math.max(0, view.height - sizes.head));
+    return stop.row >= p && stop.row < q && stop.col >= a && stop.col < b ? stop : { row: p, col: a };
+  })();
   const cellAt = (e: { target: EventTarget }) => {
     const m = (e.target as HTMLElement).closest?.('td[data-cell]')?.getAttribute('data-cell')?.split('-');
     return m ? { row: Number(m[0]), col: Number(m[1]) } : null;
@@ -49,8 +82,36 @@ export function DataView({ dataset, onEdited, onGrew, request }: { dataset: Data
   const moveTo = (row: number, col: number) => {
     if (row < 0 || col < 0 || row >= rows.length || col >= dataset.variables.length) return;
     setFocus({ row, col });
-    scrollRef.current?.querySelector<HTMLElement>(`[data-cell="${row}-${col}"]`)?.focus();
+    const el = scrollRef.current?.querySelector<HTMLElement>(`[data-cell="${row}-${col}"]`);
+    if (el) el.focus();
+    else focusNext.current = { row, col };
+    reveal(row, col);
   };
+  // A cell moved to while it wasn't drawn gets the focus once it is.
+  useEffect(() => {
+    const f = focusNext.current;
+    if (!f) return;
+    const el = scrollRef.current?.querySelector<HTMLElement>(`[data-cell="${f.row}-${f.col}"]`);
+    if (el) {
+      focusNext.current = null;
+      el.focus();
+    }
+  });
+  // The view's size, and the row, header and row-number sizes as drawn.
+  useLayoutEffect(() => {
+    const sc = scrollRef.current;
+    if (!sc) return;
+    const measure = () => {
+      setView((v) => (v.width === sc.clientWidth && v.height === sc.clientHeight ? v : { ...v, width: sc.clientWidth, height: sc.clientHeight }));
+      const head = sc.querySelector<HTMLElement>('thead tr')?.offsetHeight;
+      const row = sc.querySelector<HTMLElement>('tbody tr.r')?.offsetHeight;
+      setSizes((s) => (head && row && (s.head !== head || s.row !== row) ? { head, row } : s));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(sc);
+    return () => ro.disconnect();
+  }, [rows.length > 0, dataset]); // eslint-disable-line react-hooks/exhaustive-deps
   const onGridKey = (e: KeyEvent) => {
     const c = cellAt(e);
     if (browseOnly || editing || !c) return;
@@ -75,10 +136,8 @@ export function DataView({ dataset, onEdited, onGrew, request }: { dataset: Data
   }, [dataset]);
   // Bring the cell being shown into view.
   useEffect(() => {
-    if (!target) return;
-    const el = scrollRef.current?.querySelector<HTMLElement>(`[data-cell="${target.row}-${target.col}"]`);
-    el?.scrollIntoView({ block: 'center', inline: 'center' });
-  }, [target, rows.length]);
+    if (target && target.row < rows.length) reveal(target.row, target.col);
+  }, [target, rows.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Loads the cases up to `row` (Data View shows them a page at a time), then shows that cell. */
   const showCell = async (row: number, col: number) => {
@@ -298,19 +357,32 @@ export function DataView({ dataset, onEdited, onGrew, request }: { dataset: Data
         </div>
       )}
       {error && <div className="errbox" role="alert">{error}</div>}
-      <div className="gridscroll" onPaste={onPaste} ref={scrollRef}>
-        <table className="dg" aria-label="Data View" aria-rowcount={dataset.rows + 1}>
+      <div className="gridscroll" onPaste={onPaste} ref={scrollRef} onScroll={(e) => {
+        const sc = e.currentTarget;
+        setView((v) => (v.top === sc.scrollTop && v.left === sc.scrollLeft ? v : { ...v, top: sc.scrollTop, left: sc.scrollLeft }));
+      }}>
+        <table className="dg" aria-label="Data View" aria-rowcount={dataset.rows + 1} aria-colcount={dataset.variables.length + 1} style={{ width: sizes.rn + edges[edges.length - 1] }}>
+          <colgroup>
+            <col style={{ width: sizes.rn }} />
+            {c0 > 0 && <col style={{ width: edges[c0] }} />}
+            {widths.slice(c0, c1).map((w, k) => (
+              <col key={c0 + k} style={{ width: w }} />
+            ))}
+            {c1 < widths.length && <col style={{ width: edges[widths.length] - edges[c1] }} />}
+          </colgroup>
           <thead>
-            <tr>
+            <tr aria-rowindex={1}>
               <th className="rn" scope="col">
                 #
               </th>
-              {dataset.variables.map((v) => (
-                <th key={v.id} scope="col" title={v.label || v.name}>
+              {c0 > 0 && <th className="sp" aria-hidden="true" />}
+              {dataset.variables.slice(c0, c1).map((v, k) => (
+                <th key={v.id} scope="col" title={v.label || v.name} aria-colindex={c0 + k + 2}>
                   {v.name}
                   <small>{v.label || ' '}</small>
                 </th>
               ))}
+              {c1 < widths.length && <th className="sp" aria-hidden="true" />}
             </tr>
           </thead>
           <tbody
@@ -324,15 +396,21 @@ export function DataView({ dataset, onEdited, onGrew, request }: { dataset: Data
             }}
             onKeyDown={onGridKey}
           >
-            {rows.map((r, i) => (
-              <tr key={i}>
+            {r0 > 0 && (
+              <tr className="sp" aria-hidden="true" style={{ height: r0 * sizes.row }}>
+                <td colSpan={c1 - c0 + 3} />
+              </tr>
+            )}
+            {rows.slice(r0, r1).map((r, k) => { const i = r0 + k; return (
+              <tr key={i} className="r" aria-rowindex={i + 2}>
                 <th className="rn" scope="row">
                   {i + 1}
                 </th>
-                {r.map((c, j) => {
+                {c0 > 0 && <td className="sp" aria-hidden="true" />}
+                {r.slice(c0, c1).map((c, m) => { const j = c0 + m;
                   if (editing && editing.row === i && editing.col === j) {
                     return (
-                      <td key={j} className="editing">
+                      <td key={j} className="editing" aria-colindex={j + 2}>
                         <input
                           autoFocus
                           className="cellinput"
@@ -353,16 +431,23 @@ export function DataView({ dataset, onEdited, onGrew, request }: { dataset: Data
                     <td
                       key={j}
                       data-cell={`${i}-${j}`}
+                      aria-colindex={j + 2}
                       aria-current={target && target.row === i && target.col === j ? 'true' : undefined}
                       className={s.cls + (browseOnly ? '' : ' editable') + (target && target.row === i && target.col === j ? ' found' : '')}
-                      tabIndex={browseOnly ? undefined : stop.row === i && stop.col === j ? 0 : -1}
+                      tabIndex={browseOnly ? undefined : stopAt.row === i && stopAt.col === j ? 0 : -1}
                     >
                       {s.text}
                     </td>
                   );
                 })}
+                {c1 < widths.length && <td className="sp" aria-hidden="true" />}
               </tr>
-            ))}
+            ); })}
+            {r1 < rows.length && (
+              <tr className="sp" aria-hidden="true" style={{ height: (rows.length - r1) * sizes.row }}>
+                <td colSpan={c1 - c0 + 3} />
+              </tr>
+            )}
           </tbody>
         </table>
         {rows.length < dataset.rows && (

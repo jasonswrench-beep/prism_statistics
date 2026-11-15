@@ -172,7 +172,9 @@ fn nelder_mead(f: &dyn Fn(&[f64]) -> f64, x0: &[f64], step: f64) -> Vec<f64> {
         vals = order.iter().map(|&i| vals[i]).collect();
         let spread = vals[d] - vals[0];
         let size = simplex.iter().skip(1).map(|v| v.iter().zip(&simplex[0]).map(|(a, b)| (a - b).abs()).fold(0.0, f64::max)).fold(0.0, f64::max);
-        if spread.abs() < 1e-14 && size < 1e-10 {
+        // The deviance grows with the number of cases, so its rounding noise does too: an absolute tolerance of 1e-14
+        // can never be met on large data, and the search would run all its steps. The tolerance is relative.
+        if spread.abs() <= 1e-14 * (1.0 + vals[0].abs()) && size < 1e-10 {
             break;
         }
         let centroid: Vec<f64> = (0..d).map(|j| simplex[..d].iter().map(|v| v[j]).sum::<f64>() / d as f64).collect();
@@ -262,10 +264,14 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     let mut present: Vec<usize> = gidx.clone();
     present.sort_unstable();
     present.dedup();
-    let groups: Vec<Group> = present
+    // Each group's cases, in one pass (filtering all the cases once per group is slow with many groups).
+    let mut members: Vec<Vec<usize>> = vec![Vec::new(); present.len()];
+    for (i, g) in gidx.iter().enumerate() {
+        members[present.binary_search(g).expect("present lists every group")].push(i);
+    }
+    let groups: Vec<Group> = members
         .iter()
-        .map(|&g| {
-            let rows: Vec<usize> = (0..nobs).filter(|&i| gidx[i] == g).collect();
+        .map(|rows| {
             Group {
                 y: rows.iter().map(|&i| y[i]).collect(),
                 x: rows.iter().map(|&i| std::iter::once(1.0).chain(cols.iter().map(|c| c[i])).collect()).collect(),

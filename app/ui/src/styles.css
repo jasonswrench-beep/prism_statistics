@@ -180,7 +180,10 @@ h1{font-size:28px}h2{font-size:18px}h3{font-size:15px}
 .switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
 .switch input:checked{background:var(--accent)}.switch input:checked::after{left:16px}
 .gridscroll{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
-table.dg{border-collapse:separate;border-spacing:0;font-size:13px;font-feature-settings:"tnum" 1}
+table.dg{border-collapse:separate;border-spacing:0;font-size:13px;font-feature-settings:"tnum" 1;table-layout:fixed}
+table.dg th,table.dg td{overflow:hidden;text-overflow:ellipsis}
+table.dg .sp{padding:0;border:0;background:transparent}
+table.dg tr.sp td{padding:0;border:0;height:auto}
 table.dg th,table.dg td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:5px 10px;white-space:nowrap;height:30px}
 table.dg thead th{position:sticky;top:0;background:#FAF9FE;z-index:2;font-weight:600;text-align:left}
 table.dg thead th small{display:block;font-weight:400;color:var(--muted);font-size:11px}

@@ -13,6 +13,7 @@ mod examples;
 pub use ai::write_value as ai_write;
 mod google;
 pub mod mcp;
+mod recheck;
 pub mod recovery;
 mod rexpr;
 pub mod rscript;
@@ -131,6 +132,8 @@ pub struct Session {
     nesting: u32,
     /// While a script runs: the existing files the user agreed to let it replace (see `may_write`).
     pub(crate) script_replace: Option<Vec<String>>,
+    /// Whether each result is out of date, kept until the data it reads change (recheck.rs).
+    recheck: std::sync::Mutex<recheck::Recheck>,
 }
 
 /// A result as the Output tab shows it.
@@ -489,7 +492,9 @@ impl Session {
                     path: Option<String>,
                 }
                 let a: A = parse(args)?;
-                let p = self.project.as_ref().ok_or("There is nothing to save yet. Open a data file first.")?;
+                if self.project.is_none() {
+                    return Err("There is nothing to save yet. Open a data file first.".into());
+                }
                 let mut path = match a.path {
                     Some(p) => local_path(&p)?,
                     None => self.path.clone().ok_or("Choose where to save the project.")?,
@@ -502,7 +507,7 @@ impl Session {
                 if self.path.as_ref() != Some(&path) {
                     self.may_write(&path)?;
                 }
-                project::save(&path, p).map_err(|e| e.to_string())?;
+                project::save(&path, &self.to_save()?).map_err(|e| e.to_string())?;
                 self.path = Some(path);
                 self.dirty = false;
                 self.clear_own_recovery();
@@ -635,15 +640,18 @@ impl Session {
                         o.insert("data".into(), serde_json::to_value(&settings).map_err(|e| e.to_string())?);
                     }
                 }
+                let started = std::time::Instant::now();
                 let made = run_job(&self.project()?.dataset, c, &args)?;
+                let took = started.elapsed().as_secs_f64();
                 let seq = self.record(c, args)?;
                 let p = self.project_mut()?;
                 let mut ids = Vec::new();
                 for (bundle, paragraph) in made {
                     let id = p.results.iter().map(|r| r.id).max().unwrap_or(0) + 1;
-                    p.results.push(StoredResult { id, operation: seq, bundle, paragraph, ai: None });
+                    p.results.push(StoredResult { id, operation: seq, bundle, paragraph, ai: None, checked: None });
                     ids.push(id);
                 }
+                self.just_made(&ids, took);
                 Ok(json!(self.outputs().into_iter().filter(|o| ids.contains(&o.id)).collect::<Vec<_>>()))
             }
             "rerun" => {
@@ -967,7 +975,41 @@ impl Session {
     /// The results with their out-of-date flags, worked out by running each operation again on the current data.
     pub(crate) fn outputs(&self) -> Vec<OutputItem> {
         let Some(p) = &self.project else { return Vec::new() };
-        let mut cache: Vec<(u32, Option<Vec<ResultBundle>>)> = Vec::new();
+        let mut hashes = recheck::Hashes::new(&p.dataset);
+        let mut known = self.recheck.lock().unwrap_or_else(|e| e.into_inner());
+        // The key of each operation that made a result, and the operations whose results need checking by running them.
+        let mut keys: Vec<(u32, u64)> = Vec::new();
+        let mut todo: Vec<&Operation> = Vec::new();
+        for r in &p.results {
+            let Some(op) = p.operations.iter().find(|o| o.seq == r.operation) else { continue };
+            let key = match keys.iter().find(|(s, _)| *s == op.seq) {
+                Some((_, k)) => *k,
+                None => {
+                    let k = hashes.key(op);
+                    keys.push((op.seq, k));
+                    k
+                }
+            };
+            // A slow analysis is out of date as soon as what it reads changes (recheck.rs); the others are run to see.
+            if known.get(r, key).is_none() && !known.slow(op.seq) && !todo.iter().any(|o| o.seq == op.seq) {
+                todo.push(op);
+            }
+        }
+        // Run those again, several at once.
+        let runs: Vec<Option<(Option<Vec<ResultBundle>>, f64)>> = parallel(&todo, |o| {
+            let started = std::time::Instant::now();
+            let made = run_analysis(&p.dataset, &o.command, &o.args).ok().map(|v| v.into_iter().map(|(b, _)| b).collect());
+            Some((made, started.elapsed().as_secs_f64()))
+        });
+        let again: Vec<(u32, Option<Vec<ResultBundle>>)> = runs
+            .into_iter()
+            .zip(&todo)
+            .map(|(run, o)| {
+                let (made, took) = run.unwrap_or((None, 0.0));
+                known.took(o.seq, took);
+                (o.seq, made)
+            })
+            .collect();
         let mut seen: Vec<(u32, usize)> = Vec::new();
         p.results
             .iter()
@@ -982,16 +1024,55 @@ impl Session {
                         0
                     }
                 };
-                if !cache.iter().any(|(op, _)| *op == r.operation) {
-                    let again = p.operations.iter().find(|o| o.seq == r.operation).and_then(|o| run_analysis(&p.dataset, &o.command, &o.args).ok()).map(|v| v.into_iter().map(|(b, _)| b).collect());
-                    cache.push((r.operation, again));
-                }
-                let again = cache.iter().find(|(op, _)| *op == r.operation).and_then(|(_, b)| b.as_ref()).and_then(|b| b.get(index));
-                let stale = again.is_none_or(|b| !same_numbers(b, &r.bundle));
+                let key = keys.iter().find(|(s, _)| *s == r.operation).map(|(_, k)| *k);
+                let stale = match key.and_then(|k| known.get(r, k)) {
+                    Some(s) => s,
+                    None => {
+                        let fresh = again.iter().find(|(op, _)| *op == r.operation).and_then(|(_, b)| b.as_ref()).and_then(|b| b.get(index));
+                        let stale = fresh.is_none_or(|b| !same_numbers(b, &r.bundle));
+                        if let Some(k) = key {
+                            known.put(r, k, stale);
+                        }
+                        stale
+                    }
+                };
                 let op = p.operations.iter().find(|o| o.seq == r.operation);
                 OutputItem { id: r.id, operation: r.operation, bundle: r.bundle.clone(), paragraph: r.paragraph.clone(), stale, ai: r.ai.clone(), command: op.map(|o| o.command.clone()).unwrap_or_default(), args: op.map(|o| o.args.clone()).unwrap_or(Value::Null) }
             })
             .collect()
+    }
+
+    /// Forgets the kept out-of-date answers (other data or another project was opened).
+    pub(crate) fn forget_checks(&mut self) {
+        self.recheck.get_mut().unwrap_or_else(|e| e.into_inner()).clear();
+    }
+
+    /// Notes that these results were just made from the current data, so they are up to date without running them again.
+    fn just_made(&self, ids: &[u32], seconds: f64) {
+        let Some(p) = &self.project else { return };
+        let mut hashes = recheck::Hashes::new(&p.dataset);
+        let mut known = self.recheck.lock().unwrap_or_else(|e| e.into_inner());
+        for r in p.results.iter().filter(|r| ids.contains(&r.id)) {
+            if let Some(op) = p.operations.iter().find(|o| o.seq == r.operation) {
+                known.put(r, hashes.key(op), false);
+                known.took(op.seq, seconds);
+            }
+        }
+    }
+
+    /// The project as it is saved: each result with its key and whether it is out of date now, so opening it again
+    /// needn't run the analyses to know (recheck.rs).
+    fn to_save(&self) -> Result<Project, String> {
+        let flags: Vec<(u32, bool)> = self.outputs().into_iter().map(|o| (o.id, o.stale)).collect();
+        let mut p = self.project()?.clone();
+        let mut hashes = recheck::Hashes::new(&p.dataset);
+        let keys: Vec<(u32, u64)> = p.operations.iter().map(|o| (o.seq, hashes.key(o))).collect();
+        for r in &mut p.results {
+            let key = keys.iter().find(|(s, _)| *s == r.operation).map(|(_, k)| *k);
+            let stale = flags.iter().find(|(id, _)| *id == r.id).map(|(_, s)| *s);
+            r.checked = key.zip(stale);
+        }
+        Ok(p)
     }
 
     /// Runs a result's operation again on the current data and replaces that operation's results.
@@ -999,7 +1080,9 @@ impl Session {
         let p = self.project()?;
         let r = p.results.iter().find(|r| r.id == id).ok_or("That result is no longer in the output.")?;
         let op = p.operations.iter().find(|o| o.seq == r.operation).ok_or("The settings for this result are missing.")?.clone();
+        let started = std::time::Instant::now();
         let made = run_job(&p.dataset, &op.command, &op.args)?;
+        let took = started.elapsed().as_secs_f64();
         let seq = self.record(&op.command, op.args.clone())?;
         let p = self.project_mut()?;
         let at = p.results.iter().position(|r| r.operation == op.seq).unwrap_or(p.results.len());
@@ -1010,7 +1093,7 @@ impl Session {
             .into_iter()
             .map(|(bundle, paragraph)| {
                 next += 1;
-                StoredResult { id: next, operation: seq, bundle, paragraph, ai: None }
+                StoredResult { id: next, operation: seq, bundle, paragraph, ai: None, checked: None }
             })
             .collect();
         let new_ids: Vec<u32> = fresh.iter().map(|r| r.id).collect();
@@ -1029,6 +1112,7 @@ impl Session {
                 _ => true,
             });
         }
+        self.just_made(&new_ids, took);
         Ok(())
     }
 
@@ -1290,6 +1374,40 @@ fn run_job(ds: &Dataset, command: &str, args: &Value) -> Result<Vec<(ResultBundl
         return Err("The analysis was cancelled; nothing was added to the output.".into());
     }
     made.unwrap_or_else(|_| Err("The analysis stopped on an internal error, so it gave no result. The data and the output are unchanged; please report the analysis and its settings.".into()))
+}
+
+/// Runs `f` on each item, several at a time (one thread per processor), and returns the answers in order. An item
+/// whose `f` panics gets None.
+fn parallel<T: Sync, R: Send>(items: &[T], f: impl Fn(&T) -> Option<R> + Sync) -> Vec<Option<R>> {
+    let f = |t: &T| std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| f(t))).ok().flatten();
+    let threads = std::thread::available_parallelism().map_or(1, |n| n.get()).min(items.len().max(1));
+    if threads <= 1 {
+        return items.iter().map(f).collect();
+    }
+    let next = std::sync::atomic::AtomicUsize::new(0);
+    let mut out: Vec<(usize, Option<R>)> = std::thread::scope(|s| {
+        let workers: Vec<_> = (0..threads)
+            .map(|_| {
+                s.spawn(|| {
+                    let mut mine = Vec::new();
+                    loop {
+                        let i = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                        let Some(item) = items.get(i) else { break };
+                        mine.push((i, f(item)));
+                    }
+                    mine
+                })
+            })
+            .collect();
+        workers.into_iter().flat_map(|w| w.join().unwrap_or_default()).collect()
+    });
+    // Every item has its answer (a panic is caught inside `f`), but go by position all the same.
+    out.sort_by_key(|(i, _)| *i);
+    let mut answers: Vec<Option<R>> = (0..items.len()).map(|_| None).collect();
+    for (i, r) in out {
+        answers[i] = r;
+    }
+    answers
 }
 
 /// Runs one analysis command on a dataset. The same function serves a first run, a rerun and the out-of-date check.
@@ -2000,5 +2118,50 @@ mod tests {
 1,2
 ") })).unwrap();
         assert_eq!(csv["dataset"]["rows"], 1);
+    }
+
+    #[test]
+    fn out_of_date_checks_are_kept_until_what_an_analysis_reads_changes() {
+        let mut s = session();
+        s.handle("compute_variable", json!({ "target": "z", "formula": "y * 2" })).unwrap();
+        let made = s.handle("descriptives", json!({ "variables": ["y"] })).unwrap();
+        let id = made[0]["id"].clone();
+        let stale = |s: &mut Session| s.handle("results", json!({})).unwrap()[0]["stale"].as_bool().unwrap();
+        // Another variable's values: still up to date.
+        s.handle("set_cell", json!({ "row": 0, "name": "z", "value": "50" })).unwrap();
+        assert!(!stale(&mut s));
+        // Its own values: out of date; the old value back: up to date again.
+        s.handle("set_cell", json!({ "row": 0, "name": "y", "value": "100" })).unwrap();
+        assert!(stale(&mut s));
+        s.handle("set_cell", json!({ "row": 0, "name": "y", "value": "3" })).unwrap();
+        assert!(!stale(&mut s));
+
+        // A slow analysis is marked out of date without being run again, and Undo puts it back.
+        let seq = s.project.as_ref().unwrap().results[0].operation;
+        s.recheck.lock().unwrap().took(seq, 2.0 * recheck::SLOW);
+        s.handle("set_cell", json!({ "row": 1, "name": "y", "value": "4" })).unwrap();
+        assert!(!stale(&mut s), "the same value is no change");
+        s.handle("set_cell", json!({ "row": 1, "name": "y", "value": "40" })).unwrap();
+        assert!(stale(&mut s));
+        s.handle("undo", json!({})).unwrap();
+        assert!(!stale(&mut s));
+
+        // Saved with its check: opened again, it is up to date without running, and still checked against changes.
+        let dir = std::env::temp_dir().join(format!("prism-api-recheck-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let saved = s.handle("save_project", json!({ "path": dir.join("kept").to_string_lossy() })).unwrap();
+        let p = project::load(Path::new(saved["path"].as_str().unwrap())).unwrap();
+        assert!(p.results[0].checked.is_some(), "the result keeps its check");
+        let mut t = Session::new();
+        let opened = t.handle("open_project", json!({ "path": saved["path"] })).unwrap();
+        assert_eq!(opened["results"][0]["stale"], false);
+        assert_eq!(opened["results"][0]["id"], id);
+        t.handle("set_cell", json!({ "row": 2, "name": "y", "value": "60" })).unwrap();
+        assert!(stale(&mut t));
+        // Saved while out of date: opened again, still out of date.
+        let saved = t.handle("save_project", json!({ "path": dir.join("kept").to_string_lossy() })).unwrap();
+        let mut u = Session::new();
+        assert_eq!(u.handle("open_project", json!({ "path": saved["path"] })).unwrap()["results"][0]["stale"], true);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
