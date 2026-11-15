@@ -1,6 +1,6 @@
 # Validation report
 
-Generated 2026-11-14 by `python tools/validate.py` at commit `ee8082a` (engine 0.1.0).
+Generated 2026-11-14 by `python tools/validate.py` at commit `fa60d3a` (engine 0.1.1).
 R 4.6.1.
 
 **152 of 152 reference tests passed**.
@@ -71,8 +71,8 @@ Designed experiments against R (reference/doe_reference.json, made by make_doe_r
 - ✓ `full_factorial_and_response_surface_designs`
 - ✓ `mixture_models`
 - ✓ `i_optimal_designs`
-- ✓ `mixture_designs`
 - ✓ `response_surface`
+- ✓ `mixture_designs`
 - ✓ `plackett_burman_designs`
 - ✓ `d_optimal_designs`
 
@@ -105,9 +105,9 @@ Data health and paste preview: every finding on a dataset built to have each pro
 
 JASP data import.  The committed test builds a small .jasp file the way JASP 0.19 lays one out (a zip holding `internal.sqlite`), with a labelled numeric category, a text category with a missing-value string, a scale variable with a title and an empty cell, and a filtered row. The second test runs on the product owner's JASP data library when it is present in `samples-private/` (never committed) and compares every file with the CSV copy beside it.
 
+- ✓ `local_data_library_matches_its_csv_copies`
 - ✓ `old_and_damaged_files_are_refused_plainly`
 - ✓ `reads_values_labels_and_missing_cells`
-- ✓ `local_data_library_matches_its_csv_copies`
 
 ### latent_reference
 
@@ -161,11 +161,11 @@ The analyses added after the preview, against R (reference/more_reference.json, 
 - ✓ `linear_mixed_models`
 - ✓ `noncentral_f_against_r`
 - ✓ `one_sided_tests`
-- ✓ `one_way_manova`
 - ✓ `missing_patterns_and_multiple_imputation`
+- ✓ `one_way_manova`
 - ✓ `ordinal_multinomial_and_count_regression`
-- ✓ `partial_correlation`
 - ✓ `oneway_contrasts_and_adjusted_pairs`
+- ✓ `partial_correlation`
 - ✓ `power_and_sample_size`
 - ✓ `rater_agreement`
 - ✓ `repeated_measures_and_mixed_anova`
@@ -227,8 +227,8 @@ Penalized regression with cross-validation against glmnet (reference/predict_ref
 The preview analyses against R (reference/preview_reference.json, made by make_preview_reference.R from preview.csv). The data have an empty cell or a user-missing code in most variables, and R gets the same exclusions written out by hand, so these tests check the case handling as well as the numbers.
 
 - ✓ `failures_say_why_and_never_interpret`
-- ✓ `crosstabs_and_chi_square`
 - ✓ `correlations`
+- ✓ `crosstabs_and_chi_square`
 - ✓ `linear_regression`
 - ✓ `one_sample_t`
 - ✓ `rank_tests`
@@ -290,8 +290,8 @@ Sort Cases, Rank Cases, Standardize, Reverse Score and Date and Time against R (
 
 - ✓ `z_scores_and_reverse_scores_match_r`
 - ✓ `sorting_matches_r`
-- ✓ `ranks_match_r`
 - ✓ `dates_match_r`
+- ✓ `ranks_match_r`
 
 ### tree_reference
 
@@ -307,8 +307,8 @@ Decision trees against rpart (reference/tree_reference.json, made by make_tree_r
 The independent-samples t test against R (reference/ttest_reference.json, made by make_ttest_reference.R).  The data include every kind of case the test must leave out: an empty grouping cell, a user-missing group code, a third group, an empty score and a user-missing score. R gets the same exclusions written out by hand, so the test checks the case handling as well as the numbers.
 
 - ✓ `small_groups_are_flagged`
-- ✓ `every_excluded_case_has_one_reason`
 - ✓ `student_at_90_percent_matches_r`
+- ✓ `every_excluded_case_has_one_reason`
 - ✓ `too_few_cases_fails_without_numbers`
 - ✓ `template_paragraph_reads_correctly`
 - ✓ `swapping_groups_flips_the_sign_only`
