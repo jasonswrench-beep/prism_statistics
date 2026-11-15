@@ -1,6 +1,6 @@
 [package]
 name = "prismstatistics-app"
-version = "0.1.0"
+version = "0.1.1"
 description = "The PrismStatistics desktop app: a Tauri window around the engine and the React interface."
 edition = "2021"
 rust-version = "1.92"

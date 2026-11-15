@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.1 (teaching preview)
+
+Fixes for faults found while writing the user manual. The installer and the program are code-signed.
+
+### Fixes
+
+- Closing Help while an analysis dialog was open left a second copy of that dialog that couldn't be closed. Help now closes cleanly and returns focus to the dialog.
+- The item response theory paragraph could give the BIC as the largest item difficulty. The range now comes from the difficulties alone.
+- Panel regression: when the Hausman statistic is negative (the covariance difference isn't positive definite), the test is reported as not computed, with a note, instead of a negative chi-square.
+- The meta-regression note on the test of moderators now gives its p value.
+- Descriptive statistics name the variable that caused cases to be excluded ("excluded: empty in exam").
+- Turning off Browse only in Data View no longer freezes the program on large data. The grid has one tab stop, and the arrow keys move between cells (Enter edits).
+- Bar charts slant long category names, cutting them at 28 characters, instead of printing them over each other.
+- Variable View's Missing column says it takes codes separated by commas, and a range such as 90-99 gets a message that explains this.
+- Messages and the recovery window name a file without its folders, so the account name in a path isn't shown on screen.
+- Help and the changelog say exactly when a result goes out of date, and name the batch runner by its installed file, `prismstatistics-app.exe run`.
+
 ## 0.1.0 (teaching preview)
 
 The first release for classes and research, on Windows. The installer and the program are code-signed.
