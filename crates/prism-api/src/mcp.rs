@@ -1,6 +1,6 @@
 //! The connection for AI assistants (D15): a Model Context Protocol server over standard input and output.
 //!
-//! An assistant that supports MCP starts `PrismStatistics.exe --mcp` (or `prism mcp`) and can then open data, run the
+//! An assistant that supports MCP starts `prismstatistics-app.exe --mcp` (or `prism mcp`) and can then open data, run the
 //! analyses and export the results, through the same command layer as the window. The numbers it gets are the
 //! engine's, already rounded the APA way, so the assistant has no reason to compute anything itself.
 //!

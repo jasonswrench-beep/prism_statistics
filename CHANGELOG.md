@@ -42,10 +42,10 @@ The first release for classes and research, on Windows. The installer and the pr
 
 - APA tables and figures, with assumption checks and a method note on every result.
 - A template APA paragraph on every result, plus an optional AI-written draft whose numbers are checked against the result.
-- Results go out of date when the data change, and can be run again with the same settings.
+- Results go out of date when a change to the data would change their numbers (an edited value the analysis used, a new missing-value code, a recode into the same variable), and can be run again with the same settings. A change the analysis does not use, such as a recode into a new variable, leaves them as they are.
 - Report Builder.
 - Export to Word, HTML, tagged PDF (PDF/UA) and R script. A single figure can be saved as PNG or SVG, and a single table copied or saved as CSV.
-- Scripts (Paste, Run all, a project's history as a script) and a batch runner (`PrismStatistics.exe run`).
+- Scripts (Paste, Run all, a project's history as a script) and a batch runner (`prismstatistics-app.exe run`, the installed program file).
 - Connection for AI assistants through the Model Context Protocol (MCP). Off by default.
 
 ### Reliability

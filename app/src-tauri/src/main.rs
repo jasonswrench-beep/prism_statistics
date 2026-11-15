@@ -54,7 +54,7 @@ fn main() {
         }
         return;
     }
-    // PrismStatistics.exe run script.pscript ...: the batch runner, printing to the terminal it was started from.
+    // prismstatistics-app.exe run script.pscript ...: the batch runner, printing to the terminal it was started from.
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.first().map(String::as_str) == Some("run") {
         attach_console();

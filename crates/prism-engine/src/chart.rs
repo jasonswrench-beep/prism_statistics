@@ -249,10 +249,34 @@ pub fn bars(cats: &[(String, f64)], errors: Option<&[(f64, f64)]>, xlabel: &str,
         let _ = write!(out, "<line x1=\"{c:.2}\" y1=\"{}\" x2=\"{c:.2}\" y2=\"{}\" stroke-width=\"1\"/>", HEIGHT - BOTTOM, HEIGHT - BOTTOM + 5.0);
     }
     out.push_str("</g><g fill=\"#000\">");
+    // Names too wide for their slot (long predictor names, many bars) are slanted, cut to MAX_LABEL characters, and the
+    // chart grows downward to make room, so neighbouring names never overlap.
+    const MAX_LABEL: usize = 28;
+    let width = |t: &str| t.chars().count() as f64 * 7.2;
+    let slant = cats.iter().any(|(l, _)| width(l) > slot - 6.0);
+    let mut longest: f64 = 0.0;
     for (i, (label, _)) in cats.iter().enumerate() {
-        let _ = write!(out, "<text x=\"{:.2}\" y=\"{}\" text-anchor=\"middle\">{}</text>", LEFT + slot * (i as f64 + 0.5), HEIGHT - BOTTOM + 21.0, esc(label));
+        let c = LEFT + slot * (i as f64 + 0.5);
+        if slant {
+            let shown: String = if label.chars().count() > MAX_LABEL { label.chars().take(MAX_LABEL - 1).collect::<String>() + "…" } else { label.clone() };
+            longest = longest.max(width(&shown));
+            let _ = write!(out, "<text transform=\"translate({:.2} {:.2}) rotate(-40)\" text-anchor=\"end\">{}</text>", c + 4.0, HEIGHT - BOTTOM + 16.0, esc(&shown));
+        } else {
+            let _ = write!(out, "<text x=\"{c:.2}\" y=\"{}\" text-anchor=\"middle\">{}</text>", HEIGHT - BOTTOM + 21.0, esc(label));
+        }
     }
     out.push_str("</g>");
+    if slant {
+        // The slanted names reach 0.64 of their length below the axis; the axis title moves below them.
+        let extra = (16.0 + 0.643 * longest + 10.0 - (BOTTOM - 30.0)).max(0.0).ceil();
+        if extra > 0.0 {
+            let h = HEIGHT + extra;
+            out = out.replacen(&format!("viewBox=\"0 0 {WIDTH} {HEIGHT}\" width=\"{WIDTH}\" height=\"{HEIGHT}\""), &format!("viewBox=\"0 0 {WIDTH} {h}\" width=\"{WIDTH}\" height=\"{h}\""), 1);
+            out = out.replacen(&format!("<rect width=\"{WIDTH}\" height=\"{HEIGHT}\" fill=\"#FFFFFF\"/>"), &format!("<rect width=\"{WIDTH}\" height=\"{h}\" fill=\"#FFFFFF\"/>"), 1);
+            let title = |y: f64| format!("<text x=\"{:.2}\" y=\"{y}\" text-anchor=\"middle\">{}</text>", (LEFT + WIDTH - RIGHT) / 2.0, esc(xlabel));
+            out = out.replacen(&title(HEIGHT - 16.0), &title(h - 16.0), 1);
+        }
+    }
     close(out)
 }
 
@@ -717,5 +741,22 @@ mod tests {
         let s = scatter(&[(1.0, 2.0), (2.0, 3.0)], Some((1.0, 1.0)), "a<b", "\"y\" & z", "A & B");
         assert!(s.contains("a&lt;b") && s.contains("&quot;y&quot; &amp; z") && s.contains("aria-label=\"A &amp; B\""));
         assert!(s.starts_with("<svg") && s.ends_with("</svg>"));
+    }
+}
+
+#[cfg(test)]
+mod slanted_label_tests {
+    use super::*;
+
+    #[test]
+    fn long_bar_names_are_slanted_and_the_chart_grows() {
+        let short: Vec<(String, f64)> = vec![("a".into(), 1.0), ("b".into(), 2.0)];
+        let s = bars(&short, None, "Predictor", "Importance", "alt");
+        assert!(!s.contains("rotate(-40)") && s.contains(&format!("height=\"{HEIGHT}\"")), "{s}");
+        let long: Vec<(String, f64)> = (0..8).map(|i| (format!("weekly_hours_of_supervised_study_{i}"), i as f64 + 1.0)).collect();
+        let s = bars(&long, None, "Predictor", "Importance", "alt");
+        assert_eq!(s.matches("rotate(-40)").count(), 8, "{s}");
+        assert!(s.contains("…") && !s.contains(&format!("height=\"{HEIGHT}\"")), "{s}");
+        assert!(s.contains(">Predictor</text>") && !s.contains(&format!("y=\"{}\" text-anchor=\"middle\">Predictor", HEIGHT - 16.0)), "the axis title moved down: {s}");
     }
 }

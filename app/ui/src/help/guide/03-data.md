@@ -59,4 +59,4 @@ These settings show as chips above the output. Each analysis records the setting
 
 ## Results that are out of date
 
-Results remember the data they were made from. Sometimes the data change afterwards, for example through an edited cell or a new missing-value code. The affected results are then marked **Out of date**. Their **Run again** button repeats the analysis with the same settings.
+Results remember the data they were made from. Sometimes the data change afterwards, for example through an edited cell or a new missing-value code. PrismStatistics runs each result again in the background, and a result is marked **Out of date** only when its numbers would now be different. A change the analysis does not use leaves it as it is: editing a variable it doesn't include, or recoding into a new variable, which keeps the old one unchanged. The **Run again** button repeats the analysis with the same settings.

@@ -36,7 +36,7 @@ Every analysis dialog has a **Paste** button. It adds the analysis to the **Scri
 A saved script also runs without the window, from a terminal:
 
 ```
-"%LOCALAPPDATA%\PrismStatistics\PrismStatistics.exe" run analysis.pscript --data mydata.sav --out report.docx
+"%LOCALAPPDATA%\PrismStatistics\prismstatistics-app.exe" run analysis.pscript --data mydata.sav --out report.docx
 ```
 
 `--data` opens a data file first, `--out` writes the results as a Word, HTML or PDF report, and `--project` saves them as a `.pstat` project. The APA paragraphs are printed as each result is made.

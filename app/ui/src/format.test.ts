@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cellText, italicRuns, num, parseCodes, parseValueLabels, pCell, plainText } from './format';
+import { cellText, fileName, italicRuns, num, parseCodes, parseValueLabels, pCell, plainText } from './format';
 
 test('numbers and p values read like the engine writes them', () => {
   assert.equal(num(-1.5, 2), '−1.50');
@@ -33,4 +33,13 @@ test('value labels and missing codes parse, and bad lines are named', () => {
   assert.match(parseValueLabels('1 = A\n1 = B').error ?? '', /two labels/);
   assert.deepEqual(parseCodes('-99, 9 9').codes, [-99, 9]);
   assert.match(parseCodes('x').error ?? '', /not a number/);
+  // A range is refused with a message that says how to type codes, and negative codes still work.
+  for (const r of ['90 to 99', '90-99', '90..99', '90 thru 99']) assert.match(parseCodes(r).error ?? '', /separated by commas/);
+  assert.deepEqual(parseCodes('-9, -99, 1e-3').codes, [-9, -99, 0.001]);
+});
+
+test('messages name a file without its folders', () => {
+  assert.equal(fileName('C:\\Users\\someone\\Documents\\study.pstat'), 'study.pstat');
+  assert.equal(fileName('/home/someone/report.docx'), 'report.docx');
+  assert.equal(fileName('study.pstat'), 'study.pstat');
 });

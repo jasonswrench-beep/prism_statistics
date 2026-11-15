@@ -1,7 +1,7 @@
 // Help › PrismStatistics Help (F1): the user guide and a page for every dialog, with search. The ? button in a dialog's
 // title bar, or F1 while it is open, opens that dialog's page.
 
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { ALL, EXAMPLES, GUIDE, TOPICS, helpFor, type HelpPage } from '../help';
 import { Markdown } from '../help/markdown';
 import { Icon } from './Icon';
@@ -20,9 +20,26 @@ export function HelpButton() {
   );
 }
 
+/** When Help closes, focus goes back where it was, or into the dialog left in front, so Escape and Tab still reach that
+ * dialog instead of the page behind it. */
+function useReturnFocus() {
+  // Read while rendering, before the Close button's autoFocus moves focus into Help.
+  const [before] = useState(() => document.activeElement as HTMLElement | null);
+  useEffect(
+    () => () => {
+      // Help's own elements are gone by the time this runs.
+      if (before && before !== document.body && before.isConnected) return before.focus();
+      const front = [...document.querySelectorAll<HTMLElement>('.overlay .dialog')].pop();
+      front?.querySelector<HTMLElement>('button, input, select, textarea, [tabindex]:not([tabindex="-1"])')?.focus();
+    },
+    [before],
+  );
+}
+
 export function HelpDialog({ start, onClose, onExample }: { start: string | null; onClose: () => void; onExample?: (id: string) => void }) {
   const [id, setId] = useState(start && ALL.some((p) => p.id === start) ? start : GUIDE[0]?.id ?? '');
   const [query, setQuery] = useState('');
+  useReturnFocus();
   const page = ALL.find((p) => p.id === id);
   const q = query.trim().toLowerCase();
   const match = (p: HelpPage) => !q || p.title.toLowerCase().includes(q) || p.text.toLowerCase().includes(q);

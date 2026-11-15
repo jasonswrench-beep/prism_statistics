@@ -1730,7 +1730,9 @@ fn irt_paragraph(r: &ResultBundle) -> Option<String> {
             if k.starts_with("a1.") && !k.starts_with("a1.se.") {
                 a.push(*v);
             }
-            if k.starts_with('b') && !k.contains(".se.") && !k.contains(".p.") {
+            // b.<item> or b<category>.<item>; not bic, which also starts with b.
+            let is_b = k.strip_prefix('b').is_some_and(|rest| rest.starts_with('.') || rest.starts_with(|c: char| c.is_ascii_digit()));
+            if is_b && !k.contains(".se.") && !k.contains(".p.") {
                 b.push(*v);
             }
         }

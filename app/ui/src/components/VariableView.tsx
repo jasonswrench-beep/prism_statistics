@@ -33,7 +33,10 @@ export function VariableView({ dataset, onChange }: { dataset: DatasetInfo; onCh
               <th scope="col">Type</th>
               <th scope="col">Label</th>
               <th scope="col">Values</th>
-              <th scope="col">Missing</th>
+              <th scope="col">
+                Missing
+                <small id="missingHint"> codes, separated by commas</small>
+              </th>
               <th scope="col">Measure</th>
               <th scope="col">Empty cells</th>
             </tr>
@@ -57,7 +60,9 @@ export function VariableView({ dataset, onChange }: { dataset: DatasetInfo; onCh
                 <td>
                   <input
                     aria-label={`Missing-value codes for ${v.name}`}
-                    placeholder="None"
+                    placeholder="None (e.g. -9, 99)"
+                    title="One or more codes, separated by commas, such as -9, 99"
+                    aria-describedby="missingHint"
                     disabled={v.type !== 'numeric'}
                     defaultValue={v.missing_values.join(', ')}
                     key={`${v.id}-${v.missing_values.join(',')}`}

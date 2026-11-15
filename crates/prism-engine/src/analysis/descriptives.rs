@@ -68,6 +68,8 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     let mut fields = BTreeMap::new();
     let mut total = 0usize;
     let mut worst_missing = (0usize, 0usize);
+    // The variable with the most missing values, named in the case line.
+    let mut worst_name = String::new();
     let mut names = Vec::new();
     for name in &spec.variables {
         let var = ds.variable(name)?;
@@ -90,6 +92,7 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
             .collect();
         if empty + umiss > worst_missing.0 + worst_missing.1 {
             worst_missing = (empty, umiss);
+            worst_name = var.name.clone();
         }
         let d = prismqda_stats::describe::descriptives(&x, spec.level);
         let key = &var.name;
@@ -140,10 +143,12 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
         cases: CaseAccounting {
             total,
             analyzed,
-            excluded: [("empty (variable with the most missing)", worst_missing.0), ("user-missing (variable with the most missing)", worst_missing.1)]
+            // Each variable uses its own valid values; the count shown is for the one with the most missing, e.g.
+            // "excluded: empty in exam (6)".
+            excluded: [(format!("empty in {worst_name}"), worst_missing.0), (format!("a missing-value code in {worst_name}"), worst_missing.1)]
                 .into_iter()
                 .filter(|(_, n)| *n > 0)
-                .map(|(r, n)| Exclusion { reason: r.into(), count: n })
+                .map(|(r, n)| Exclusion { reason: r, count: n })
                 .collect(),
         },
         tables: vec![Table { id: "descriptives".into(), title: "Descriptive statistics".into(), columns, rows, footnotes: vec!["Each variable uses its own valid values. SD and variance use n − 1. The median is Hyndman-Fan type 7.".into()] }],

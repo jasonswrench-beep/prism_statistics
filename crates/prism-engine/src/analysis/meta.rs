@@ -861,9 +861,9 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
             set(&mut b, "qm.p", pq);
             set(&mut b, "qm.df", m as f64);
             foot.push(if spec.knha {
-                format!("Test of moderators: F({m}, {}) = {}, {}.", apa::num(df, 0), apa::num(stat, 2), apa::p_clause(pq))
+                format!("Test of moderators: F({m}, {}) = {}, p {}.", apa::num(df, 0), apa::num(stat, 2), apa::p_clause(pq))
             } else {
-                format!("Test of moderators: QM({m}) = {}, {}.", apa::num(stat, 2), apa::p_clause(pq))
+                format!("Test of moderators: QM({m}) = {}, p {}.", apa::num(stat, 2), apa::p_clause(pq))
             });
         }
         if spec.method != Method::Fe && !multi {

@@ -1,6 +1,7 @@
 // The workspace: title bar, classic menu bar, toolbar, left rail, document tabs (Data, Output) and the context bar.
 // Layout and look follow the approved mockup and the shared Prism style (D02, D13).
 
+import { fileName } from './format';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { call, inTauri } from './bridge';
 import { DataView, type FindRequest } from './components/DataView';
@@ -131,7 +132,7 @@ export function App() {
       }
       const state = await call<ProjectState>('save_project', { path });
       setProject(state);
-      say(`Saved ${state.path}`);
+      say(`Saved ${state.path ? fileName(state.path) : 'the project'}.`);
       return true;
     } catch (e) {
       setError((e as Error).message);
@@ -315,7 +316,7 @@ export function App() {
         say(format === 'r' ? `Wrote the R script ${r.file_name}.` : `Exported ${r.count} result${r.count === 1 ? '' : 's'} to ${r.file_name}.`);
       } else {
         const r = await call<{ path: string; count: number }>('export', { format, path, report });
-        say(format === 'r' ? `Wrote the R script to ${r.path}.` : `Exported ${r.count} result${r.count === 1 ? '' : 's'} to ${r.path}.`);
+        say(format === 'r' ? `Wrote the R script ${fileName(r.path)}.` : `Exported ${r.count} result${r.count === 1 ? '' : 's'} to ${fileName(r.path)}.`);
       }
     } catch (e) {
       setError((e as Error).message);
@@ -697,7 +698,7 @@ export function App() {
       )}
       {(dialog === 'sem' || dialog === 'pls') && dataset && (
         <SemBuilder
-          key={dialog}
+          key={`sem:${dialog}`}
           kind={dialog}
           def={ANALYSES[dialog]}
           dataset={dataset}
@@ -715,7 +716,7 @@ export function App() {
       )}
       {dialog && ANALYSES[dialog] && dialog !== 'sem' && dialog !== 'pls' && dataset && (
         <AnalysisDialog
-          key={dialog}
+          key={`analysis:${dialog}`}
           def={ANALYSES[dialog]}
           dataset={dataset}
           initial={initialArgs ? restore(ANALYSES[dialog], initialArgs) : undefined}
@@ -807,7 +808,9 @@ export function App() {
       <div className={`toast ${toast ? 'show' : ''}`} role="status" aria-live="polite">
         {toast}
       </div>
-      {help !== undefined && <HelpDialog key={help ?? ''} start={help} onClose={() => setHelp(undefined)} onExample={openExample} />}
+      {/* The key has its own prefix: a help page's id is often the same as its dialog's, and two siblings with one key
+          leave React with a stray copy of the dialog. */}
+      {help !== undefined && <HelpDialog key={`help:${help ?? ''}`} start={help} onClose={() => setHelp(undefined)} onExample={openExample} />}
     </div>
     </HelpContext.Provider>
   );

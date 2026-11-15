@@ -82,6 +82,13 @@ fn item_response_models() {
     assert!(compare(&b, "grm", 1e-6, 1e-5) > 40);
     assert!(paragraph(&b).unwrap().starts_with("A graded response model was fitted to 4 items"), "{}", paragraph(&b).unwrap());
     assert_eq!(b.charts.len(), 2);
+    // The difficulties' range is the largest threshold, not the BIC (whose field name also starts with b).
+    for fit in [&rb, &b] {
+        let text = paragraph(fit).unwrap();
+        let hi = fit.fields.iter().filter(|(k, _)| k.starts_with('b') && k.as_str() != "bic" && !k.contains(".se.") && !k.contains(".p.")).filter_map(|(_, f)| if let prism_engine::result::Field::Number(v) = f { Some(*v) } else { None }).fold(f64::NEG_INFINITY, f64::max);
+        assert!(text.contains(&format!("to {}", prism_engine::apa::num(hi, 2))), "{hi}: {text}");
+        assert!(!text.contains(&format!("to {}.", prism_engine::apa::num(fit.number("bic").unwrap(), 2))), "{text}");
+    }
 }
 
 /// Bayesian SEM against blavaan. Both are MCMC, so each posterior summary is compared within a share of the posterior

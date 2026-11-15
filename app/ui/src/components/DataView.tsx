@@ -2,7 +2,7 @@
 // mistaken for data. Value labels can be shown in place of codes. The grid is browse-only until that switch is turned
 // off; then a double-click (or Enter) edits a cell, and every edit is recorded like any other change.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent as KeyEvent } from 'react';
 import { call } from '../bridge';
 import type { CellValue, DatasetInfo, RowsPage, VariableInfo } from '../types';
 import { Modal } from './Modal';
@@ -39,6 +39,30 @@ export function DataView({ dataset, onEdited, onGrew, request }: { dataset: Data
   const findRef = useRef<HTMLInputElement>(null);
   const gotoRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Editing: one cell at a time is a tab stop (the last one used, else the first), and the arrow keys move between cells.
+  // One stop and shared handlers instead of one per cell keep large data quick when Browse only is turned off.
+  const stop = focus ?? { row: 0, col: 0 };
+  const cellAt = (e: { target: EventTarget }) => {
+    const m = (e.target as HTMLElement).closest?.('td[data-cell]')?.getAttribute('data-cell')?.split('-');
+    return m ? { row: Number(m[0]), col: Number(m[1]) } : null;
+  };
+  const moveTo = (row: number, col: number) => {
+    if (row < 0 || col < 0 || row >= rows.length || col >= dataset.variables.length) return;
+    setFocus({ row, col });
+    scrollRef.current?.querySelector<HTMLElement>(`[data-cell="${row}-${col}"]`)?.focus();
+  };
+  const onGridKey = (e: KeyEvent) => {
+    const c = cellAt(e);
+    if (browseOnly || editing || !c) return;
+    const step: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      startEdit(c.row, c.col);
+    } else if (step[e.key]) {
+      e.preventDefault();
+      moveTo(c.row + step[e.key][0], c.col + step[e.key][1]);
+    }
+  };
 
   useEffect(() => {
     if (!request) return;
@@ -289,7 +313,17 @@ export function DataView({ dataset, onEdited, onGrew, request }: { dataset: Data
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody
+            onFocus={(e) => {
+              const c = cellAt(e);
+              if (c && !browseOnly) setFocus(c);
+            }}
+            onDoubleClick={(e) => {
+              const c = cellAt(e);
+              if (c) startEdit(c.row, c.col);
+            }}
+            onKeyDown={onGridKey}
+          >
             {rows.map((r, i) => (
               <tr key={i}>
                 <th className="rn" scope="row">
@@ -321,10 +355,7 @@ export function DataView({ dataset, onEdited, onGrew, request }: { dataset: Data
                       data-cell={`${i}-${j}`}
                       aria-current={target && target.row === i && target.col === j ? 'true' : undefined}
                       className={s.cls + (browseOnly ? '' : ' editable') + (target && target.row === i && target.col === j ? ' found' : '')}
-                      tabIndex={browseOnly ? undefined : 0}
-                      onFocus={() => setFocus({ row: i, col: j })}
-                      onDoubleClick={() => startEdit(i, j)}
-                      onKeyDown={(e) => e.key === 'Enter' && startEdit(i, j)}
+                      tabIndex={browseOnly ? undefined : stop.row === i && stop.col === j ? 0 : -1}
                     >
                       {s.text}
                     </td>

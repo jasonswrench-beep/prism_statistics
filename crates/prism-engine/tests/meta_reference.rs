@@ -90,6 +90,8 @@ fn meta_regression() {
     let bcg = data("bcg.csv");
     let b = run(&bcg, with(counts("rr"), serde_json::json!({ "moderators": ["ablat", "alloc"] })));
     assert!(compare(&b, "mods", 1e-6) > 60);
+    let notes: Vec<&String> = b.tables.iter().flat_map(|t| &t.footnotes).filter(|f| f.starts_with("Test of moderators")).collect();
+    assert!(notes.len() == 1 && (notes[0].contains(", p = .") || notes[0].contains(", p < .001")), "{notes:?}");
     let b = run(&bcg, with(counts("rr"), serde_json::json!({ "moderators": ["ablat"], "knha": true })));
     assert!(compare(&b, "modsknha", 1e-6) > 50);
     for m in ["ml", "dl", "pm", "he", "sj"] {

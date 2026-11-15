@@ -161,7 +161,7 @@ pub fn from_history(session: &Session) -> Result<String, String> {
 /// How to call the batch runner.
 pub const USAGE: &str = "run <script.pscript> [--data <file>] [--out <report.docx|.html|.pdf>] [--project <file.pstat>]";
 
-/// The batch runner: `prism run` and `PrismStatistics.exe run`. Paragraphs go to standard output, progress to standard
+/// The batch runner: `prism run` (the developer tool) and `prismstatistics-app.exe run` (the installed program). Paragraphs go to standard output, progress to standard
 /// error; the first error comes back with its line number.
 pub fn batch(args: &[String]) -> Result<(), String> {
     let (script_path, flags) = args.split_first().ok_or_else(|| USAGE.to_string())?;

@@ -638,6 +638,12 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
             let vd: Mat = (0..k).map(|a| (0..k).map(|c| w.vcov[a][c] - re.vcov[a + 1][c + 1]).collect()).collect();
             if let Some(vi) = invert(&vd) {
                 let h: f64 = (0..k).map(|a| d[a] * (0..k).map(|c| vi[a][c] * d[c]).sum::<f64>()).sum();
+                if h < 0.0 {
+                    // The difference of the two covariance matrices is not positive definite here, so the statistic has no
+                    // chi-square distribution; a negative value would only mislead.
+                    trows.push(vec![text("Hausman test (fixed vs. random effects)"), text("not computed"), text("")]);
+                    b.diagnostics.push(Diagnostic { id: "hausman".into(), title: "Fixed or random effects".into(), state: DiagnosticState::ReviewNeeded, message: "Hausman's test could not be computed: the fixed-effects covariance minus the random-effects covariance is not positive definite in these data, so the statistic came out negative. Choose between the models on substantive grounds.".into() });
+                } else {
                 let pv = chisq_sf(h, k as f64);
                 set(&mut b, "hausman.chisq", h);
                 set(&mut b, "hausman.df", k as f64);
@@ -648,6 +654,7 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
                 } else {
                     Diagnostic { id: "hausman".into(), title: "Fixed or random effects".into(), state: DiagnosticState::NoConcernDetected, message: "Hausman's test does not reject random effects, which are then the more efficient estimates.".into() }
                 });
+                }
             }
         }
         b.tables.push(Table { id: "tests".into(), title: "Specification tests".into(), columns: vec!["Test".into(), "Statistic".into(), "p".into()], rows: trows, footnotes: vec!["These tests use conventional (not robust) standard errors.".into()] });

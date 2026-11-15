@@ -1,6 +1,7 @@
 // Offered at start-up when an earlier window closed or crashed with unsaved work: open the copy (as unsaved work, to be
 // saved where the user chooses) or discard it.
 
+import { fileName } from '../format';
 import { useState } from 'react';
 import { call } from '../bridge';
 import { Modal } from './Modal';
@@ -46,7 +47,7 @@ export function RecoveryDialog({ copies, onClose, onRecovered }: { copies: Recov
         {list.map((c) => (
           <li key={c.id}>
             <span>
-              <strong>{c.name}</strong> <span className="fieldhint">— copied {when(c.saved_at)}{c.path ? `, from ${c.path}` : ', never saved'}</span>
+              <strong>{c.name}</strong> <span className="fieldhint">— copied {when(c.saved_at)}{c.path ? `, from ${fileName(c.path)}` : ', never saved'}</span>
             </span>
             <button type="button" className="btn primary" style={{ marginLeft: 8 }} onClick={() => recover(c)}>
               Open

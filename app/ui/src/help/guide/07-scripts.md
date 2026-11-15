@@ -17,8 +17,10 @@ A script is plain text with one command per line: the command, then its settings
 A saved script also runs from a terminal. This is useful for running the same analyses on many data files, or as a scheduled job:
 
 ```
-PrismStatistics.exe run analysis.pscript --data mydata.sav --out report.docx
+"%LOCALAPPDATA%\PrismStatistics\prismstatistics-app.exe" run analysis.pscript --data mydata.sav --out report.docx
 ```
+
+The program file is `prismstatistics-app.exe`, in the folder PrismStatistics was installed to (`%LOCALAPPDATA%\PrismStatistics` unless you chose another).
 
 - `--data` opens a data file first.
 - `--out` writes the results as a Word, HTML or PDF report.

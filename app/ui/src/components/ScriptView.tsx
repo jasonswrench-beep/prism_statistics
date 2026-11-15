@@ -1,6 +1,6 @@
 // The Script screen: commands pasted from the dialogs (Paste) or taken from the project's history, run in order with
 // Run all. A script is plain text, one command per line (the command, then its arguments as JSON); lines starting with
-// # are comments. Saved scripts run without the window too: prism run study.pscript --data exam.sav --out report.docx.
+// # are comments. Saved scripts run without the window too: prismstatistics-app.exe run study.pscript --data exam.sav --out report.docx.
 
 import { useRef, useState } from 'react';
 import { call, inTauri } from '../bridge';
@@ -148,7 +148,7 @@ export function ScriptView({ text, setText, onRan, say }: { text: string; setTex
         <span className="muted">{commands} command{commands === 1 ? '' : 's'}</span>
       </div>
       <p className="fieldhint" style={{ margin: '0 0 8px' }}>
-        Use <b>Paste</b> in any analysis dialog to add its command here without running it. One command per line; lines starting with # are notes. A saved script also runs without the window: <code>prism run analysis.pscript --data mydata.sav --out report.docx</code>.
+        Use <b>Paste</b> in any analysis dialog to add its command here without running it. One command per line; lines starting with # are notes. A saved script also runs without the window: <code>prismstatistics-app.exe run analysis.pscript --data mydata.sav --out report.docx</code> (the program file in the PrismStatistics install folder; Help › Scripts has the full command).
       </p>
       {error && (
         <p role="alert" className="errbox">

@@ -67,6 +67,8 @@ export function parseValueLabels(text: string): { labels: { value: number; label
 
 /** Parses missing-value codes written as "-99, 9". */
 export function parseCodes(text: string): { codes: number[]; error?: string } {
+  // A range ("90 to 99", "90-99", "90..99") can't be typed here; say so instead of "is not a number".
+  if (/\d\s*(?:to|thru|through|\.\.|–)\s*-?\d|\d-\d/i.test(text)) return { codes: [], error: 'list each code, separated by commas (for example -9, 98, 99). A range of codes can only come from the data file.' };
   const parts = text.split(/[,;\s]+/).filter(Boolean);
   const codes: number[] = [];
   for (const p of parts) {
@@ -75,4 +77,10 @@ export function parseCodes(text: string): { codes: number[]; error?: string } {
     if (!codes.includes(v)) codes.push(v);
   }
   return { codes };
+}
+
+/** A file's name without its folders, for messages: "study.pstat" from a full path. Messages and the recovery window show
+ * this, so the account name in a user folder's path is not put on screen (or in screenshots). */
+export function fileName(path: string): string {
+  return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
 }
