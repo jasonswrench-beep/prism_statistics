@@ -118,7 +118,7 @@ def signoff(suites):
         ]
         open(SIGNOFF, "w", encoding="utf-8", newline=nl).write(nl.join(head))
     text = open(SIGNOFF, encoding="utf-8").read()
-    have = set(re.findall(r"^\| `([a-z_]+)` \|", text, re.M))
+    have = set(re.findall(r"^\| `([a-z0-9_]+)` \|", text, re.M))
     new = [s["name"] for s in suites if s["name"] not in have]
     if new:
         if not text.endswith(nl):

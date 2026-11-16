@@ -33,6 +33,3 @@ The product owner signs a suite after reviewing its comparison in `docs/validati
 | `ttest_reference` | | | |
 | `training_reference` | | | |
 | `transform_reference` | | | |
-| `c3_reference` | | | |
-| `c3_reference` | | | |
-| `c3_reference` | | | |

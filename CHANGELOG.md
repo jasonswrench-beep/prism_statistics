@@ -1,10 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (teaching preview)
+
+Scoring tests and analysing their items, fit statistics for item response models, evaluating training by Kirkpatrick level, exporting the data itself, and the shared file formats with OpenAssess and PrismQDA, with faster handling of large data and full keyboard use of the dialogs. The installer and the program are code-signed.
 
 ### Test scoring and item analysis
 
-- **Analyze › Scale › Test Scoring and Item Analysis** scores letter answers against a typed key (`B, A, D/B, AC, -, *`: two right answers, select-all, dropped, credited to everyone) or reads points already earned, and reports each question's difficulty, its point-biserial (total includes the question) and corrected item-total r (total leaves the item out), the upper and lower 27 percent groups and D, the options chosen by score group with blanks, and KR-20, KR-21 and the standard error of measurement for the test. Checked against R (psych's score.multiple.choice and base R) and against the shared item-analysis test set that OpenAssess is also checked against (seven cases, every figure within 1e-9).
+- **Analyze › Scale › Test Scoring and Item Analysis** scores letter answers against a typed key (`B, A, D/B, AC, -, *`: two right answers, select-all, dropped, credited to everyone) or reads points already earned, and reports each question's difficulty, its point-biserial (total includes the question) and corrected item-total r (total leaves the item out), the upper and lower 27 percent groups and D, the options chosen by score group with blanks, and KR-20, KR-21 and the standard error of measurement for the test. Checked against R (psych's score.multiple.choice and base R) and against the shared item-analysis test set that OpenAssess is also checked against (nine cases, every figure within 1e-9).
 - Reliability Analysis labels its column **Corrected item-total r (total leaves the item out)**, and keeps each item's unrounded mean and SD as fields.
 
 ### Item response theory

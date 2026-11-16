@@ -1,6 +1,6 @@
 # Validation report
 
-Generated 2026-11-15 by `python tools/validate.py` at commit `10cee4b` (engine 0.1.1).
+Generated 2026-11-15 by `python tools/validate.py` at commit `24414bb` (engine 0.2.0).
 R 4.6.1.
 
 **167 of 167 reference tests passed**.
@@ -85,8 +85,8 @@ Designed experiments against R (reference/doe_reference.json, made by make_doe_r
 - ✓ `full_factorial_and_response_surface_designs`
 - ✓ `mixture_models`
 - ✓ `i_optimal_designs`
-- ✓ `mixture_designs`
 - ✓ `response_surface`
+- ✓ `mixture_designs`
 - ✓ `plackett_burman_designs`
 - ✓ `d_optimal_designs`
 
@@ -188,14 +188,14 @@ The analyses added after the preview, against R (reference/more_reference.json, 
 - ✓ `logistic_regression`
 - ✓ `mcnemar_test`
 - ✓ `linear_mixed_models`
-- ✓ `mediation_and_moderation`
-- ✓ `noncentral_f_against_r`
 - ✓ `missing_patterns_and_multiple_imputation`
+- ✓ `noncentral_f_against_r`
+- ✓ `mediation_and_moderation`
 - ✓ `one_way_manova`
 - ✓ `oneway_contrasts_and_adjusted_pairs`
+- ✓ `one_sided_tests`
 - ✓ `ordinal_multinomial_and_count_regression`
 - ✓ `partial_correlation`
-- ✓ `one_sided_tests`
 - ✓ `power_and_sample_size`
 - ✓ `rater_agreement`
 - ✓ `repeated_measures_and_mixed_anova`
@@ -215,8 +215,8 @@ Structural equation models against the product owner's two SEM reference package
 - ✓ `latent_growth_model`
 - ✓ `path_model`
 - ✓ `confirmatory_factor_analysis`
-- ✓ `satorra_bentler_correction`
 - ✓ `political_democracy_model`
+- ✓ `satorra_bentler_correction`
 - ✓ `two_group_models`
 
 ### panel_reference
@@ -269,8 +269,8 @@ The preview analyses against R (reference/preview_reference.json, made by make_p
 
 The data tools against base R (reference/make_reshape_reference.R writes the inputs and the expected datasets): append with a source variable, merges (left, inner, all, one-to-many), aggregate (eleven summaries, and added to cases), and restructuring wide to long (with and without dropping missing rows) and back to wide.
 
-- ✓ `aggregate`
 - ✓ `append_cases`
+- ✓ `aggregate`
 - ✓ `restructure`
 - ✓ `merges`
 
@@ -310,16 +310,16 @@ Imports of .sav, .dta and .sas7bdat files against R's haven package (reference/s
 
 - ✓ `damaged_files_are_refused_plainly`
 - ✓ `sas_catalog_labels_attach_by_format_name`
-- ✓ `dta_matches_haven`
 - ✓ `sas7bdat_matches_haven`
+- ✓ `dta_matches_haven`
 - ✓ `sav_matches_haven_and_keeps_missing_settings`
 
 ### training_reference
 
 The training evaluation report by Kirkpatrick level against R (reference/training_reference.json, made by make_training_reference.R with base R's t.test from the Training evaluation example data), and xAPI statements read as data.
 
-- ✓ `xapi_statements_open_as_data_without_identities`
 - ✓ `nothing_chosen_is_refused_in_words`
+- ✓ `xapi_statements_open_as_data_without_identities`
 - ✓ `learning_from_two_unlinked_groups_matches_welch`
 - ✓ `every_level_matches_r`
 
@@ -346,8 +346,8 @@ Decision trees against rpart (reference/tree_reference.json, made by make_tree_r
 The independent-samples t test against R (reference/ttest_reference.json, made by make_ttest_reference.R).  The data include every kind of case the test must leave out: an empty grouping cell, a user-missing group code, a third group, an empty score and a user-missing score. R gets the same exclusions written out by hand, so the test checks the case handling as well as the numbers.
 
 - ✓ `small_groups_are_flagged`
-- ✓ `student_at_90_percent_matches_r`
 - ✓ `every_excluded_case_has_one_reason`
+- ✓ `student_at_90_percent_matches_r`
 - ✓ `too_few_cases_fails_without_numbers`
 - ✓ `template_paragraph_reads_correctly`
 - ✓ `swapping_groups_flips_the_sign_only`
