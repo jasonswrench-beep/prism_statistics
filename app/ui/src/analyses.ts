@@ -1563,6 +1563,76 @@ export const ANALYSES: Record<string, AnalysisDef> = {
       return { items: [...c.roles.items, ...c.roles.reverse], reverse: c.roles.reverse, scale_min: num(c.options.scale_min), scale_max: num(c.options.scale_max), level: level(c) };
     },
   },
+  item_analysis: {
+    id: 'item_analysis',
+    command: 'item_analysis',
+    title: 'Test Scoring and Item Analysis',
+    roles: [{ key: 'items', label: 'Items', hint: 'one per question, in the key’s order', kind: 'many', accepts: 'any', min: 2 }],
+    options: [
+      {
+        key: 'mode',
+        label: 'The items hold',
+        type: 'radio',
+        choices: [
+          { value: 'letters', label: 'Answers (letters or codes) to score against a key (default)' },
+          { value: 'points', label: 'Points already earned', hint: 'such as a results file from OpenAssess' },
+        ],
+        default: 'letters',
+      },
+      { key: 'key', label: 'Answer key', type: 'text', default: '', hint: 'One entry per item, in order: B, A, D/B, AC. Use / for two right answers, letters together for select-all, - to drop an item, * to credit everyone.', showWhen: { option: 'mode', values: ['letters'] } },
+      { key: 'points', label: 'Points per item', type: 'text', default: '', hint: 'Optional, in the same order (1, 1, 2 …). Empty: one point each, or with points earned, each item’s highest score.' },
+      { key: 'group', label: 'Upper and lower groups (%)', type: 'number', default: '27' },
+    ],
+    build: (c) => {
+      const points = numberList(c.options.points) ?? [];
+      const scored = c.options.mode === 'points';
+      const key: KeyEntry[] = scored ? points.map((p) => ({ correct: [], points: p, adjustment: 'none' as const })) : parseKey(String(c.options.key ?? ''));
+      if (!scored) key.forEach((k, i) => (k.points = points[i] ?? 1));
+      return { items: c.roles.items, key, scored, group_fraction: Number(c.options.group) / 100 };
+    },
+  },
+  kirkpatrick: {
+    id: 'kirkpatrick',
+    command: 'kirkpatrick',
+    title: 'Training Evaluation (Kirkpatrick Levels)',
+    roles: [
+      { key: 'reaction', label: 'Level 1, Reaction: rating items', hint: 'a reaction survey', kind: 'many', accepts: 'numeric', optional: true },
+      { key: 'learning', label: 'Level 2, Learning: before and after', hint: 'the same people: before, then after', kind: 'pairs', accepts: 'numeric', optional: true },
+      { key: 'learning_score', label: 'Level 2, Learning: score of two groups', hint: 'or: one score, before and after cases apart', kind: 'one', accepts: 'numeric', optional: true },
+      { key: 'learning_time', label: 'Level 2, Learning: which administration', hint: 'its codes for before and after go below', kind: 'one', accepts: 'any', optional: true },
+      { key: 'behavior', label: 'Level 3, Behavior: before and after', kind: 'pairs', accepts: 'numeric', optional: true },
+      { key: 'behavior_items', label: 'Level 3, Behavior: measures', kind: 'many', accepts: 'numeric', optional: true },
+      { key: 'results', label: 'Level 4, Results: before and after', kind: 'pairs', accepts: 'numeric', optional: true },
+      { key: 'results_items', label: 'Level 4, Results: measures', kind: 'many', accepts: 'numeric', optional: true },
+    ],
+    options: [
+      { key: 'reaction_max', label: 'Highest rating on the scale', type: 'number', default: '', hint: 'Empty: the highest rating given.' },
+      { key: 'favorable', label: 'Favorable from', type: 'number', default: '', hint: 'Ratings at or above this count as favorable. Empty: the top two points.' },
+      { key: 'learning_max', label: 'Test points possible', type: 'number', default: '', hint: 'For the normalized gain. Empty: not computed.' },
+      { key: 'pre_code', label: 'Code for before', type: 'text', default: '1', hint: 'With two groups: the code (or text) of the administration before.' },
+      { key: 'post_code', label: 'Code for after', type: 'text', default: '2' },
+      LEVEL,
+    ],
+    build: (c) => {
+      const num = (v: unknown) => (typeof v === 'string' && v.trim() !== '' ? Number(v) : null);
+      const pairsOf = (k: string) => (c.pairs[k] ?? []).map(([pre, post]) => ({ pre, post }));
+      const score = c.roles.learning_score?.[0];
+      const time = c.roles.learning_time?.[0];
+      return {
+        reaction: c.roles.reaction ?? [],
+        favorable: num(c.options.favorable),
+        reaction_max: num(c.options.reaction_max),
+        learning: pairsOf('learning'),
+        learning_groups: score && time ? { score, time, pre: String(c.options.pre_code ?? '').trim(), post: String(c.options.post_code ?? '').trim() } : null,
+        learning_max: num(c.options.learning_max),
+        behavior: pairsOf('behavior'),
+        behavior_items: c.roles.behavior_items ?? [],
+        results: pairsOf('results'),
+        results_items: c.roles.results_items ?? [],
+        level: level(c),
+      };
+    },
+  },
   canonical: {
     id: 'canonical',
     command: 'canonical',
@@ -2071,6 +2141,35 @@ export function contrastRows(v: unknown): number[][] {
 }
 
 /** A list of numbers typed with commas or spaces ("1, 2, 2"), or null when the box is empty. */
+export interface KeyEntry {
+  correct: string[];
+  points: number;
+  adjustment: 'none' | 'dropped' | 'credit_all';
+}
+
+/** One answer in a comparable form, as the engine compares them: upper case, separators gone, select-all letters in order. */
+export function normalizeAnswer(s: string): string {
+  const t = s.replace(/[\s,;+&]/g, '').toUpperCase();
+  return /^[A-Z]+$/.test(t) ? [...new Set(t.split(''))].sort().join('') : t;
+}
+
+/** A typed answer key, parsed as the engine's parse_key does: "B, A, D/B, AC, -, *". */
+export function parseKey(text: string): KeyEntry[] {
+  return text
+    .split(/[,;\s]+/)
+    .filter((s) => s.trim() !== '')
+    .map((s): KeyEntry => {
+      if (s === '-') return { correct: [], points: 1, adjustment: 'dropped' };
+      if (s === '*') return { correct: [], points: 1, adjustment: 'credit_all' };
+      return { correct: s.split(/[/|]/).map(normalizeAnswer).filter((a) => a !== ''), points: 1, adjustment: 'none' };
+    });
+}
+
+/** A key written back as text, for reopening a result's dialog. */
+export function keyText(key: KeyEntry[]): string {
+  return key.map((k) => (k.adjustment === 'dropped' ? '-' : k.adjustment === 'credit_all' ? '*' : k.correct.join('/'))).join(', ');
+}
+
 export function numberList(v: unknown): number[] | null {
   if (typeof v !== 'string' || !v.trim()) return null;
   return v.split(/[,;\s]+/).filter(Boolean).map(Number);
@@ -2088,7 +2187,7 @@ export function problem(def: AnalysisDef, c: Collected): string | null {
   for (const r of visibleRoles(def, c.options)) {
     if (r.kind === 'pairs') {
       const pairs = c.pairs[r.key] ?? [];
-      if (!pairs.length) return `Add at least one pair to ${r.label}.`;
+      if (!pairs.length && !r.optional) return `Add at least one pair to ${r.label}.`;
       continue;
     }
     const got = c.roles[r.key] ?? [];
@@ -2111,6 +2210,30 @@ export function problem(def: AnalysisDef, c: Collected): string | null {
     if (bad) return `${bad} is in an interaction but not in the model; move it into a predictor box first.`;
   }
   if (def.id === 'reliability' && (c.roles.items?.length ?? 0) + (c.roles.reverse?.length ?? 0) < 2) return 'Move at least two items into the scale.';
+  if (def.id === 'kirkpatrick') {
+    const r = c.roles;
+    const any = ['reaction', 'learning_score', 'behavior_items', 'results_items'].some((k) => (r[k]?.length ?? 0) > 0) || ['learning', 'behavior', 'results'].some((k) => (c.pairs[k]?.length ?? 0) > 0);
+    if (!any) return 'Move the measures of at least one level into the boxes.';
+    if ((r.learning_score?.length ?? 0) !== (r.learning_time?.length ?? 0)) return 'For two groups, give both the score and the variable saying which administration each case is.';
+    for (const k of ['reaction_max', 'favorable', 'learning_max']) {
+      const v = String(c.options[k] ?? '').trim();
+      if (v && !Number.isFinite(Number(v))) return 'The scale and points must be numbers.';
+    }
+    if (String(c.options.learning_max ?? '').trim() && !(Number(c.options.learning_max) > 0)) return 'The test points possible must be above zero.';
+  }
+  if (def.id === 'item_analysis') {
+    const n = c.roles.items?.length ?? 0;
+    const pts = numberList(c.options.points);
+    if (String(c.options.points ?? '').trim() && (!pts || pts.some((p) => !(p > 0)))) return 'Points must be numbers above zero, separated by commas.';
+    if (pts && pts.length !== n) return `Give points for each of the ${n} items, or leave Points per item empty.`;
+    if (c.options.mode === 'letters') {
+      const key = parseKey(String(c.options.key ?? ''));
+      if (!key.length) return 'Type the answer key: one entry per item, such as B, A, D, C.';
+      if (key.length !== n) return `The key has ${key.length} ${key.length === 1 ? 'entry' : 'entries'} but ${n} items are chosen; give one for each item, in order.`;
+    }
+    const g = Number(c.options.group);
+    if (!(g > 0 && g <= 50)) return 'The upper and lower groups must each be more than 0% and at most 50% of the cases.';
+  }
   if (def.id === 'chisq_gof') {
     const e = numberList(c.options.expected);
     if (e && e.some((x) => !(Number.isFinite(x) && x > 0))) return 'Expected proportions must be numbers above zero, separated by commas.';
@@ -2125,6 +2248,7 @@ export function problem(def: AnalysisDef, c: Collected): string | null {
     if (o.type === 'number') {
       const n = Number(v);
       if (def.id === 'reliability' && o.key !== 'level' && typeof v === 'string' && v.trim() === '') continue;
+      if (def.id === 'kirkpatrick' && o.key !== 'level' && typeof v === 'string' && v.trim() === '') continue;
       if (typeof v !== 'string' || v.trim() === '' || !Number.isFinite(n)) return `${o.label} must be a number.`;
       if (o.key === 'level' && !(n > 0 && n < 100)) return 'The confidence level must be between 0 and 100.';
     }
@@ -2236,6 +2360,26 @@ const ROLE_ARGS: Record<string, (a: Args) => Partial<Collected>> = {
     };
   },
   reliability: (a) => ({ roles: { items: strs(a.items).filter((i) => !strs(a.reverse).includes(i)), reverse: strs(a.reverse) } }),
+  kirkpatrick: (a) => {
+    const pr = (v: unknown): [string, string][] => (Array.isArray(v) ? v.map((p) => [String((p as Args).pre), String((p as Args).post)] as [string, string]) : []);
+    const g = (a.learning_groups ?? null) as Args | null;
+    const nul = (v: unknown) => (v == null ? '' : String(v));
+    return {
+      roles: { reaction: strs(a.reaction), learning_score: g ? [String(g.score)] : [], learning_time: g ? [String(g.time)] : [], behavior_items: strs(a.behavior_items), results_items: strs(a.results_items) },
+      pairs: { learning: pr(a.learning), behavior: pr(a.behavior), results: pr(a.results) },
+      options: { favorable: nul(a.favorable), reaction_max: nul(a.reaction_max), learning_max: nul(a.learning_max), pre_code: g ? String(g.pre) : '1', post_code: g ? String(g.post) : '2', level: String(Math.round(Number(a.level ?? 0.95) * 1e6) / 1e4) },
+    };
+  },
+  item_analysis: (a) => {
+    const key = (Array.isArray(a.key) ? a.key : []) as KeyEntry[];
+    const scored = a.scored === true;
+    const pts = key.map((k) => k.points);
+    const plain = !scored && pts.every((p) => p === 1);
+    return {
+      roles: { items: strs(a.items) },
+      options: { mode: scored ? 'points' : 'letters', key: scored ? '' : keyText(key), points: plain ? '' : pts.join(', '), group: String(Math.round(Number(a.group_fraction ?? 0.27) * 1000) / 10) },
+    };
+  },
   canonical: (a) => ({ roles: { set1: strs(a.set1), set2: strs(a.set2) } }),
   chisq_gof: (a) => ({ roles: { variable: strs(a.variable) } }),
   binomial: (a) => ({ roles: { variables: strs(a.variables) } }),
@@ -2287,5 +2431,7 @@ export function restore(def: AnalysisDef, args: Args): Collected {
       options[o.key] = v == null ? o.default : String(v);
     }
   }
+  // A dialog whose options are not stored one to one (Item Analysis's key) gives them itself.
+  Object.assign(options, r.options ?? {});
   return { roles: r.roles ?? {}, pairs: r.pairs ?? {}, groups: r.groups ?? {}, references: r.references ?? {}, options };
 }

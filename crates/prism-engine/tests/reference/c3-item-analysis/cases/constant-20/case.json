@@ -1,0 +1,13 @@
+{
+  "case": "constant-20",
+  "description": "Twenty sheets, five questions; q03 right on every sheet, q05 wrong on every sheet.",
+  "sheets": 20,
+  "versions": 1,
+  "items": [
+    {"id": "q01", "possible": 1, "partial_credit": false},
+    {"id": "q02", "possible": 1, "partial_credit": false},
+    {"id": "q03", "possible": 1, "partial_credit": false},
+    {"id": "q04", "possible": 1, "partial_credit": false},
+    {"id": "q05", "possible": 1, "partial_credit": false}
+  ]
+}

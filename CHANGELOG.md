@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+### Test scoring and item analysis
+
+- **Analyze › Scale › Test Scoring and Item Analysis** scores letter answers against a typed key (`B, A, D/B, AC, -, *`: two right answers, select-all, dropped, credited to everyone) or reads points already earned, and reports each question's difficulty, its point-biserial (total includes the question) and corrected item-total r (total leaves the item out), the upper and lower 27 percent groups and D, the options chosen by score group with blanks, and KR-20, KR-21 and the standard error of measurement for the test. Checked against R (psych's score.multiple.choice and base R) and against the shared item-analysis test set that OpenAssess is also checked against (seven cases, every figure within 1e-9).
+- Reliability Analysis labels its column **Corrected item-total r (total leaves the item out)**, and keeps each item's unrounded mean and SD as fields.
+
+### Item response theory
+
+- Item Response Theory reports limited-information model fit: M2 for right-or-wrong items and M2* for ordered ones, with RMSEA and its 90% interval, SRMSR, and TLI and CFI against the model in which the items are independent. Each item gets S-X² with its df, RMSEA and p value. Every figure matches R's mirt (its M2() and itemfit()) on LSAT7, Science and the bfi items; where M2 has no degrees of freedom, as with four four-category items, it says so instead.
+
+### Training evaluation
+
+- **Analyze › Training Evaluation (Kirkpatrick Levels)** reports a training program by level in one result: Reaction (each rating's mean and percent favorable, the scale mean and alpha), Learning (before-and-after pairs with the paired t test, Cohen's d_z and Hake's normalized gain, or two unlinked groups of cases with Welch's t test, as when two classes' answer-sheet results are added together), Behavior and Results (pairs or single measures), with a summary by level and a plain statement that before-and-after change does not show cause. Checked against R.
+- xAPI statements exported from a learning record store open as data (a `.json` array, an LRS query result or JSON Lines): one case per statement with the verb, activity, score, success, completion, duration and registration. Learners are numbered in order of appearance; their names, emails and account ids are never read.
+- File › Open Example Data has a **Training evaluation** dataset (60 employees, every level) that also opens as a **blank template**: the variables, labels and value labels with no cases.
+
+### Exporting the data
+
+- **File › Export › Data as CSV…**, **Data as CSV with value labels…** and **Data as .sav…** write the dataset itself. The .sav file keeps variable labels, measures, value labels and missing-value codes; the values read back exactly.
+- Data › Add Variables and Add Cases take a project (`.pstat`) as the other file, such as a case table from a qualitative project or a second class's results from OpenAssess.
+
+### macOS
+
+- The desktop app opens a project sent from the macOS Finder, at start-up or while it runs, and the bundle carries the macOS icon. A Mac build workflow (tests and an unsigned disk image for Apple silicon and Intel) is in `.github/workflows/macos.yml`, run by hand. No Mac build has been made or tried yet.
+
+### Project files
+
+- The `.pstat` format is no longer provisional: it is format 1 of the shared specification PSTAT-1 (revision 1.0). A file that names a profile keeps it when saved again.
+- A file from a newer format names the program that wrote it ("OpenAssess 0.2.0"), rather than always saying "PrismStatistics".
+
 ### Large data
 
 Timed with simulated files of up to 1,000,000 cases and up to 500 variables.

@@ -37,6 +37,12 @@ export interface ImportReport {
   notes: string[];
 }
 
+/** What opening a file that follows a known profile offers (an OpenAssess results file, for one). */
+export interface ProfileOffer {
+  about: string;
+  suggestions: { dialog: string; label: string; args: Record<string, unknown> }[];
+}
+
 export interface ProjectState {
   path: string | null;
   name: string | null;

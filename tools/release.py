@@ -4,6 +4,12 @@
     python tools/release.py bump 0.2.0        # set a new version everywhere
     python tools/release.py build             # tests, validation report, UI build, then the unsigned installer
     python tools/release.py build --sign      # the same, with the program and installer signed and timestamped
+    python tools/release.py build --core <openstage-core clone>  # also run the shared core's checks on the build
+
+`--core` names a clone of openstage-core. With it, the build also runs the core's .pstat reader conformance check
+(specs/pstat/conformance/check_reader.mjs) and its item-analysis check (testsets/item-analysis/check/
+check_prismstatistics.mjs) against the program just built, without changing it. Without it those two are reported as
+skipped; the item-analysis test set itself always runs, from the copy in the Rust reference tests (c3_reference).
 
 `build` stops at the first failure. It maps the build folders out of the program (--remap-path-prefix, /d1trimfile) and
 fails if the program still holds the user profile or repository path. It writes the installer, its SHA-256 checksum and the release notes for this version
@@ -144,7 +150,7 @@ def tauri_config(sign):
     return path
 
 
-def build(sign=False):
+def build(sign=False, core=None):
     version = check()
     conf = json.loads(read(TAURI_CONF))
     win = conf.get("bundle", {}).get("windows", {})
@@ -153,6 +159,10 @@ def build(sign=False):
     if sign:
         step("Signing: checking everything it needs", [sys.executable, "-I", SIGN_SCRIPT, "--ready"])
     release_notes = notes(version)
+    # Not a stop: it needs GitHub, and a change there is read and adopted by hand (decision D03).
+    drift = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "check_shared_stats.py")])
+    if drift.returncode:
+        print("\nNote: PrismQDA's statistics crate has changed since the pin (above). The build goes on with the pinned copy.")
     step("Rust tests", ["cargo", "test", "--workspace", "-q"])
     step("Interface tests", "npm test", cwd=os.path.join(ROOT, "app", "ui"), shell=True)
     step("Validation report", [sys.executable, os.path.join(ROOT, "tools", "validate.py")])
@@ -161,7 +171,13 @@ def build(sign=False):
     # started in) is switched off by tools/tauri-release.json.
     cfg = tauri_config(sign)
     step("Installer (signed)" if sign else "Installer (unsigned)", f'npm --prefix ../ui exec -- tauri build --config "{cfg}"', cwd=os.path.join(ROOT, "app", "src-tauri"), shell=True, env=path_free_env())
-    check_no_private_paths(os.path.join(ROOT, "app", "src-tauri", "target", "release", "prismstatistics-app.exe"))
+    program = os.path.join(ROOT, "app", "src-tauri", "target", "release", "prismstatistics-app.exe")
+    check_no_private_paths(program)
+    if core:
+        step("Shared core: .pstat reader conformance", ["node", os.path.join(core, "specs", "pstat", "conformance", "check_reader.mjs"), "--prism", program], cwd=core)
+        step("Shared core: item-analysis test set", ["node", os.path.join(core, "testsets", "item-analysis", "check", "check_prismstatistics.mjs"), "--prism", program], cwd=core)
+    else:
+        print("\nSkipped: the shared core's conformance and item-analysis checks on the build (give --core <openstage-core clone>).")
     bundle = os.path.join(ROOT, "app", "src-tauri", "target", "release", "bundle", "nsis")
     found = [f for f in os.listdir(bundle) if f.endswith("-setup.exe") and f"_{version}_" in f]
     if not found:
@@ -191,6 +207,13 @@ if __name__ == "__main__":
         bump(sys.argv[2])
     else:
         extra = sys.argv[2:]
-        if extra not in ([], ["--sign"]):
-            sys.exit("build takes only --sign, e.g. python tools/release.py build --sign")
-        build(sign=extra == ["--sign"])
+        sign = "--sign" in extra
+        core = None
+        rest = [a for a in extra if a != "--sign"]
+        if rest[:1] == ["--core"] and len(rest) == 2:
+            core = os.path.abspath(rest[1])
+            if not os.path.isfile(os.path.join(core, "CORE-NOTES.md")):
+                sys.exit(f"{core} is not a clone of openstage-core (no CORE-NOTES.md).")
+        elif rest:
+            sys.exit("build takes --sign and --core <openstage-core clone>, e.g. python tools/release.py build --core <openstage-core clone>")
+        build(sign=sign, core=core)

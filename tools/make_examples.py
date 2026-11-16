@@ -137,9 +137,48 @@ def clinic_followup(rng):
     write("clinic_followup", meta, {"id": np.arange(1, n + 1), "treatment": treatment, "age": age, "weeks": weeks, "relapsed": relapsed})
 
 
+
+def training_evaluation(rng):
+    n = 60
+    skill = rng.normal(0, 1, n)
+    agree = [{"value": v, "label": l} for v, l in zip(range(1, 6), ["Strongly disagree", "Disagree", "Neither", "Agree", "Strongly agree"])]
+    satisfied = rng.normal(0, 1, n)  # how much each person liked the session, shared by the four ratings
+    react = {}
+    for i, shift in enumerate([0.9, 0.6, 0.7, 0.3], start=1):
+        react[f"react_{i}"] = clip_round(3.6 + shift * 0.4 + 0.7 * satisfied + 0.45 * rng.normal(0, 1, n) + 0.2 * skill, 1, 5)
+    pre = clip_round(9 + 2.5 * skill + rng.normal(0, 2, n), 0, 20)
+    post = clip_round(pre + 4 + 0.8 * skill + rng.normal(0, 2, n), 0, 20)
+    behav_pre = clip_round(3.4 + 0.8 * skill + rng.normal(0, 0.9, n), 1, 7)
+    behav_post = clip_round(behav_pre + 0.8 + rng.normal(0, 0.9, n), 1, 7).astype(float)
+    behav_post[rng.choice(n, 6, replace=False)] = np.nan  # not rated at follow-up
+    errors_pre = clip_round(rng.poisson(7, n) + 0.0, 0, 30)
+    errors_post = clip_round(errors_pre - rng.poisson(2, n) + rng.normal(0, 1, n), 0, 30)
+    meta = {
+        "title": "Training evaluation",
+        "description": "60 employees in a customer-service training, measured at each of Kirkpatrick's four levels: four reaction ratings after the session, a 20-point knowledge test before and after, a supervisor's rating of skill use before and three months after (six were not rated at follow-up), and errors logged per month before and after.",
+        "try": ["Report the training by Kirkpatrick level (Analyze › Training Evaluation)", "Compare the knowledge test before and after (Paired-Samples T Test)"],
+        "template": True,
+        "variables": [
+            {"name": "id", "label": "Employee", "measure": "nominal"},
+            {"name": "react_1", "label": "The training was relevant to my job", "measure": "ordinal", "value_labels": agree},
+            {"name": "react_2", "label": "The session was well organized", "measure": "ordinal", "value_labels": agree},
+            {"name": "react_3", "label": "I would recommend it to a colleague", "measure": "ordinal", "value_labels": agree},
+            {"name": "react_4", "label": "I feel confident using what I learned", "measure": "ordinal", "value_labels": agree},
+            {"name": "pre_test", "label": "Knowledge test before (of 20)", "measure": "scale"},
+            {"name": "post_test", "label": "Knowledge test after (of 20)", "measure": "scale"},
+            {"name": "behav_pre", "label": "Skill use before, supervisor rating (1-7)", "measure": "scale"},
+            {"name": "behav_post", "label": "Skill use at three months, supervisor rating (1-7)", "measure": "scale"},
+            {"name": "errors_pre", "label": "Errors per month before", "measure": "scale"},
+            {"name": "errors_post", "label": "Errors per month after", "measure": "scale"},
+        ],
+    }
+    write("training_evaluation", meta, {"id": np.arange(1, n + 1), **react, "pre_test": pre, "post_test": post, "behav_pre": behav_pre, "behav_post": behav_post, "errors_pre": errors_pre, "errors_post": errors_post})
+
+
 if __name__ == "__main__":
     rng = np.random.default_rng(2027)
     study_methods(rng)
     sleep_reaction(rng)
     clinic_followup(rng)
+    training_evaluation(rng)
     print("Wrote", ", ".join(sorted(os.listdir(OUT))))

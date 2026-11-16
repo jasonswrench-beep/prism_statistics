@@ -1095,6 +1095,37 @@ fn analysis(cmd: &str, a: &Value) -> Option<Vec<String>> {
             o.push("k <- ncol(items); alpha <- k / (k - 1) * (1 - sum(apply(items, 2, var)) / var(rowSums(items))); n <- nrow(items)".into());
             o.push(format!("print(c(alpha = alpha, lower = 1 - (1 - alpha) * qf({}, n - 1, (n - 1) * (k - 1)), upper = 1 - (1 - alpha) * qf({}, n - 1, (n - 1) * (k - 1))))  # Feldt's interval", 1.0 - (1.0 - lv) / 2.0, (1.0 - lv) / 2.0));
         }
+        "item_analysis" => {
+            let items = strs(&a["items"]);
+            let key = a["key"].as_array().cloned().unwrap_or_default();
+            let pts: Vec<String> = (0..items.len()).map(|i| r_num(key.get(i).and_then(|k| k["points"].as_f64()).unwrap_or(1.0))).collect();
+            if a["scored"].as_bool() == Some(true) {
+                o.push(format!("X <- x[complete.cases(x[{v}]), {v}]", v = vec_r(&items)));
+                if key.is_empty() {
+                    o.push("possible <- apply(X, 2, max)".into());
+                } else {
+                    o.push(format!("possible <- c({})", pts.join(", ")));
+                }
+            } else {
+                let keys: Vec<String> = key
+                    .iter()
+                    .map(|k| match k["adjustment"].as_str() {
+                        Some("dropped") => "NULL".to_string(),
+                        Some("credit_all") => "TRUE".to_string(),
+                        _ => format!("c({})", strs(&k["correct"]).iter().map(|c| q(c)).collect::<Vec<_>>().join(", ")),
+                    })
+                    .collect();
+                o.push(format!("keys <- list({})  # NULL: dropped; TRUE: credited to everyone", keys.join(", ")));
+                o.push(format!("possible <- c({})", pts.join(", ")));
+                o.push(format!("R <- as.data.frame(lapply(x[{}], function(v) {{ v <- toupper(gsub(\"[[:space:],;+&]\", \"\", as.character(v))); v[is.na(v)] <- \"\"; sapply(strsplit(v, \"\"), function(l) if (all(grepl(\"^[A-Z]$\", l))) paste(sort(unique(l)), collapse = \"\") else paste(l, collapse = \"\")) }}))", vec_r(&items)));
+                o.push("R <- R[rowSums(R != \"\") > 0, , drop = FALSE]  # a sheet left entirely blank is left out".into());
+                o.push("live <- !sapply(keys, is.null); X <- sapply(which(live), function(j) if (isTRUE(keys[[j]])) rep(possible[j], nrow(R)) else possible[j] * (R[[j]] %in% keys[[j]])); possible <- possible[live]".into());
+            }
+            o.push("tot <- rowSums(X); n <- nrow(X); k <- ncol(X); varn <- function(v) mean((v - mean(v))^2)".into());
+            o.push("print(c(n = n, mean = mean(tot), sd = sd(tot), KR20 = k / (k - 1) * (1 - sum(apply(X, 2, varn)) / varn(tot))))  # KR-20 (alpha with partial credit)".into());
+            o.push(format!("g <- ({} * n + 50) %/% 100; ord <- order(-tot, seq_len(n)); up <- ord[1:g]; lo <- ord[(n - g + 1):n]", ((a["group_fraction"].as_f64().unwrap_or(0.27)) * 100.0).round()));
+            o.push("print(round(data.frame(p = colMeans(sweep(X, 2, possible, \"/\")), r_pb = apply(X, 2, cor, tot), r_corrected = sapply(seq_len(k), function(j) cor(X[, j], tot - X[, j])), D = colMeans(sweep(X[up, , drop = FALSE], 2, possible, \"/\")) - colMeans(sweep(X[lo, , drop = FALSE], 2, possible, \"/\"))), 3))".into());
+        }
         "canonical" => {
             let (s1, s2) = (strs(&a["set1"]), strs(&a["set2"]));
             let all: Vec<String> = s1.iter().chain(&s2).cloned().collect();
@@ -1722,6 +1753,22 @@ mod tests {
         assert!(r.contains("d[1, \"y\"] <- 10"), "{r}");
         assert!(r.contains("power.t.test(delta = 0.5, sd = 1, sig.level = 0.05, power = 0.8, type = \"two.sample\")"), "{r}");
         assert!(r.contains("# 1. Independent-Samples T Test"), "{r}");
+    }
+
+    #[test]
+    fn an_item_analysis_becomes_r() {
+        let mut s = Session::new();
+        let csv = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../prism-engine/tests/reference/item_letters.csv")).unwrap();
+        s.handle("open_text", json!({ "name": "item_letters.csv", "text": csv })).unwrap();
+        let names: Vec<String> = (1..=12).map(|i| format!("q{i:02}")).collect();
+        let key: Vec<serde_json::Value> = "B A D/B C B A C D B AC C D".split(' ').map(|k| json!({ "correct": k.split('/').collect::<Vec<_>>(), "points": 1, "adjustment": "none" })).collect();
+        s.handle("item_analysis", json!({ "items": names, "key": key })).unwrap();
+        let r = super::script(s.project.as_ref().unwrap());
+        assert!(r.contains("keys <- list(c(\"B\"), c(\"A\"), c(\"D\", \"B\")"), "{r}");
+        assert!(r.contains("KR20 = k / (k - 1)"), "{r}");
+        if let Ok(path) = std::env::var("PRISM_WRITE_R") {
+            std::fs::write(path, &r).unwrap();
+        }
     }
 
     #[test]

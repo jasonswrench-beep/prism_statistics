@@ -4,7 +4,8 @@
 //! The latent trait is integrated over mirt's fixed grid of 61 points from −6 to 6 with normal weights (normalized to
 //! sum to 1), so the same function is maximized; estimation is Newton's method with an analytic gradient and the
 //! Hessian from it by central differences, which also gives the observed-information standard errors (mirt's Oakes
-//! standard errors are the same quantity). Items are in slope-intercept form, P(Y ≥ k | θ) = 1 / (1 + exp(−(aθ + d_k))),
+//! standard errors are the same quantity). Model fit (M2, with RMSEA, SRMSR, TLI and CFI) and item fit (S-X²) are in
+//! `irt_fit.rs`, as mirt's M2() and itemfit() compute them. Items are in slope-intercept form, P(Y ≥ k | θ) = 1 / (1 + exp(−(aθ + d_k))),
 //! with the IRT form b_k = −d_k / a and its standard errors by the delta method. A two-category item in the graded
 //! model is the 2PL. In the Rasch model every slope is 1 and the variance of θ is estimated.
 
@@ -18,7 +19,8 @@ use crate::model::Dataset;
 use crate::result::{Diagnostic, DiagnosticState, ResultBundle, Table};
 
 pub const IRT: &str = "irt.model";
-pub const METHOD_VERSION: u32 = 1;
+/// 2: item fit (S-X²) and limited-information model fit (M2, RMSEA, SRMSR, TLI, CFI) added.
+pub const METHOD_VERSION: u32 = 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
@@ -405,7 +407,81 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     } else {
         Diagnostic { id: "convergence".into(), title: "Convergence".into(), state: DiagnosticState::ReviewNeeded, message: "The estimation stopped before converging.".into() }
     });
-    b.diagnostics.push(common::not_assessed("fit", "Item and model fit", "Limited-information fit (M2) and item fit statistics are not computed yet."));
+    // Fit: M2 for the model, S-X² for each item (irt_fit.rs).
+    let fitted = super::irt_fit::Model {
+        k: &k,
+        a: (0..k.len()).map(|j| slope(&lay, j, &p)).collect(),
+        d: (0..k.len()).map(|j| lay.d[j].iter().map(|&i| p[i]).collect()).collect(),
+        var: lay.var.map_or(1.0, |i| p[i]),
+        slopes_estimated: !rasch,
+        group_params: usize::from(lay.var.is_some()),
+    };
+    let labels: Vec<String> = spec.items.iter().map(|nm| ds.variable(nm).map(|v| v.display_name().to_string())).collect::<Result<_>>()?;
+    let m2 = super::irt_fit::m2(&fitted, &d.patterns, &d.counts);
+    let mut misfit = Vec::new();
+    if let Some(m) = &m2 {
+        for (key, v) in [("m2", m.m2), ("m2.df", m.df), ("m2.p", m.p), ("m2.rmsea", m.rmsea), ("m2.rmsea_5", m.rmsea_lower), ("m2.rmsea_95", m.rmsea_upper), ("m2.srmsr", m.srmsr)] {
+            set(&mut b, key, v);
+        }
+        if let Some(t) = m.tli {
+            set(&mut b, "m2.tli", t);
+        }
+        if let Some(c) = m.cfi {
+            set(&mut b, "m2.cfi", c);
+        }
+        let mut rows = vec![
+            vec![text(if k.iter().all(|&x| x == 2) { "M2" } else { "M2*" }), num(m.m2, 2)],
+            vec![text("df"), num(m.df, 0)],
+            vec![text("p"), common::p(m.p)],
+            vec![text("RMSEA [90% CI]"), text(format!("{} [{}, {}]", crate::apa::num(m.rmsea, 3), crate::apa::num(m.rmsea_lower, 3), crate::apa::num(m.rmsea_upper, 3)))],
+            vec![text("SRMSR"), num(m.srmsr, 3)],
+        ];
+        if let (Some(t), Some(c)) = (m.tli, m.cfi) {
+            rows.push(vec![text("TLI"), num(t, 3)]);
+            rows.push(vec![text("CFI"), num(c, 3)]);
+        }
+        b.tables.push(Table {
+            id: "m2".into(),
+            title: "Limited-information model fit".into(),
+            columns: vec!["Measure".into(), "Value".into()],
+            rows,
+            footnotes: vec![format!("M2{} compares the observed means and cross-products of the item scores with the model's (Maydeu-Olivares and Joe; mirt's default). TLI and CFI are against the model in which the items are independent. They are not shown when that model fits better.", if k.iter().all(|&x| x == 2) { "" } else { "* (Cai and Hansen's version for ordered items)" })],
+        });
+    }
+    let sx2 = super::irt_fit::s_x2(&fitted, &d.patterns, &d.counts);
+    let mut fit_rows = Vec::new();
+    for ((name, label), f) in spec.items.iter().zip(&labels).zip(&sx2) {
+        match f {
+            Some(f) => {
+                set(&mut b, format!("sx2.{name}"), f.x2);
+                set(&mut b, format!("sx2.df.{name}"), f.df);
+                set(&mut b, format!("sx2.rmsea.{name}"), f.rmsea);
+                set(&mut b, format!("sx2.p.{name}"), f.p);
+                if f.p < 0.05 {
+                    misfit.push(label.clone());
+                }
+                fit_rows.push(vec![text(label.clone()), num(f.x2, 2), num(f.df, 0), num(f.rmsea, 3), common::p(f.p)]);
+            }
+            None => fit_rows.push(vec![text(label.clone()), text("—"), text("—"), text("—"), text("—")]),
+        }
+    }
+    b.tables.push(Table {
+        id: "itemfit".into(),
+        title: "Item fit".into(),
+        columns: vec!["Item".into(), "S-X²".into(), "df".into(), "RMSEA".into(), "p".into()],
+        rows: fit_rows,
+        footnotes: vec!["S-X² (Orlando and Thissen) compares each item's observed and expected answers at each summed score, with sparse cells pooled as mirt pools them. A dash: no degrees of freedom are left after pooling. The p values are not adjusted for testing every item.".into()],
+    });
+    b.diagnostics.push(match &m2 {
+        None => common::not_assessed("fit", "Model fit", "M2 could not be computed for this model (too few degrees of freedom, or a singular covariance matrix)."),
+        Some(m) if m.rmsea > 0.08 || m.srmsr > 0.08 => Diagnostic { id: "fit".into(), title: "Model fit".into(), state: DiagnosticState::ReviewNeeded, message: format!("RMSEA is {} and SRMSR {}; values above about .08 suggest the one-dimensional model misses some of what the items share.", crate::apa::num(m.rmsea, 3), crate::apa::num(m.srmsr, 3)) },
+        Some(m) => Diagnostic { id: "fit".into(), title: "Model fit".into(), state: DiagnosticState::NoConcernDetected, message: format!("RMSEA is {} and SRMSR {}.", crate::apa::num(m.rmsea, 3), crate::apa::num(m.srmsr, 3)) },
+    });
+    b.diagnostics.push(if misfit.is_empty() {
+        Diagnostic { id: "itemfit".into(), title: "Item fit".into(), state: DiagnosticState::NoConcernDetected, message: "No item's S-X² is significant at .05.".into() }
+    } else {
+        Diagnostic { id: "itemfit".into(), title: "Item fit".into(), state: DiagnosticState::ReviewNeeded, message: format!("{} {} S-X² significant at .05 (not adjusted for testing every item). Look at how {} answered at each score before dropping {}.", crate::apa::series(&misfit), if misfit.len() == 1 { "has an" } else { "have" }, if misfit.len() == 1 { "it was" } else { "they were" }, if misfit.len() == 1 { "it" } else { "them" }) }
+    });
     b.diagnostics.push(common::size_diagnostic(n as usize, format!("{} complete cases", n as usize)));
     Ok(b)
 }

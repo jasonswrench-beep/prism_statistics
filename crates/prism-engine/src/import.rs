@@ -110,7 +110,7 @@ fn looks_binary(bytes: &[u8]) -> bool {
 }
 
 /// The file types the reader opens, for messages.
-pub const OPENS: &str = ".csv, .tsv, .txt, .xlsx, .sav, .zsav, .dta, .sas7bdat and .jasp";
+pub const OPENS: &str = ".csv, .tsv, .txt, .xlsx, .sav, .zsav, .dta, .sas7bdat and .jasp, and xAPI statements as .json,";
 
 /// Builds a dataset from a header row and rows of raw cells, deciding each column's type and repairing names.
 pub(crate) fn build_dataset(name: &str, headers: &[String], rows: Vec<Vec<RawCell>>, report: &mut ImportReport) -> Result<Dataset> {
@@ -160,10 +160,25 @@ pub fn read_bytes(file_name: &str, name: &str, bytes: &[u8], sheet: Option<&str>
         Some("dta") => crate::statfile::read_dta(bytes, name),
         Some("sas7bdat") => crate::statfile::read_sas7bdat(bytes, name),
         Some("jasp") => crate::statfile::read_jasp(bytes, name),
+        // A project's dataset, so Add Cases and Add Variables can take one: a PrismQDA case table or an OpenAssess
+        // results file, which are .pstat files (PSTAT-1). Its results and record stay in that project.
+        Some("pstat") => {
+            let p = crate::project::from_bytes(bytes)?;
+            let mut notes = vec!["Only the project's data was read; its results stay in that project.".to_string()];
+            if let Some(profile) = &p.profile {
+                notes.push(format!("The file says it follows the profile \"{profile}\"."));
+            }
+            let report = ImportReport { rows: p.dataset.n_rows(), variables: p.dataset.variables.len(), notes, ..Default::default() };
+            Ok((p.dataset, report))
+        }
         Some("tsv") | Some("tab") => text_data(bytes, b'\t', name),
         Some("csv") => text_data(bytes, b',', name),
         None | Some("txt") | Some("dat") | Some("data") => text_data(bytes, sniff_delimiter(bytes), name),
-        Some("json") => Err(Error::Invalid(format!("JSON files can't be opened as data. Save the table as .csv and open that. PrismStatistics opens {OPENS} files."))),
+        // xAPI statements from a learning record store; any other JSON is refused.
+        Some("json") | Some("jsonl") => match crate::xapi::parse(bytes).as_ref().and_then(crate::xapi::statements) {
+            Some(list) => crate::xapi::read(&list, name),
+            None => Err(Error::Invalid(format!("Only xAPI statements (a learning record store's export) can be opened from a JSON file. Save other tables as .csv and open that. PrismStatistics opens {OPENS} files."))),
+        },
         Some(other) => Err(Error::Invalid(format!("PrismStatistics can't open .{other} files as data. It opens {OPENS} files."))),
     }
 }

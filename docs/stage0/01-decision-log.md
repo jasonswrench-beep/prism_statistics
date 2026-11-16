@@ -27,6 +27,12 @@ Draft 1 · November 10, 2026 · Mirrors the *Decisions* sheet of the tracker; th
 - **New evidence (2026-11-11):** PrismQDA (github.com/jasonswrench-beep/prismqda) is already built on **Rust + Tauri 2 + React 19 with React Aria + Vite**, Apache-2.0, with a dependency licence checker. Its `prismqda-stats` crate (about 6,000 lines) already implements and validates against R: distributions, descriptives, t tests, one-way ANOVA with post hoc tests, chi-square and Fisher, correlations including partial, the rank tests, Shapiro-Wilk, linear and logistic regression, and the bootstrap. Its importer already reads `.sav` and `.zsav`.
 - **Revised recommendation:** adopt PrismQDA's stack and move `prismqda-stats` (and later the `.sav` reader) into a **shared crate both apps depend on**, instead of comparing two new engines. One short spike confirms the thin slice (06 §2) on that stack; the challenger runtime is dropped unless the spike fails.
 - **To close:** product owner agrees to the shared-crate approach; confirming spike passes.
+- **Settled (2026-11-15, development list item 4):** one statistics crate for both apps, published from the shared
+  core (openstage-core), versioned by tag, and both apps pin the same tag. A fix is made once, in the core, and reaches
+  each app when it moves its pin and its own reference tests pass. The core does not hold the crate yet, so it is asked
+  for in `CORE-REQUESTS.md` (R5) rather than built here. Until then PrismStatistics keeps its pin to PrismQDA commit
+  56a161e, and `tools/check_shared_stats.py` (run by every release build) says when PrismQDA's copy has changed since
+  the pin. On 2026-11-15 it had not: both apps compute with the same code.
 - **Status:** Proposed (recommendation changed 2026-11-11) · **Decision record:** —
 
 ## D04 Distribution and source licensing
@@ -68,6 +74,10 @@ Draft 1 · November 10, 2026 · Mirrors the *Decisions* sheet of the tracker; th
 - **Before gate:** G1 · **Owner:** Integration lead · **Spec:** §16
 - **Proposal:** Versioned, file-based case table exchange with provenance (INT-01–03). **New point:** PrismQDA's concept screens already show a *Statistics* module (descriptive, inferential, chi-square). The two products need a stated boundary before G1. Suggested split: PrismQDA keeps quick in-context counts and crosstabs on coded data; anything inferential or model-based hands off to PrismStatistics through the exchange file, and PrismQDA labels its own statistics as descriptive.
 - **Status:** Direction set · **Decision record:** 2026-11-10, product owner: **PrismQDA stays descriptive** (counts and crosstabs of coded data). Any test or model hands off to PrismStatistics through the exchange file, so each test has one implementation. The exchange schema itself is still open until G1.
+- **Exchange route (2026-11-15, development list item 5):** the case table travels as a `.pstat` file (PSTAT-1, the
+  shared core's format), one row per case. PrismStatistics now reads a `.pstat` file in Add Variables and Add Cases, so
+  a case table merges onto survey data by its case id. The layout PrismQDA writes (case id, attributes, each code's
+  presence and count, and where they came from) is a new profile of PSTAT-1, asked for in `CORE-REQUESTS.md` (R6).
 - **Conflict found (2026-11-11), needs the product owner:** PrismQDA's own roadmap puts t tests, one-way ANOVA, correlation, linear regression and the rank tests in *its* 1.0, and its `prismqda-stats` crate already computes them. If both apps share one statistics crate (D03), the "one implementation" goal holds even if PrismQDA keeps running tests. Either PrismQDA's roadmap changes to match this decision, or this decision changes to "shared engine, both apps may run tests".
 
 ## D11 Naming and visual identity

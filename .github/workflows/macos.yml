@@ -1,0 +1,75 @@
+# The Mac build (development list item 9): tests and an UNSIGNED .dmg on GitHub's macOS runners.
+#
+# It runs only when started by hand (Actions › Mac build › Run workflow), because macOS minutes on a private repository
+# count against the account's plan. Nothing is signed or notarized: that needs an Apple Developer ID, which is the
+# product owner's decision (TESTING-TODO.md, item 9). The .dmg is kept as a workflow artifact for 14 days.
+
+name: Mac build
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: "Run the Rust and interface tests first"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14 # Apple silicon
+            target: aarch64-apple-darwin
+          - runner: macos-13 # Intel
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add ${{ matrix.target }}
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build tools for the AI runtime (llama.cpp needs CMake)
+        run: brew list cmake >/dev/null 2>&1 || brew install cmake
+
+      - name: Interface dependencies
+        working-directory: app/ui
+        run: npm ci
+
+      - name: Rust tests
+        if: ${{ inputs.run_tests }}
+        run: cargo test --workspace -q
+
+      - name: Interface tests
+        if: ${{ inputs.run_tests }}
+        working-directory: app/ui
+        run: npm test
+
+      - name: Interface build
+        working-directory: app/ui
+        run: npm run build
+
+      - name: App and disk image (unsigned)
+        working-directory: app/src-tauri
+        run: npm --prefix ../ui exec -- tauri build --target ${{ matrix.target }} --bundles app,dmg --config ../../tools/tauri-release.json
+
+      - name: Keep the disk image
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrismStatistics-${{ matrix.target }}
+          path: app/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+          retention-days: 14

@@ -12,6 +12,7 @@ pub mod analysis;
 pub mod apa;
 pub mod chart;
 pub mod data_ops;
+pub mod dataset_export;
 pub mod error;
 pub mod export;
 pub mod health;
@@ -27,6 +28,7 @@ pub mod subset;
 pub mod svg_clean;
 pub mod templates;
 pub mod transform;
+pub mod xapi;
 pub mod xlsx;
 
 pub use error::{Error, Result};

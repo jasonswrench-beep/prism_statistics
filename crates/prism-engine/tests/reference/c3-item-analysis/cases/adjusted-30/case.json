@@ -1,0 +1,14 @@
+{
+  "case": "adjusted-30",
+  "description": "Thirty sheets, six questions; q04 does not count on version 2, so its cells there are empty.",
+  "sheets": 30,
+  "versions": 2,
+  "items": [
+    {"id": "q01", "possible": 1, "partial_credit": false},
+    {"id": "q02", "possible": 1, "partial_credit": false},
+    {"id": "q03", "possible": 1, "partial_credit": false},
+    {"id": "q04", "possible": 1, "partial_credit": false, "not_counted_on_versions": [2]},
+    {"id": "q05", "possible": 1, "partial_credit": false},
+    {"id": "q06", "possible": 1, "partial_credit": false}
+  ]
+}

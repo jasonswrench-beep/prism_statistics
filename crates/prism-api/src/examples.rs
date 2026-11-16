@@ -12,6 +12,7 @@ const EXAMPLES: &[(&str, &str, &str)] = &[
     ("study_methods", include_str!("../data/examples/study_methods.csv"), include_str!("../data/examples/study_methods.json")),
     ("sleep_reaction", include_str!("../data/examples/sleep_reaction.csv"), include_str!("../data/examples/sleep_reaction.json")),
     ("clinic_followup", include_str!("../data/examples/clinic_followup.csv"), include_str!("../data/examples/clinic_followup.json")),
+    ("training_evaluation", include_str!("../data/examples/training_evaluation.csv"), include_str!("../data/examples/training_evaluation.json")),
 ];
 
 #[derive(Deserialize)]
@@ -40,6 +41,8 @@ struct Listed {
     variables: usize,
     #[serde(rename = "try")]
     suggestions: Vec<String>,
+    /// Also offered as a blank template: the same variables and codebook with no cases.
+    template: bool,
 }
 
 pub(crate) fn list() -> Value {
@@ -54,6 +57,7 @@ pub(crate) fn list() -> Value {
                 rows: m["rows"].as_u64().unwrap_or(0),
                 variables: m["variables"].as_array().map_or(0, Vec::len),
                 suggestions: m["try"].as_array().into_iter().flatten().filter_map(|s| s.as_str().map(str::to_string)).collect(),
+                template: m["template"].as_bool().unwrap_or(false),
             }
         })
         .collect();
@@ -61,11 +65,13 @@ pub(crate) fn list() -> Value {
 }
 
 impl Session {
-    /// Opens an example dataset as new, unsaved data, with its codebook applied.
-    pub(crate) fn open_example(&mut self, id: &str) -> Result<Value, String> {
+    /// Opens an example dataset as new, unsaved data, with its codebook applied. `blank` opens a template example's
+    /// variables and codebook with no cases, for entering one's own data.
+    pub(crate) fn open_example(&mut self, id: &str, blank: bool) -> Result<Value, String> {
         let (_, csv, meta) = EXAMPLES.iter().find(|(i, _, _)| *i == id).ok_or_else(|| format!("There is no example dataset named {id}."))?;
         let book: Codebook = serde_json::from_str(meta).map_err(|e| format!("The example's codebook could not be read: {e}"))?;
-        let mut out = self.open_data(&format!("{id}.csv"), csv.as_bytes(), None)?;
+        let header = csv.lines().next().unwrap_or_default();
+        let mut out = self.open_data(&format!("{id}.csv"), if blank { header.as_bytes() } else { csv.as_bytes() }, None)?;
         let ds = &mut self.project.as_mut().ok_or("The example did not open.")?.dataset;
         if let Some(t) = serde_json::from_str::<Value>(meta).ok().and_then(|m| m["title"].as_str().map(str::to_string)) {
             ds.name = t;
@@ -102,7 +108,7 @@ mod tests {
     #[test]
     fn every_example_opens_with_its_codebook() {
         let list = super::list();
-        assert_eq!(list.as_array().unwrap().len(), 3);
+        assert_eq!(list.as_array().unwrap().len(), 4);
         for e in list.as_array().unwrap() {
             let mut s = open(e["id"].as_str().unwrap());
             let ds = s.handle("dataset", json!({})).unwrap();
@@ -113,6 +119,14 @@ mod tests {
             assert_eq!(s.state()["name"], e["title"], "named by its title");
             assert_eq!(s.state()["undo"], json!(null));
         }
+        // A template example also opens blank: its variables and codebook, no cases.
+        let mut t = crate::Session::new();
+        t.handle("open_example", json!({ "id": "training_evaluation", "blank": true })).unwrap();
+        let ds = t.handle("dataset", json!({})).unwrap();
+        assert_eq!(ds["rows"], 0);
+        assert_eq!(ds["variables"].as_array().unwrap().len(), 11);
+        assert!(ds["variables"].as_array().unwrap().iter().any(|v| v["name"] == "react_1" && v["value_labels"].as_array().is_some_and(|l| l.len() == 5)));
+        assert_eq!(super::list().as_array().unwrap().iter().filter(|e| e["template"] == true).count(), 1);
         let mut s = open("study_methods");
         let ds = s.handle("dataset", json!({})).unwrap();
         let sat = ds["variables"].as_array().unwrap().iter().find(|v| v["name"] == "satisfaction").unwrap();

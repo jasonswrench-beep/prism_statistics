@@ -13,6 +13,11 @@ use tauri::{Manager, RunEvent, State};
 
 struct Engine(Mutex<Session>);
 
+/// A project the system asked the program to open (macOS sends a file opened from Finder as an event, not as an
+/// argument), held until the window asks for it.
+#[derive(Default)]
+struct Opened(Mutex<Option<String>>);
+
 /// Runs one engine command. Async so a long analysis never freezes the window.
 #[tauri::command]
 async fn call(cmd: String, args: Option<Value>, engine: State<'_, Engine>) -> Result<Value, String> {
@@ -39,9 +44,13 @@ async fn ai_draft(args: Value, engine: &State<'_, Engine>) -> Result<Value, Stri
     engine.0.lock().unwrap_or_else(|e| e.into_inner()).handle("ai_store", store)
 }
 
-/// The project file PrismStatistics was started with (double-clicking a .pstat file in File Explorer), if any.
+/// The project file PrismStatistics was started with (double-clicking a .pstat file in File Explorer, or opening one from
+/// Finder), if any.
 #[tauri::command]
-fn opened_with() -> Option<String> {
+fn opened_with(opened: State<'_, Opened>) -> Option<String> {
+    if let Some(p) = opened.0.lock().unwrap_or_else(|e| e.into_inner()).take() {
+        return Some(p);
+    }
     std::env::args_os().skip(1).map(std::path::PathBuf::from).find(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("pstat")) && p.is_file()).map(|p| p.to_string_lossy().into_owned())
 }
 
@@ -73,6 +82,7 @@ fn main() {
                 Err(_) => Session::new(),
             };
             app.manage(Engine(Mutex::new(session)));
+            app.manage(Opened::default());
             let handle = app.handle().clone();
             std::thread::spawn(move || loop {
                 std::thread::sleep(std::time::Duration::from_secs(30));
@@ -88,6 +98,18 @@ fn main() {
         // so work closed without saving can still be recovered at the next start.
         if let RunEvent::Exit = event {
             autosave(handle);
+        }
+        // macOS: a .pstat file opened from Finder, at start-up or while the program runs.
+        #[cfg(target_os = "macos")]
+        if let RunEvent::Opened { urls } = &event {
+            use tauri::Emitter;
+            for path in urls.iter().filter_map(|u| u.to_file_path().ok()).filter(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("pstat"))) {
+                let path = path.to_string_lossy().into_owned();
+                if let Some(opened) = handle.try_state::<Opened>() {
+                    *opened.0.lock().unwrap_or_else(|e| e.into_inner()) = Some(path.clone());
+                }
+                let _ = handle.emit("open-project", path);
+            }
         }
     });
 }

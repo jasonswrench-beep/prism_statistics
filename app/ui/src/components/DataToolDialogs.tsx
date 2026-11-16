@@ -69,9 +69,9 @@ function OtherFile({ other, setOther, setError }: { other: Other | null; setOthe
   return (
     <div>
       <label className="fieldlabel" htmlFor="otherFile">
-        The other data file <span className="fieldhint">CSV, .xlsx, .sav, .dta, .sas7bdat or .jasp</span>
+        The other data file <span className="fieldhint">CSV, .xlsx, .sav, .dta, .sas7bdat, .jasp, or a project (.pstat), such as a PrismQDA case table</span>
       </label>
-      <input id="otherFile" type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.sav,.zsav,.dta,.sas7bdat,.jasp" onChange={(e) => choose(e.target.files?.[0])} />
+      <input id="otherFile" type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.sav,.zsav,.dta,.sas7bdat,.jasp,.pstat" onChange={(e) => choose(e.target.files?.[0])} />
       {reading && <div className="fieldhint">Reading…</div>}
       {other && (
         <div className="fieldhint">

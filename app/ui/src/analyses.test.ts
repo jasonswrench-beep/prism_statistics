@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ANALYSES, restore } from './analyses';
+import { ANALYSES, parseKey, restore } from './analyses';
 
 // The arguments each dialog would send, as recorded in a project. Reopening a result (Settings…) must give a dialog that
 // sends exactly these again.
@@ -60,6 +60,8 @@ const SAMPLES: Record<string, Record<string, unknown>> = {
   logistic: { dependent: 'smoker', event: '1', covariates: ['hours'], factors: [{ name: 'cond', reference: null }], level: 0.95, blocks: [{ covariates: ['pre'], factors: [] }], interactions: [['hours', 'cond']], center: false, roc: true },
   reliability: { items: ['i1', 'i2', 'i3', 'i4'], reverse: ['i4'], scale_min: 1, scale_max: 5, level: 0.95 },
   canonical: { set1: ['pre', 'post'], set2: ['hours', 'score'] },
+  kirkpatrick: { reaction: ['i1', 'i2'], favorable: 4, reaction_max: 5, learning: [{ pre: 'pre', post: 'post' }], learning_groups: { score: 'score', time: 'cond', pre: '1', post: '2' }, learning_max: 20, behavior: [{ pre: 'hours', post: 'i3' }], behavior_items: ['i4'], results: [], results_items: ['i5'], level: 0.9 },
+  item_analysis: { items: ['q1', 'q2', 'q3', 'q4'], key: [{ correct: ['B'], points: 1, adjustment: 'none' }, { correct: ['A', 'C'], points: 2, adjustment: 'none' }, { correct: [], points: 1, adjustment: 'dropped' }, { correct: [], points: 1, adjustment: 'credit_all' }], scored: false, group_fraction: 0.27 },
   chisq_gof: { variable: 'region', expected: [1, 2, 2] },
   binomial: { variables: ['sex'], test_proportion: 0.5, level: 0.95 },
   runs: { variables: ['score'], cut: 'value', value: 60 },
@@ -101,6 +103,19 @@ test('a reliability analysis without reversed items and with empty endpoints', (
   const def = ANALYSES.reliability;
   const args = { items: ['i1', 'i2'], reverse: [], scale_min: null, scale_max: null, level: 0.95 };
   assert.deepEqual(def.build(restore(def, args)), args);
+});
+
+test('an item analysis of points already earned, with points taken from the data', () => {
+  const def = ANALYSES.item_analysis;
+  const args = { items: ['q01', 'q02'], key: [], scored: true, group_fraction: 0.25 };
+  assert.deepEqual(def.build(restore(def, args)), args);
+});
+
+test('the answer key parses as the engine parses it', () => {
+  assert.deepEqual(
+    parseKey('b; A/c  ca - *').map((k) => [k.correct, k.adjustment]),
+    [[['B'], 'none'], [['A', 'C'], 'none'], [['AC'], 'none'], [[], 'dropped'], [[], 'credit_all']],
+  );
 });
 
 test('a regression without later blocks or interactions sends empty lists', () => {

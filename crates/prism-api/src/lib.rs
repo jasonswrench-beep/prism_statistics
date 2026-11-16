@@ -23,7 +23,7 @@ mod undo;
 use std::path::{Path, PathBuf};
 
 use base64::Engine as _;
-use prism_engine::analysis::{agreement, anova_factorial, anova_oneway, bootstrap, canonical, factor, glm_more, manova, missing, mixed, permutation, pls, process, sem, survey, lca, lpa, forest, boost, irt, meta, gee, panel, dpanel, predict, tree, spc, doe, survival, timeseries, rm_anova, trimmed, classic_np, correlation, crosstabs, curve, descriptives, explore, frequencies, graphs, logistic, partial_correlation, power, rank_tests, regression, related, reliability, ttest_independent, ttest_one_sample, ttest_paired};
+use prism_engine::analysis::{agreement, anova_factorial, anova_oneway, bootstrap, canonical, factor, glm_more, manova, missing, mixed, permutation, pls, process, sem, survey, lca, lpa, forest, boost, irt, meta, gee, panel, dpanel, predict, tree, spc, doe, survival, timeseries, rm_anova, trimmed, classic_np, correlation, crosstabs, curve, descriptives, explore, frequencies, graphs, logistic, partial_correlation, power, rank_tests, regression, related, reliability, item_analysis, kirkpatrick, ttest_independent, ttest_one_sample, ttest_paired};
 use prism_engine::model::{NumericCell, ValueLabel};
 use prism_engine::project::{self, Operation, Project, Report, ReportBlock, Source, StoredResult};
 use prism_engine::result::Field;
@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 /// The commands that run an analysis; each is recorded and can be run again.
-const ANALYSES: [&str; 77] = [
+const ANALYSES: [&str; 79] = [
     "ttest_independent",
     "frequencies",
     "descriptives",
@@ -51,6 +51,8 @@ const ANALYSES: [&str; 77] = [
     "anova_factorial",
     "logistic",
     "reliability",
+    "item_analysis",
+    "kirkpatrick",
     "canonical",
     "power",
     "chart",
@@ -520,7 +522,12 @@ impl Session {
                 self.path = Some(PathBuf::from(a.path));
                 self.dirty = false;
                 self.clear_own_recovery();
-                Ok(json!({ "state": self.state(), "dataset": self.summary()?, "results": self.outputs() }))
+                let offer = self.project.as_ref().and_then(project::profile_suggestions);
+                let mut reply = json!({ "state": self.state(), "dataset": self.summary()?, "results": self.outputs() });
+                if let Some((about, suggestions)) = offer {
+                    reply["profile"] = json!({ "about": about, "suggestions": suggestions });
+                }
+                Ok(reply)
             }
             "dataset" => self.summary(),
             "rows" => {
@@ -532,9 +539,11 @@ impl Session {
                 #[derive(Deserialize)]
                 struct A {
                     id: String,
+                    #[serde(default)]
+                    blank: bool,
                 }
                 let a: A = parse(args)?;
-                self.open_example(&a.id)
+                self.open_example(&a.id, a.blank)
             }
             "find" => {
                 #[derive(Deserialize)]
@@ -690,6 +699,37 @@ impl Session {
                 }
                 let a: A = parse(args)?;
                 self.export(&a.format, a.path.as_deref(), a.ids.as_deref(), a.report)
+            }
+            "export_data" => {
+                // The dataset itself, as CSV (codes, or value labels) or .sav/.zsav, with its codebook where the format
+                // holds one (development list item 8).
+                #[derive(Deserialize)]
+                struct A {
+                    format: String,
+                    #[serde(default)]
+                    path: Option<String>,
+                }
+                let a: A = parse(args)?;
+                let ds = &self.project()?.dataset;
+                let (bytes, ext) = match a.format.as_str() {
+                    "csv" => (prism_engine::dataset_export::to_csv(ds, false), "csv"),
+                    "csv_labels" => (prism_engine::dataset_export::to_csv(ds, true), "csv"),
+                    "sav" => (prism_engine::dataset_export::to_sav(ds, false).map_err(|e| e.to_string())?, "sav"),
+                    "zsav" => (prism_engine::dataset_export::to_sav(ds, true).map_err(|e| e.to_string())?, "zsav"),
+                    f => return Err(format!("Unknown data format \"{f}\". Use csv, csv_labels, sav or zsav.")),
+                };
+                let stem: String = ds.name.chars().map(|c| if c.is_alphanumeric() || c == ' ' || c == '-' || c == '_' { c } else { ' ' }).collect::<String>().split_whitespace().collect::<Vec<_>>().join(" ");
+                let file_name = format!("{}.{ext}", if stem.is_empty() { "data" } else { &stem });
+                let (rows, vars) = (ds.n_rows(), ds.variables.len());
+                match a.path {
+                    Some(path) => {
+                        let target = local_path(&path)?;
+                        self.may_write(&target)?;
+                        project::write_atomic(&target, &bytes).map_err(|e| format!("Could not save {path}: {e}"))?;
+                        Ok(json!({ "path": path, "rows": rows, "variables": vars }))
+                    }
+                    None => Ok(json!({ "file_name": file_name, "base64": base64::engine::general_purpose::STANDARD.encode(&bytes), "rows": rows, "variables": vars })),
+                }
             }
             "export_item" => {
                 // One figure as PNG or SVG, or one table as CSV (full-precision numbers), from a result's own menu.
@@ -1460,6 +1500,8 @@ fn run_on(ds: &Dataset, command: &str, args: &Value) -> Result<Vec<(ResultBundle
         "anova_factorial" => vec![anova_factorial::run(ds, &spec(args)?).map_err(e)?],
         "logistic" => vec![logistic::run(ds, &spec(args)?).map_err(e)?],
         "reliability" => vec![reliability::run(ds, &spec(args)?).map_err(e)?],
+        "item_analysis" => vec![item_analysis::run(ds, &spec(args)?).map_err(e)?],
+        "kirkpatrick" => vec![kirkpatrick::run(ds, &spec(args)?).map_err(e)?],
         "canonical" => vec![canonical::run(ds, &spec(args)?).map_err(e)?],
         // Power analysis plans a study, so it doesn't read the data.
         "power" => vec![power::run(&spec(args)?).map_err(e)?],
@@ -1825,6 +1867,8 @@ mod tests {
             ("anova_factorial", json!({ "dependent": "y", "factors": ["g", "g2"] })),
             ("logistic", json!({ "dependent": "g", "covariates": ["y"] })),
             ("reliability", json!({ "items": ["g", "g2", "y"], "reverse": ["g2"] })),
+            ("item_analysis", json!({ "items": ["g", "g2", "y"], "scored": true })),
+            ("kirkpatrick", json!({ "reaction": ["g", "g2"], "learning": [{ "pre": "g", "post": "y" }] })),
             ("canonical", json!({ "set1": ["g", "g2"], "set2": ["y"] })),
             ("chisq_gof", json!({ "variable": "g2" })),
             ("binomial", json!({ "variables": ["g2"] })),
@@ -2066,6 +2110,83 @@ mod tests {
         assert!(doc.contains("Independent-Samples T Test") && !doc.contains("Descriptives"));
         assert!(today().contains(", 20"));
         std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn an_openassess_results_file_offers_item_analysis_and_keeps_its_profile() {
+        let src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../prism-engine/tests/reference/c3-item-analysis/cases/small-ties/small-ties.pstat");
+        let dir = std::env::temp_dir().join(format!("prism-profile-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("small-ties.pstat");
+        std::fs::copy(&src, &path).unwrap();
+        let mut s = Session::new();
+        let r = s.handle("open_project", json!({ "path": path.to_string_lossy() })).unwrap();
+        let offer = &r["profile"];
+        assert!(offer["about"].as_str().unwrap().contains("6 questions"), "{offer}");
+        let first = &offer["suggestions"][0];
+        assert_eq!(first["dialog"], "item_analysis");
+        // The offered settings run as they stand.
+        let out = s.handle("item_analysis", first["args"].clone()).unwrap();
+        assert!(out.to_string().contains("Corrected item-total r"), "{out}");
+        s.handle("save_project", json!({ "path": path.to_string_lossy() })).unwrap();
+        let again = s.handle("open_project", json!({ "path": path.to_string_lossy() })).unwrap();
+        assert!(again["profile"].is_object(), "the profile is kept when the project is saved again");
+        // A project of PrismStatistics's own offers nothing.
+        let mut t = Session::new();
+        t.handle("open_text", json!({ "name": "a.csv", "text": "q01,q02\n1,0\n0,1\n1,1\n" })).unwrap();
+        let own = dir.join("own.pstat");
+        t.handle("save_project", json!({ "path": own.to_string_lossy() })).unwrap();
+        assert!(t.handle("open_project", json!({ "path": own.to_string_lossy() })).unwrap().get("profile").is_none());
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn a_case_table_project_merges_onto_survey_data_by_case() {
+        // A case table as a qualitative program would send it: one row per case, its id, and each code's presence and
+        // count. Saved as a project, then added to survey data by the case id.
+        let dir = std::env::temp_dir().join(format!("prism-casetable-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let table = dir.join("cases.pstat");
+        let mut q = Session::new();
+        q.handle("open_text", json!({ "name": "cases.csv", "text": "case_id,code_barriers_present,code_barriers_count\n2,1,3\n1,0,0\n3,1,1\n" })).unwrap();
+        q.handle("save_project", json!({ "path": table.to_string_lossy() })).unwrap();
+        let mut s = Session::new();
+        s.handle("open_text", json!({ "name": "survey.csv", "text": "case_id,satisfaction\n1,4\n2,2\n3,5\n4,3\n" })).unwrap();
+        let r = s.handle("merge_variables", json!({ "path": table.to_string_lossy(), "keys": ["case_id"] })).unwrap();
+        assert!(r.to_string().contains("code_barriers_count"), "{r}");
+        let rows = s.handle("rows", json!({ "start": 0, "count": 4 })).unwrap().to_string();
+        assert!(rows.contains("3"), "{rows}");
+        let ds = &s.project.as_ref().unwrap().dataset;
+        assert_eq!(ds.variables.iter().map(|v| v.name.as_str()).collect::<Vec<_>>(), ["case_id", "satisfaction", "code_barriers_present", "code_barriers_count"]);
+        assert_eq!(ds.columns[3], prism_engine::model::Column::Numeric(vec![Some(0.0), Some(3.0), Some(1.0), None]), "matched by case, not by row");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn the_dataset_exports_as_csv_and_sav_and_reads_back() {
+        let mut s = Session::new();
+        s.handle("open_text", json!({ "name": "d.csv", "text": "g,score,note\n1,3.25,\"a, b\"\n2,,x\n9,4,\n" })).unwrap();
+        s.handle("update_variable", json!({ "name": "g", "label": "Group", "measure": "nominal", "value_labels": [{ "value": 1, "label": "Control" }, { "value": 2, "label": "Treatment" }], "missing_values": [9] })).unwrap();
+        let dir = std::env::temp_dir().join(format!("prism-export-data-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let csv = dir.join("d.csv");
+        s.handle("export_data", json!({ "format": "csv", "path": csv.to_string_lossy() })).unwrap();
+        assert_eq!(std::fs::read_to_string(&csv).unwrap(), "g,score,note\r\n1,3.25,\"a, b\"\r\n2,,x\r\n9,4,\r\n");
+        let labelled = s.handle("export_data", json!({ "format": "csv_labels" })).unwrap();
+        let text = String::from_utf8(base64::engine::general_purpose::STANDARD.decode(labelled["base64"].as_str().unwrap()).unwrap()).unwrap();
+        assert!(text.contains("Control,3.25") && text.contains("Treatment,,x"), "{text}");
+        for (fmt, ext) in [("sav", "sav"), ("zsav", "zsav")] {
+            let path = dir.join(format!("d.{ext}"));
+            s.handle("export_data", json!({ "format": fmt, "path": path.to_string_lossy() })).unwrap();
+            let (back, _) = prism_engine::import::read_file(&path).unwrap();
+            let orig = &s.project.as_ref().unwrap().dataset;
+            assert_eq!(back.columns[0], orig.columns[0], "{fmt}: codes kept");
+            assert_eq!(back.columns[1], orig.columns[1], "{fmt}: values kept exactly");
+            let g = back.variable("g").unwrap();
+            assert_eq!((g.label.as_str(), g.value_labels.len(), g.missing_values.clone()), ("Group", 2, vec![9.0]), "{fmt}: codebook kept");
+            assert_eq!(back.columns[2], prism_engine::model::Column::Text(vec![Some("a, b".into()), Some("x".into()), None]), "{fmt}: text kept");
+        }
+        std::fs::remove_dir_all(&dir).ok();
     }
 
     #[test]

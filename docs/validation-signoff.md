@@ -5,12 +5,15 @@ The product owner signs a suite after reviewing its comparison in `docs/validati
 | Suite | Signed by | Date | Notes |
 |---|---|---|---|
 | `bmeta_reference` | | | |
+| `c3_reference` | | | Shared item-analysis test set (openstage-core, set 1.0.0) |
 | `boost_reference` | | | |
 | `descriptives_reference` | | | |
 | `doe_reference` | | | |
 | `forest_reference` | | | |
 | `gee_reference` | | | |
 | `health` | | | |
+| `irt_fit_reference` | | | |
+| `item_analysis_reference` | | | |
 | `jasp_import` | | | |
 | `latent_reference` | | | |
 | `lpa_reference` | | | |
@@ -28,4 +31,7 @@ The product owner signs a suite after reviewing its comparison in `docs/validati
 | `statfile_reference` | | | |
 | `tree_reference` | | | |
 | `ttest_reference` | | | |
+| `training_reference` | | | |
 | `transform_reference` | | | |
+| `c3_reference` | | | |
+| `c3_reference` | | | |

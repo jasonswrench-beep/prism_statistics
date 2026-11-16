@@ -11,9 +11,11 @@ export interface Example {
   rows: number;
   variables: number;
   try: string[];
+  /** Also offered as a blank template (the variables and labels, no cases). */
+  template?: boolean;
 }
 
-export function ExamplesDialog({ onClose, onOpen, onWorked }: { onClose: () => void; onOpen: (id: string) => void; onWorked: () => void }) {
+export function ExamplesDialog({ onClose, onOpen, onWorked }: { onClose: () => void; onOpen: (id: string, blank?: boolean) => void; onWorked: () => void }) {
   const [list, setList] = useState<Example[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -56,6 +58,11 @@ export function ExamplesDialog({ onClose, onOpen, onWorked }: { onClose: () => v
             <button type="button" className="btn primary" onClick={() => onOpen(x.id)}>
               Open {x.title}
             </button>
+            {x.template && (
+              <button type="button" className="btn" style={{ marginLeft: 8 }} onClick={() => onOpen(x.id, true)}>
+                Blank template
+              </button>
+            )}
           </section>
         ))}
       </div>

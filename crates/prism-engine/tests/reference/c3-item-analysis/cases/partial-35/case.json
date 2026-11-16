@@ -1,0 +1,16 @@
+{
+  "case": "partial-35",
+  "description": "Thirty-five sheets, eight questions; q07 and q08 give partial credit in halves.",
+  "sheets": 35,
+  "versions": 3,
+  "items": [
+    {"id": "q01", "possible": 1, "partial_credit": false},
+    {"id": "q02", "possible": 1, "partial_credit": false},
+    {"id": "q03", "possible": 1, "partial_credit": false},
+    {"id": "q04", "possible": 1, "partial_credit": false},
+    {"id": "q05", "possible": 1, "partial_credit": false},
+    {"id": "q06", "possible": 1, "partial_credit": false},
+    {"id": "q07", "possible": 1, "partial_credit": true},
+    {"id": "q08", "possible": 1, "partial_credit": true}
+  ]
+}

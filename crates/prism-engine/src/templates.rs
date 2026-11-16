@@ -6,7 +6,7 @@
 //! described as "did not differ significantly", never as evidence that there is no difference.
 
 use crate::analysis::{
-    agreement, anova_factorial, meta, gee, panel, dpanel, lpa, boost, forest, predict, tree, spc, doe, anova_oneway, bootstrap, canonical, factor, glm_more, manova, missing, mixed, permutation, pls, process, sem, survey, lca, irt, survival, timeseries, rm_anova, trimmed, classic_np, correlation, curve, explore, crosstabs, logistic, partial_correlation, power, rank_tests, regression, related, reliability, ttest_independent,
+    agreement, anova_factorial, meta, gee, panel, dpanel, lpa, boost, forest, predict, tree, spc, doe, anova_oneway, bootstrap, canonical, factor, glm_more, manova, missing, mixed, permutation, pls, process, sem, survey, lca, irt, survival, timeseries, rm_anova, trimmed, classic_np, correlation, curve, explore, crosstabs, logistic, partial_correlation, power, rank_tests, regression, related, reliability, item_analysis, kirkpatrick, ttest_independent,
     ttest_one_sample, ttest_paired,
 };
 use crate::apa::*;
@@ -76,6 +76,8 @@ pub fn paragraph(r: &ResultBundle) -> Option<String> {
         process::MODERATION => moderation_paragraph(r),
         anova_factorial::METHOD_ID => factorial(r),
         reliability::METHOD_ID => cronbach(r),
+        item_analysis::METHOD_ID => item_analysis_paragraph(r),
+        kirkpatrick::METHOD_ID => kirkpatrick_paragraph(r),
         logistic::METHOD_ID => logistic_paragraph(r),
         canonical::METHOD_ID => canonical_paragraph(r),
         power::METHOD_ID => power_paragraph(r),
@@ -1751,6 +1753,19 @@ fn irt_paragraph(r: &ResultBundle) -> Option<String> {
     } else {
         text += &format!(" Item difficulties ranged from {} to {}; the variance of the trait was {}.", num(blo, 2), num(bhi, 2), num(r.number("var")?, 2));
     }
+    if let (Some(m2), Some(df), Some(p), Some(rmsea), Some(srmsr)) = (r.number("m2"), r.number("m2.df"), r.number("m2.p"), r.number("m2.rmsea"), r.number("m2.srmsr")) {
+        let star = if r.title == "Graded Response Model" { "*" } else { "" };
+        text += &format!(
+            " Limited-information fit was *M*2{star}({}) = {}, {}, RMSEA = {}, 90% CI [{}, {}], SRMSR = {}.",
+            df as usize,
+            num(m2, 2),
+            crate::apa::p_clause(p),
+            no_leading_zero(rmsea, 3),
+            no_leading_zero(r.number("m2.rmsea_5").unwrap_or(f64::NAN), 3),
+            no_leading_zero(r.number("m2.rmsea_95").unwrap_or(f64::NAN), 3),
+            no_leading_zero(srmsr, 3)
+        );
+    }
     Some(text)
 }
 
@@ -2289,6 +2304,72 @@ fn cronbach(r: &ResultBundle) -> Option<String> {
     if let Some(rev) = r.text("reversed") {
         let rev: Vec<String> = rev.split('\u{1f}').map(str::to_string).collect();
         text += &format!(" Before the analysis, {} {} reverse-scored.", series(&rev), if rev.len() == 1 { "was" } else { "were" });
+    }
+    Some(text)
+}
+
+fn kirkpatrick_paragraph(r: &ResultBundle) -> Option<String> {
+    let levels = r.text("levels")?;
+    let mut parts = vec![format!("The training was evaluated at Kirkpatrick level{} {}.", if levels.contains(',') { "s" } else { "" }, series(&levels.split(',').map(str::to_string).collect::<Vec<_>>()))];
+    if let (Some(m), Some(n), Some(fav)) = (r.number("reaction.scale.mean"), r.number("reaction.scale.n"), r.number("reaction.favorable")) {
+        let mut t = format!("Participants rated the training *M* = {} (*SD* = {}, *n* = {}), with {}% of ratings favorable", num(m, 2), num(r.number("reaction.scale.sd").unwrap_or(f64::NAN), 2), n as usize, num(fav * 100.0, 0));
+        if let Some(a) = r.number("reaction.alpha") {
+            t += &format!(" (α = {})", no_leading_zero(a, 2));
+        }
+        parts.push(t + ".");
+    }
+    for (key, what) in [("learning.1", "Test scores"), ("behavior.1", "Ratings of on-the-job behavior"), ("results.1", "The results measure")] {
+        let (Some(pre), Some(post), Some(t), Some(df), Some(p), Some(d)) = (r.number(&format!("{key}.pre.mean")), r.number(&format!("{key}.post.mean")), r.number(&format!("{key}.t")), r.number(&format!("{key}.df")), r.number(&format!("{key}.p")), r.number(&format!("{key}.d"))) else { continue };
+        let mut s = format!("{what} went from *M* = {} before to *M* = {} after, *t*({}) = {}, {}, *d_z* = {}", num(pre, 2), num(post, 2), df as usize, num(t, 2), crate::apa::p_clause(p), num(d, 2));
+        if let Some(g) = r.number(&format!("{key}.hake")) {
+            s += &format!(", a normalized gain of {}", no_leading_zero(g, 2));
+        }
+        parts.push(s + ".");
+    }
+    if let (Some(pre), Some(post), Some(t), Some(df), Some(p)) = (r.number("learning.groups.pre.mean"), r.number("learning.groups.post.mean"), r.number("learning.groups.t"), r.number("learning.groups.df"), r.number("learning.groups.p")) {
+        let mut s = format!("Scores after the training (*M* = {}) were compared with scores before it (*M* = {}) by Welch's test, *t*({}) = {}, {}", num(post, 2), num(pre, 2), num(df, 2), num(t, 2), crate::apa::p_clause(p));
+        if let Some(g) = r.number("learning.groups.hake") {
+            s += &format!(", a normalized gain of {}", no_leading_zero(g, 2));
+        }
+        parts.push(s + ".");
+    }
+    Some(parts.join(" "))
+}
+
+fn item_analysis_paragraph(r: &ResultBundle) -> Option<String> {
+    let k = r.number("k")? as usize;
+    let n = r.number("n")? as usize;
+    let kind = r.text("reliability.kind")?;
+    let symbol = if kind == "KR-20" { "KR-20".to_string() } else { "Cronbach's α".to_string() };
+    let mut text = format!(
+        "The {}-item test was taken by {} {} (*M* = {}, *SD* = {}, out of {} points). Internal consistency was {} = {}",
+        count_words(k),
+        n,
+        if n == 1 { "person" } else { "people" },
+        num(r.number("mean")?, 2),
+        num(r.number("sd")?, 2),
+        num(r.number("possible")?, 0),
+        symbol,
+        no_leading_zero(r.number("reliability")?, 2)
+    );
+    if let Some(v) = r.number("kr21") {
+        text += &format!(" (KR-21 = {})", no_leading_zero(v, 2));
+    }
+    text += &format!(", with a standard error of measurement of {} points.", num(r.number("sem")?, 2));
+    let ps: Vec<f64> = (1..=k).filter_map(|i| r.number(&format!("item.{i}.p"))).collect();
+    if !ps.is_empty() {
+        let (lo, hi) = ps.iter().fold((f64::INFINITY, f64::NEG_INFINITY), |(a, z), v| (a.min(*v), z.max(*v)));
+        text += &format!(" Item difficulties ranged from {} to {}", no_leading_zero(lo, 2), no_leading_zero(hi, 2));
+        let rs: Vec<f64> = (1..=k).filter_map(|i| r.number(&format!("item.{i}.rpb_corrected"))).collect();
+        if !rs.is_empty() {
+            let (a, z) = rs.iter().fold((f64::INFINITY, f64::NEG_INFINITY), |(a, z), v| (a.min(*v), z.max(*v)));
+            text += &format!(", and corrected item-total correlations from {} to {}", no_leading_zero(a, 2), no_leading_zero(z, 2));
+        }
+        text += ".";
+    }
+    let negative: Vec<String> = (1..=k).filter(|i| r.number(&format!("item.{i}.rpb_corrected")).is_some_and(|v| v < 0.0)).filter_map(|i| r.text(&format!("item.{i}.label")).map(str::to_string)).collect();
+    if !negative.is_empty() {
+        text += &format!(" {} correlated negatively with the rest of the test.", series(&negative));
     }
     Some(text)
 }

@@ -1,0 +1,156 @@
+{
+  "id": "training_evaluation",
+  "rows": 60,
+  "title": "Training evaluation",
+  "description": "60 employees in a customer-service training, measured at each of Kirkpatrick's four levels: four reaction ratings after the session, a 20-point knowledge test before and after, a supervisor's rating of skill use before and three months after (six were not rated at follow-up), and errors logged per month before and after.",
+  "try": [
+    "Report the training by Kirkpatrick level (Analyze › Training Evaluation)",
+    "Compare the knowledge test before and after (Paired-Samples T Test)"
+  ],
+  "template": true,
+  "variables": [
+    {
+      "name": "id",
+      "label": "Employee",
+      "measure": "nominal"
+    },
+    {
+      "name": "react_1",
+      "label": "The training was relevant to my job",
+      "measure": "ordinal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Strongly disagree"
+        },
+        {
+          "value": 2,
+          "label": "Disagree"
+        },
+        {
+          "value": 3,
+          "label": "Neither"
+        },
+        {
+          "value": 4,
+          "label": "Agree"
+        },
+        {
+          "value": 5,
+          "label": "Strongly agree"
+        }
+      ]
+    },
+    {
+      "name": "react_2",
+      "label": "The session was well organized",
+      "measure": "ordinal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Strongly disagree"
+        },
+        {
+          "value": 2,
+          "label": "Disagree"
+        },
+        {
+          "value": 3,
+          "label": "Neither"
+        },
+        {
+          "value": 4,
+          "label": "Agree"
+        },
+        {
+          "value": 5,
+          "label": "Strongly agree"
+        }
+      ]
+    },
+    {
+      "name": "react_3",
+      "label": "I would recommend it to a colleague",
+      "measure": "ordinal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Strongly disagree"
+        },
+        {
+          "value": 2,
+          "label": "Disagree"
+        },
+        {
+          "value": 3,
+          "label": "Neither"
+        },
+        {
+          "value": 4,
+          "label": "Agree"
+        },
+        {
+          "value": 5,
+          "label": "Strongly agree"
+        }
+      ]
+    },
+    {
+      "name": "react_4",
+      "label": "I feel confident using what I learned",
+      "measure": "ordinal",
+      "value_labels": [
+        {
+          "value": 1,
+          "label": "Strongly disagree"
+        },
+        {
+          "value": 2,
+          "label": "Disagree"
+        },
+        {
+          "value": 3,
+          "label": "Neither"
+        },
+        {
+          "value": 4,
+          "label": "Agree"
+        },
+        {
+          "value": 5,
+          "label": "Strongly agree"
+        }
+      ]
+    },
+    {
+      "name": "pre_test",
+      "label": "Knowledge test before (of 20)",
+      "measure": "scale"
+    },
+    {
+      "name": "post_test",
+      "label": "Knowledge test after (of 20)",
+      "measure": "scale"
+    },
+    {
+      "name": "behav_pre",
+      "label": "Skill use before, supervisor rating (1-7)",
+      "measure": "scale"
+    },
+    {
+      "name": "behav_post",
+      "label": "Skill use at three months, supervisor rating (1-7)",
+      "measure": "scale"
+    },
+    {
+      "name": "errors_pre",
+      "label": "Errors per month before",
+      "measure": "scale"
+    },
+    {
+      "name": "errors_post",
+      "label": "Errors per month after",
+      "measure": "scale"
+    }
+  ]
+}

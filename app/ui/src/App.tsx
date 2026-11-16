@@ -35,9 +35,9 @@ import { DataSettingsDialog, settingChips, type DataSettings } from './component
 import { VariableView } from './components/VariableView';
 import logo from './assets/PrismStatistics.svg';
 import { GoogleSheetDialog, PathDialog, SheetDialog, UnsavedDialog } from './components/Modal';
-import { chooseExportPath, chooseProjectToOpen, chooseProjectToSave, download, fileToBase64, PROJECT_EXT } from './files';
+import { chooseDataPath, chooseExportPath, chooseProjectToOpen, chooseProjectToSave, download, fileToBase64, PROJECT_EXT } from './files';
 import { ANALYSES, dialogFor, restore } from './analyses';
-import type { AiStatus, DatasetInfo, ImportReport, OutputItem, ProjectState, TTestSpec } from './types';
+import type { AiStatus, DatasetInfo, ImportReport, OutputItem, ProfileOffer, ProjectState, TTestSpec } from './types';
 
 type OpenDataReply = { choose_sheet: string[] } | { report: ImportReport; dataset: DatasetInfo; state: ProjectState };
 
@@ -57,6 +57,8 @@ export function App() {
   const [dataTab, setDataTab] = useState<DataTab>('data');
   const [output, setOutput] = useState<OutputItem[]>([]);
   const [dialog, setDialog] = useState<string | null>(null);
+  // What a file from another program (a known .pstat profile) suggests running, shown above the data until dismissed.
+  const [offer, setOffer] = useState<ProfileOffer | null>(null);
   const [recovery, setRecovery] = useState<RecoveryCopy[]>([]);
   // The help viewer: undefined when closed, else the page to start on (null for the first chapter).
   const [help, setHelp] = useState<string | null | undefined>(undefined);
@@ -149,13 +151,13 @@ export function App() {
   };
 
   /** File › Open Example Data: a built-in teaching dataset, as new unsaved data. */
-  const openExample = async (id: string) => {
+  const openExample = async (id: string, blank = false) => {
     if (!(await okToReplace())) return;
     try {
       setError(null);
       setDialog(null);
       setHelp(undefined);
-      const r = await call<Exclude<OpenDataReply, { choose_sheet: string[] }>>('open_example', { id });
+      const r = await call<Exclude<OpenDataReply, { choose_sheet: string[] }>>('open_example', { id, blank });
       opened(r, r.dataset.name);
     } catch (e) {
       setError((e as Error).message);
@@ -177,7 +179,8 @@ export function App() {
     }
     try {
       setError(null);
-      const r = await call<{ state: ProjectState; dataset: DatasetInfo; results: OutputItem[] }>('open_project', { path });
+      const r = await call<{ state: ProjectState; dataset: DatasetInfo; results: OutputItem[]; profile?: ProfileOffer }>('open_project', { path });
+      setOffer(r.profile && !r.results.length ? r.profile : null);
       setProject(r.state);
       setDataset(r.dataset);
       setOutput(r.results);
@@ -218,6 +221,7 @@ export function App() {
 
   /** Shows newly opened data and what happened during the import. */
   const opened = (r: Exclude<OpenDataReply, { choose_sheet: string[] }>, name: string) => {
+    setOffer(null);
     setDataset(r.dataset);
     setProject(r.state);
     setOutput([]);
@@ -323,6 +327,25 @@ export function App() {
     }
   };
 
+  /** File › Export › Data: the dataset itself, as CSV (codes or labels) or .sav. */
+  const exportData = async (format: 'csv' | 'csv_labels' | 'sav') => {
+    try {
+      const ext = format === 'sav' ? 'sav' : 'csv';
+      const path = await chooseDataPath(ext, dataset?.name ?? 'data');
+      if (path === null) return;
+      if (path === undefined) {
+        const r = await call<{ file_name: string; base64: string; rows: number; variables: number }>('export_data', { format });
+        download(r.file_name, r.base64, ext === 'csv' ? 'text/csv' : 'application/octet-stream');
+        say(`Wrote ${r.rows} cases and ${r.variables} variables to ${r.file_name}.`);
+      } else {
+        const r = await call<{ path: string; rows: number; variables: number }>('export_data', { format, path });
+        say(`Wrote ${r.rows} cases and ${r.variables} variables to ${fileName(r.path)}.`);
+      }
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
   // Work left unsaved by a window that closed or crashed is offered once, at start-up.
   useEffect(() => {
     call<RecoveryCopy[]>('recovery_list')
@@ -330,7 +353,8 @@ export function App() {
       .catch(() => undefined);
   }, []);
 
-  // A project double-clicked in File Explorer arrives as the program's argument.
+  // A project double-clicked in File Explorer arrives as the program's argument; one opened from the macOS Finder
+  // arrives as an event, also while the program is running.
   useEffect(() => {
     if (!inTauri()) return;
     import('@tauri-apps/api/core')
@@ -339,6 +363,12 @@ export function App() {
         if (path) openProject(path);
       })
       .catch(() => undefined);
+    let stop: (() => void) | undefined;
+    import('@tauri-apps/api/event')
+      .then(({ listen }) => listen<string>('open-project', (e) => openProject(e.payload)))
+      .then((un) => (stop = un))
+      .catch(() => undefined);
+    return () => stop?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -375,7 +405,7 @@ export function App() {
         { label: 'Save project as…', shortcut: 'Ctrl+Shift+S', onSelect: () => saveProject(true), disabled: needData },
         '-',
         { label: 'Import', submenu: [{ label: 'CSV or TSV file…', onSelect: openFile }, { label: 'Spreadsheet (.xlsx)…', onSelect: openFile }, { label: '.sav, .dta or .sas7bdat file…', onSelect: openFile }, { label: '.jasp file (data only)…', onSelect: openFile }, { label: 'Online spreadsheet (shared link)…', onSelect: async () => (await okToReplace()) && setGoogleOpen(true) }, { label: 'Value labels from a format catalog (.sas7bcat)…', onSelect: () => catalogRef.current?.click(), disabled: needData }] },
-        { label: 'Export', submenu: [{ label: 'Word (.docx)…', onSelect: () => exportOutput('docx'), disabled: !output.length }, { label: 'HTML…', onSelect: () => exportOutput('html'), disabled: !output.length }, { label: 'PDF (tagged, accessible)…', onSelect: () => exportOutput('pdf'), disabled: !output.length }, { label: 'R script…', onSelect: () => exportOutput('r'), disabled: needData }] },
+        { label: 'Export', submenu: [{ label: 'Word (.docx)…', onSelect: () => exportOutput('docx'), disabled: !output.length }, { label: 'HTML…', onSelect: () => exportOutput('html'), disabled: !output.length }, { label: 'PDF (tagged, accessible)…', onSelect: () => exportOutput('pdf'), disabled: !output.length }, { label: 'R script…', onSelect: () => exportOutput('r'), disabled: needData }, '-', { label: 'Data as CSV…', onSelect: () => exportData('csv'), disabled: needData }, { label: 'Data as CSV with value labels…', onSelect: () => exportData('csv_labels'), disabled: needData }, { label: 'Data as .sav…', onSelect: () => exportData('sav'), disabled: needData }] },
       ],
     },
     {
@@ -415,7 +445,8 @@ export function App() {
         { label: 'Missing Values', submenu: [open('missing_patterns', 'Missing Data Patterns…'), open('mi_regression', 'Regression with Multiple Imputation…')] },
         { label: 'Mixed Models', submenu: [open('mixed_model', 'Linear Mixed Model…'), open('gee', 'Generalized Estimating Equations…')] },
         { label: 'Dimension Reduction', submenu: [open('factor', 'Factor Analysis…')] },
-        { label: 'Scale', submenu: [open('reliability', 'Reliability Analysis…'), open('kappa', 'Cohen’s Kappa…'), open('fleiss', 'Fleiss’ Kappa…'), open('kripp', 'Krippendorff’s Alpha…'), open('icc', 'Intraclass Correlation…'), open('irt', 'Item Response Theory…')] },
+        { label: 'Scale', submenu: [open('reliability', 'Reliability Analysis…'), open('item_analysis', 'Test Scoring and Item Analysis…'), open('kappa', 'Cohen’s Kappa…'), open('fleiss', 'Fleiss’ Kappa…'), open('kripp', 'Krippendorff’s Alpha…'), open('icc', 'Intraclass Correlation…'), open('irt', 'Item Response Theory…')] },
+        open('kirkpatrick', 'Training Evaluation (Kirkpatrick Levels)…'),
         {
           label: 'Nonparametric Tests',
           submenu: [open('mann_whitney', 'Mann-Whitney U (2 independent samples)…'), open('wilcoxon', 'Wilcoxon Signed-Rank (2 related samples)…'), open('kruskal', 'Kruskal-Wallis (k independent samples)…'), open('friedman', 'Friedman (k related samples)…'), open('mcnemar', 'McNemar (2 related yes/no measures)…'), open('cochran', 'Cochran’s Q (k related yes/no measures)…'), open('sign_test', 'Sign Test (2 related samples)…'), open('median_test', 'Median Test (k independent samples)…'), open('ks2', 'Kolmogorov-Smirnov (2 independent samples)…'), open('chisq_gof', 'Chi-Square (goodness of fit)…'), open('binomial', 'Binomial…'), open('runs', 'Runs…')],
@@ -563,6 +594,29 @@ export function App() {
                 </div>
               </div>
             )}
+            {screen === 'data' && dataset && offer && (
+              <section className="offer" aria-label="Suggested analyses">
+                <p>{offer.about}</p>
+                <div className="offer-actions">
+                  {offer.suggestions.map((s) => (
+                    <button
+                      key={s.dialog}
+                      type="button"
+                      className="btn"
+                      onClick={() => {
+                        setInitialArgs(s.args);
+                        setDialog(s.dialog);
+                      }}
+                    >
+                      {s.label}…
+                    </button>
+                  ))}
+                  <button type="button" className="btn" onClick={() => setOffer(null)} aria-label="Dismiss the suggestions">
+                    Dismiss
+                  </button>
+                </div>
+              </section>
+            )}
             {screen === 'data' &&
               (dataset ? (
                 dataTab === 'data' ? <DataView dataset={dataset} onEdited={refresh} onGrew={dataChanged} request={findReq} /> : <VariableView dataset={dataset} onChange={(d) => (setDataset(d), refresh())} />
@@ -611,7 +665,7 @@ export function App() {
         )}
       </footer>
       <input ref={catalogRef} type="file" accept=".sas7bcat" hidden onChange={(e) => (onCatalog(e.target.files?.[0]), (e.target.value = ''))} aria-label="Choose a format catalog (.sas7bcat)" />
-      <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.sav,.zsav,.dta,.sas7bdat,.jasp,text/csv" hidden onChange={(e) => onFile(e.target.files?.[0])} aria-label="Choose a data file" />
+      <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.sav,.zsav,.dta,.sas7bdat,.jasp,.json,text/csv" hidden onChange={(e) => onFile(e.target.files?.[0])} aria-label="Choose a data file" />
       {dialog?.startsWith('cases_') && dataset && (
         <DataSettingsDialog
           dataset={dataset}

@@ -1,0 +1,18 @@
+{
+  "case": "weighted-30",
+  "description": "Thirty sheets, ten right-or-wrong questions; q09 and q10 are worth two points.",
+  "sheets": 30,
+  "versions": 2,
+  "items": [
+    {"id": "q01", "possible": 1, "partial_credit": false},
+    {"id": "q02", "possible": 1, "partial_credit": false},
+    {"id": "q03", "possible": 1, "partial_credit": false},
+    {"id": "q04", "possible": 1, "partial_credit": false},
+    {"id": "q05", "possible": 1, "partial_credit": false},
+    {"id": "q06", "possible": 1, "partial_credit": false},
+    {"id": "q07", "possible": 1, "partial_credit": false},
+    {"id": "q08", "possible": 1, "partial_credit": false},
+    {"id": "q09", "possible": 2, "partial_credit": false},
+    {"id": "q10", "possible": 2, "partial_credit": false}
+  ]
+}

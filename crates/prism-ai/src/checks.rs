@@ -81,7 +81,7 @@ fn required(b: &ResultBundle) -> Vec<String> {
         "doe.effects" => vec!["lenth.pse"],
         "doe.rsm" => vec!["r2"],
         "doe.mixture" => vec!["r2"],
-        "irt.model" => vec!["logl", "bic"],
+        "irt.model" => vec!["logl", "bic", "m2", "m2.rmsea", "m2.srmsr"],
         "ts.acf" => vec!["lb.Q", "lb.p"],
         "ts.smooth" => vec![],
         "ts.arima" => vec!["sigma2", "aic"],
@@ -97,6 +97,8 @@ fn required(b: &ResultBundle) -> Vec<String> {
         "agree.kripp" => vec!["alpha"],
         "agree.icc" => vec!["icc", "F", "p"],
         "scale.reliability" => vec!["alpha", "alpha.ci.lower", "alpha.ci.upper"],
+        "scale.item_analysis" => vec!["reliability", "mean", "sd", "n"],
+        "eval.kirkpatrick" => vec!["learning.1.t", "learning.1.p", "learning.1.d"],
         _ => vec![],
     };
     let mut extra = Vec::new();

@@ -1,0 +1,14 @@
+{
+  "case": "small-ties",
+  "description": "Twelve sheets, six right-or-wrong questions; totals tie at both group boundaries.",
+  "sheets": 12,
+  "versions": 2,
+  "items": [
+    {"id": "q01", "possible": 1, "partial_credit": false},
+    {"id": "q02", "possible": 1, "partial_credit": false},
+    {"id": "q03", "possible": 1, "partial_credit": false},
+    {"id": "q04", "possible": 1, "partial_credit": false},
+    {"id": "q05", "possible": 1, "partial_credit": false},
+    {"id": "q06", "possible": 1, "partial_credit": false}
+  ]
+}

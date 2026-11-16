@@ -29,6 +29,14 @@ export async function chooseExportPath(format: 'docx' | 'html' | 'pdf' | 'r', su
   return picked ?? null;
 }
 
+/** Where to save the dataset itself (File › Export › Data). undefined in a browser, where the file is downloaded. */
+export async function chooseDataPath(ext: 'csv' | 'sav', suggested: string): Promise<string | null | undefined> {
+  if (!inTauri()) return undefined;
+  const { save } = await import('@tauri-apps/plugin-dialog');
+  const picked = await save({ defaultPath: `${suggested.replace(/[^A-Za-z0-9 \-_]+/g, ' ').replace(/\s+/g, ' ').trim() || 'data'}.${ext}`, filters: [{ name: ext === 'csv' ? 'CSV data' : 'SAV data file', extensions: [ext] }] });
+  return picked ?? null;
+}
+
 /** Where to save one figure or table. undefined in a browser, where the file is downloaded instead. */
 export async function chooseItemPath(ext: 'png' | 'svg' | 'csv', suggested: string): Promise<string | null | undefined> {
   if (!inTauri()) return undefined;

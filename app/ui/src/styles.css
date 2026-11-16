@@ -727,3 +727,25 @@ table.dg td.found{outline:2px solid #C86B00;outline-offset:-2px;background:#FFF4
 .itemtools .btn{padding:4px 10px;font-size:12px}
 .outputs{margin:6px 0 12px;padding-left:18px;display:flex;flex-direction:column;gap:6px}
 .outputs code{word-break:break-all}
+
+/* Suggested analyses for a file from another program, above Data View. */
+.offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 8px 12px 0;
+  padding: 10px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--pill);
+}
+.offer p {
+  margin: 0;
+  flex: 1 1 260px;
+}
+.offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

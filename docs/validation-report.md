@@ -1,9 +1,9 @@
 # Validation report
 
-Generated 2026-11-14 by `python tools/validate.py` at commit `fa60d3a` (engine 0.1.1).
+Generated 2026-11-15 by `python tools/validate.py` at commit `84f8d82` (engine 0.1.1).
 R 4.6.1.
 
-**152 of 152 reference tests passed**.
+**164 of 164 reference tests passed**.
 
 Each suite compares the engine with values computed independently: R scripts in `crates/prism-engine/tests/reference` (re-run them with `--regenerate`), and for SEM the product owner's reference packages. Tolerances are written in each test file: exact (to about 1e-8) where the reference is deterministic, and within the spread of repeated reference runs where it depends on random draws. The core methods shared with PrismQDA (t tests, ANOVA, correlation, regression, nonparametric tests and more) are validated against R in the `prismqda-stats` crate's own suite, and the engine's unit tests (`cargo test -p prism-engine --lib`) cover each analysis module.
 
@@ -13,11 +13,14 @@ Each suite compares the engine with values computed independently: R scripts in 
 |---|---|---|---|
 | `bmeta_reference` | `make_bmeta_reference.R` | bayesmeta 3.5, metafor 5.2.1 | 2/2 |
 | `boost_reference` | `make_boost_reference.R` | gbm 2.3.1 | 3/3 |
+| `c3_reference` | `make_reference.R` | — | 2/2 |
 | `descriptives_reference` | `make_descriptives_reference.R` | — | 4/4 |
 | `doe_reference` | `make_doe_reference.R` | AlgDesign 1.2.1.2, BsMD 2023.920, FrF2 2.3.5, rcdd 1.6.1, rsm 2.10.6 | 10/10 |
 | `forest_reference` | `make_forest_reference.R` | randomForest 4.7.1.2 | 3/3 |
 | `gee_reference` | `make_gee_reference.R` | MASS 7.3.65, geepack 1.3.13 | 4/4 |
 | `health` | — | — | 3/3 |
+| `irt_fit_reference` | `make_irt_fit_reference.R` | mirt 1.48, psych 2.6.9 | 2/2 |
+| `item_analysis_reference` | `make_item_analysis_reference.R` | psych 2.6.9 | 4/4 |
 | `jasp_import` | — | — | 3/3 |
 | `latent_reference` | `make_latent_reference.R` | mirt 1.48, poLCA 1.6.0.2 | 3/3 |
 | `lpa_reference` | `make_lpa_reference.R` | mclust 6.1.3 | 2/2 |
@@ -33,6 +36,7 @@ Each suite compares the engine with values computed independently: R scripts in 
 | `sem_reference` | `make_sem_reference.R` | lavaan 0.7.3, semTools 0.5.10 | 15/15 |
 | `spc_reference` | `make_spc_reference.R` | qcc 2.7 | 5/5 |
 | `statfile_reference` | `make_statfiles.R` | haven 2.5.5 | 5/5 |
+| `training_reference` | `make_training_reference.R` | — | 4/4 |
 | `transform_reference` | `make_transform_reference.R` | — | 4/4 |
 | `tree_reference` | `make_tree_reference.R` | MASS 7.3.65, rpart 4.1.27 | 4/4 |
 | `ttest_reference` | `make_ttest_reference.R` | — | 7/7 |
@@ -51,6 +55,13 @@ Gradient boosting against gbm (reference/boost_reference.json, made by make_boos
 - ✓ `bernoulli`
 - ✓ `squared_error`
 - ✓ `cross_validation_chooses_the_trees`
+
+### c3_reference
+
+The shared item-analysis test set (C3, openstage-core `testsets/item-analysis`, set 1.0.0, copied whole into reference/c3-item-analysis). Every figure in its reference.json was computed in base R from the case files alone (make_reference.R there). Each case's .pstat file, written to the `OpenAssess item results 1` profile, is opened as a project and run through Reliability (the listwise figures) and Item Analysis on the scored points (the figures OpenAssess also reports, here unrounded). Tolerances are the set's: 1e-9, and 1e-8 for Feldt's limits.
+
+- ✓ `the_two_correlations_are_labelled_as_the_set_asks`
+- ✓ `every_case_matches_the_shared_test_set`
 
 ### descriptives_reference
 
@@ -71,8 +82,8 @@ Designed experiments against R (reference/doe_reference.json, made by make_doe_r
 - ✓ `full_factorial_and_response_surface_designs`
 - ✓ `mixture_models`
 - ✓ `i_optimal_designs`
-- ✓ `response_surface`
 - ✓ `mixture_designs`
+- ✓ `response_surface`
 - ✓ `plackett_burman_designs`
 - ✓ `d_optimal_designs`
 
@@ -101,13 +112,29 @@ Data health and paste preview: every finding on a dataset built to have each pro
 - ✓ `fixes_preview_then_apply`
 - ✓ `every_finding_is_reported`
 
+### irt_fit_reference
+
+Item response model fit against R's mirt (reference/irt_fit_reference.json, made by make_irt_fit_reference.R): M2 (M2* for ordered items) with RMSEA and its 90% interval, SRMSR, TLI and CFI, and each item's S-X² with its df, RMSEA and p value, for the Rasch and 2PL models on LSAT7 and the graded response model on Science and on bfi3.  PrismStatistics's estimates agree with mirt's to about 1e-6 (latent_reference.rs), so the fit statistics, which are computed from them, are compared at 1e-4 relative; the ends of mirt's RMSEA interval come from R's uniroot, whose default tolerance is about 1e-4, so they are compared at 1e-3.
+
+- ✓ `rasch_and_2pl_fit_match_mirt`
+- ✓ `graded_model_fit_matches_mirt`
+
+### item_analysis_reference
+
+Test scoring and item analysis from letter answers against R (reference/item_analysis_reference.json, made by make_item_analysis_reference.R from item_letters.csv): every item and test figure from base R, and difficulty and the item-in-total point-biserial of the single-answer questions also from psych's score.multiple.choice.
+
+- ✓ `small_classes_are_flagged_and_not_split`
+- ✓ `keys_adjustments_and_answer_forms`
+- ✓ `single_answer_questions_match_psych`
+- ✓ `letters_scored_against_the_key_match_r`
+
 ### jasp_import
 
 JASP data import.  The committed test builds a small .jasp file the way JASP 0.19 lays one out (a zip holding `internal.sqlite`), with a labelled numeric category, a text category with a missing-value string, a scale variable with a title and an empty cell, and a filtered row. The second test runs on the product owner's JASP data library when it is present in `samples-private/` (never committed) and compares every file with the CSV copy beside it.
 
-- ✓ `local_data_library_matches_its_csv_copies`
 - ✓ `old_and_damaged_files_are_refused_plainly`
 - ✓ `reads_values_labels_and_missing_cells`
+- ✓ `local_data_library_matches_its_csv_copies`
 
 ### latent_reference
 
@@ -157,14 +184,14 @@ The analyses added after the preview, against R (reference/more_reference.json, 
 - ✓ `logistic_blocks_and_roc`
 - ✓ `logistic_regression`
 - ✓ `mcnemar_test`
-- ✓ `mediation_and_moderation`
 - ✓ `linear_mixed_models`
-- ✓ `noncentral_f_against_r`
-- ✓ `one_sided_tests`
 - ✓ `missing_patterns_and_multiple_imputation`
+- ✓ `noncentral_f_against_r`
+- ✓ `mediation_and_moderation`
 - ✓ `one_way_manova`
-- ✓ `ordinal_multinomial_and_count_regression`
+- ✓ `one_sided_tests`
 - ✓ `oneway_contrasts_and_adjusted_pairs`
+- ✓ `ordinal_multinomial_and_count_regression`
 - ✓ `partial_correlation`
 - ✓ `power_and_sample_size`
 - ✓ `rater_agreement`
@@ -227,9 +254,9 @@ Penalized regression with cross-validation against glmnet (reference/predict_ref
 The preview analyses against R (reference/preview_reference.json, made by make_preview_reference.R from preview.csv). The data have an empty cell or a user-missing code in most variables, and R gets the same exclusions written out by hand, so these tests check the case handling as well as the numbers.
 
 - ✓ `failures_say_why_and_never_interpret`
-- ✓ `correlations`
 - ✓ `crosstabs_and_chi_square`
 - ✓ `linear_regression`
+- ✓ `correlations`
 - ✓ `one_sample_t`
 - ✓ `rank_tests`
 - ✓ `paired_t`
@@ -280,9 +307,18 @@ Imports of .sav, .dta and .sas7bdat files against R's haven package (reference/s
 
 - ✓ `damaged_files_are_refused_plainly`
 - ✓ `sas_catalog_labels_attach_by_format_name`
-- ✓ `dta_matches_haven`
 - ✓ `sas7bdat_matches_haven`
+- ✓ `dta_matches_haven`
 - ✓ `sav_matches_haven_and_keeps_missing_settings`
+
+### training_reference
+
+The training evaluation report by Kirkpatrick level against R (reference/training_reference.json, made by make_training_reference.R with base R's t.test from the Training evaluation example data), and xAPI statements read as data.
+
+- ✓ `xapi_statements_open_as_data_without_identities`
+- ✓ `nothing_chosen_is_refused_in_words`
+- ✓ `learning_from_two_unlinked_groups_matches_welch`
+- ✓ `every_level_matches_r`
 
 ### transform_reference
 

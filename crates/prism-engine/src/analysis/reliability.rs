@@ -180,6 +180,10 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
         let key = format!("item.{}", i + 1);
         set_text(&mut b, format!("{key}.label"), labels[i].clone());
         set(&mut b, format!("{key}.r_it"), rit);
+        if let (Some(m), Some(sd)) = (d.mean, d.sd) {
+            set(&mut b, format!("{key}.mean"), m);
+            set(&mut b, format!("{key}.sd"), sd);
+        }
         if a_del.is_finite() {
             set(&mut b, format!("{key}.alpha_deleted"), a_del);
         }
@@ -192,7 +196,7 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
     b.tables.push(Table {
         id: "items".into(),
         title: "Item statistics".into(),
-        columns: vec!["Item".into(), "Mean".into(), "SD".into(), "Corrected item-total r".into(), "α if item deleted".into()],
+        columns: vec!["Item".into(), "Mean".into(), "SD".into(), super::item_analysis::CORRECTED_LABEL.into(), "α if item deleted".into()],
         rows,
         footnotes: if k == 2 { vec!["With two items, alpha if an item is deleted is not defined.".into()] } else { Vec::new() },
     });

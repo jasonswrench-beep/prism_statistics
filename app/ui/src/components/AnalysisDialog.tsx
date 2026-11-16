@@ -85,7 +85,7 @@ export function AnalysisDialog({ def, dataset, initial, onClose, onDone, onPaste
 
   // Hidden roles send nothing.
   const collected: Collected = { roles: Object.fromEntries(def.roles.map((r) => [r.key, shown.includes(r) ? (roles[r.key] ?? []) : []])), pairs, groups, references, options };
-  const firstProblem = problem(def, collected) ?? (pending[def.roles.find((r) => r.kind === 'pairs')?.key ?? ''] ? 'Choose the second variable of the pair.' : null);
+  const firstProblem = problem(def, collected) ?? (def.roles.some((r) => r.kind === 'pairs' && pending[r.key]) ? 'Choose the second variable of the pair.' : null);
   const codeError = needCodes.map((n) => codeErrors[n]).find(Boolean);
 
   const run = async () => {

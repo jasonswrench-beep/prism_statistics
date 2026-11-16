@@ -10,7 +10,7 @@ export interface MenuItem {
   onSelect?: () => void;
   disabled?: boolean;
   later?: boolean;
-  submenu?: MenuItem[];
+  submenu?: (MenuItem | '-')[];
 }
 
 export type MenuEntry = MenuItem | '-';

@@ -1,4 +1,4 @@
-//! The project file (`.pstat`, provisional extension).
+//! The project file (`.pstat`): format 1 as specified in PSTAT-1, revision 1.0 (openstage-core `specs/pstat`).
 //!
 //! A project is one file holding the dataset (values, variables, labels and missing codes), where the data came from,
 //! the operation record (every analysis and variable change, in order, with its settings), and the results with the
@@ -23,6 +23,8 @@ use crate::result::ResultBundle;
 pub const EXTENSION: &str = "pstat";
 pub const FORMAT: &str = "PrismStatistics project";
 pub const VERSION: u32 = 1;
+/// The layout OpenAssess writes for a class's scored answer sheets (PSTAT-1 section 7.1).
+pub const PROFILE_ITEM_RESULTS: &str = "OpenAssess item results 1";
 const ENTRY: &str = "project.json";
 
 /// Where the data came from.
@@ -107,12 +109,51 @@ pub struct Project {
     /// Select cases, Split file and Weight cases as they are now; each analysis records the settings it ran with.
     #[serde(default, skip_serializing_if = "crate::subset::DataSettings::is_empty")]
     pub data_settings: crate::subset::DataSettings,
+    /// The profile the file says it follows (PSTAT-1 section 7), kept when the project is saved again.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
 }
 
 impl Project {
     pub fn new(dataset: Dataset, source: Option<Source>) -> Self {
-        Project { format: FORMAT.into(), version: VERSION, app_version: env!("CARGO_PKG_VERSION").into(), dataset, source, operations: Vec::new(), results: Vec::new(), report: None, data_settings: Default::default() }
+        Project { format: FORMAT.into(), version: VERSION, app_version: env!("CARGO_PKG_VERSION").into(), dataset, source, operations: Vec::new(), results: Vec::new(), report: None, data_settings: Default::default(), profile: None }
     }
+}
+
+/// An analysis worth offering when a file is opened, with its dialog's starting arguments.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Suggestion {
+    pub dialog: String,
+    pub label: String,
+    pub args: Value,
+}
+
+/// What to offer for a file that follows a known profile, and a sentence saying what the file is. A results file from
+/// OpenAssess (profile 7.1) holds the points earned on q01, q02, … and the total; it gets item analysis and
+/// reliability on the questions and descriptives of the total.
+pub fn profile_suggestions(p: &Project) -> Option<(String, Vec<Suggestion>)> {
+    if p.profile.as_deref() != Some(PROFILE_ITEM_RESULTS) {
+        return None;
+    }
+    let questions: Vec<String> = p
+        .dataset
+        .variables
+        .iter()
+        .map(|v| v.name.clone())
+        .filter(|n| n.len() >= 3 && n.starts_with('q') && n[1..].chars().all(|c| c.is_ascii_digit()))
+        .collect();
+    if questions.len() < 2 {
+        return None;
+    }
+    let mut out = vec![
+        Suggestion { dialog: "item_analysis".into(), label: "Item analysis of the questions".into(), args: serde_json::json!({ "items": questions, "key": [], "scored": true, "group_fraction": 0.27 }) },
+        Suggestion { dialog: "reliability".into(), label: "Reliability of the questions".into(), args: serde_json::json!({ "items": questions }) },
+    ];
+    if p.dataset.find("total").is_some() {
+        out.push(Suggestion { dialog: "descriptives".into(), label: "Descriptives of the total".into(), args: serde_json::json!({ "variables": ["total"] }) });
+    }
+    let by = p.app_version.split_whitespace().next().filter(|w| !w.starts_with(|c: char| c.is_ascii_digit())).unwrap_or("OpenAssess");
+    Some((format!("This file is {by}'s scored results: {} questions, with the points each sheet earned.", questions.len()), out))
 }
 
 /// Writes the project to bytes (a zip archive holding `project.json`).
@@ -137,8 +178,7 @@ pub fn from_bytes(bytes: &[u8]) -> Result<Project> {
     }
     let version = head.get("version").and_then(Value::as_u64).unwrap_or(0);
     if version > VERSION as u64 {
-        let by = head.get("app_version").and_then(Value::as_str).unwrap_or("a newer version");
-        return Err(Error::Invalid(format!("This project was saved by PrismStatistics {by}, which is newer than this copy. Update PrismStatistics to open it.")));
+        return Err(Error::Invalid(newer_message(head.get("app_version").and_then(Value::as_str))));
     }
     let mut project: Project = serde_json::from_value(head).map_err(|e| Error::Invalid(format!("The project is damaged and could not be read: {e}")))?;
     // A hand-edited project could hold a dataset that doesn't add up; check it before anything uses it.
@@ -154,6 +194,17 @@ pub fn from_bytes(bytes: &[u8]) -> Result<Project> {
         });
     }
     Ok(project)
+}
+
+/// The refusal for a file in a newer format. PrismStatistics writes its bare version ("0.2.0"); another program writes
+/// its name first ("OpenAssess 0.1.0"), so the name is added only when the version starts with a digit.
+fn newer_message(app_version: Option<&str>) -> String {
+    let by = match app_version.map(str::trim).filter(|v| !v.is_empty()) {
+        Some(v) if v.starts_with(|c: char| c.is_ascii_digit()) => format!("PrismStatistics {v}"),
+        Some(v) => v.to_string(),
+        None => "a newer program".to_string(),
+    };
+    format!("This project was saved by {by} in a newer project format than this copy of PrismStatistics reads. Update PrismStatistics to open it.")
 }
 
 /// Saves transactionally: write a temporary file beside the target, flush it to disk, check it, then move it into place.

@@ -1,0 +1,23 @@
+{
+  "case": "class-40",
+  "description": "Forty sheets, fifteen right-or-wrong questions, four versions; q15 discriminates negatively.",
+  "sheets": 40,
+  "versions": 4,
+  "items": [
+    {"id": "q01", "possible": 1, "partial_credit": false},
+    {"id": "q02", "possible": 1, "partial_credit": false},
+    {"id": "q03", "possible": 1, "partial_credit": false},
+    {"id": "q04", "possible": 1, "partial_credit": false},
+    {"id": "q05", "possible": 1, "partial_credit": false},
+    {"id": "q06", "possible": 1, "partial_credit": false},
+    {"id": "q07", "possible": 1, "partial_credit": false},
+    {"id": "q08", "possible": 1, "partial_credit": false},
+    {"id": "q09", "possible": 1, "partial_credit": false},
+    {"id": "q10", "possible": 1, "partial_credit": false},
+    {"id": "q11", "possible": 1, "partial_credit": false},
+    {"id": "q12", "possible": 1, "partial_credit": false},
+    {"id": "q13", "possible": 1, "partial_credit": false},
+    {"id": "q14", "possible": 1, "partial_credit": false},
+    {"id": "q15", "possible": 1, "partial_credit": false}
+  ]
+}

@@ -135,7 +135,7 @@ Last updated: 2026-11-13.
 - [x] C4c Latent growth models
 - [x] C4d Multilevel SEM (two-level random-intercept models, as lavaan with cluster =)
 - [x] C4e Latent class and mixture models (latent class analysis of categorical indicators, as poLCA; latent profile analysis of continuous indicators, as mclust)
-- [x] C4f Item response theory (Rasch, 2PL, graded response) (item and M2 fit statistics are not computed)
+- [x] C4f Item response theory (Rasch, 2PL, graded response) (with M2 or M2*, RMSEA and its interval, SRMSR, TLI and CFI, and S-X² item fit, as mirt's M2() and itemfit(), since development list item F-6)
 - [x] C4g Bayesian SEM (NUTS with blavaan's default priors; one group, complete cases; LOOIC is not computed)
 
 ## Part D. Specialist methods
@@ -157,3 +157,13 @@ The parts that Parts C and D left out, in build order.
 - [x] E-6 Constrained mixture regions (lower limits by pseudo-components; extreme vertices of the region with upper and lower limits, with edge midpoints and the centroid, checked against cdd) and I-optimal designs (AlgDesign's I criterion)
 - [x] E-7 Bayesian random-effects meta-analysis (as bayesmeta, by numerical integration: uniform, half-normal or half-Cauchy prior for τ, uniform or normal for μ; posterior mode, median, mean, SD and shortest intervals for τ, μ, a new study's effect and each study's shrinkage estimate)
 - [x] E-8 Random forests and boosting (random forests as randomForest: regression and classification, out-of-bag error, permutation and impurity importance, exact for deterministic trees and within randomForest's run-to-run spread otherwise; gradient boosting as gbm: squared-error and Bernoulli loss, three-way splits for missing values, cross-validated number of trees, relative influence, exactly gbm's with bag fraction 1)
+
+## Part F. Development list, November 2026
+
+Items from the November 2026 development list, in its build order.
+
+- [x] F-2 Test scoring and classical item analysis (letter answers scored against a key, with two right answers, select-all, dropped and credited questions; or points already earned; difficulty, point-biserial with the total including the question and corrected item-total r, upper and lower 27 percent groups and D, options by score group, KR-20, KR-21 and SEM; as psych's score.multiple.choice and base R, and the shared C3 test set)
+- [x] F-6 Item fit and M2 for the item response models (M2 for right-or-wrong items and M2* for ordered ones, with RMSEA and its 90% interval, SRMSR, TLI and CFI against the independence model; S-X² for each item with mirt's pooling of sparse cells; as mirt's M2() and itemfit())
+- [x] F-7 Training evaluation by Kirkpatrick level (reaction ratings with percent favorable and alpha; learning by paired t test, d_z and Hake's normalized gain, or two groups by Welch's t test; behavior and results; xAPI statement import; a Training evaluation example and blank template; as base R's t.test)
+- [x] F-8 Export the dataset to CSV (codes or value labels) and .sav/.zsav with its codebook (read back exactly by the .sav reader)
+- [ ] F-9 A Mac build (the shell opens files from Finder and a build workflow exists; no build has been run or tried on a Mac)

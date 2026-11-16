@@ -228,6 +228,7 @@ export const QUESTIONS: Question[] = [
     ask: 'What do you want to check?',
     answers: [
       { label: 'Whether a scale’s items hang together', hint: 'internal consistency', next: 'reliability' },
+      { label: 'How each question on a test worked', hint: 'scoring, difficulty, discrimination, distractors', next: 'item_analysis' },
       { label: 'Which factors underlie a set of items', hint: 'exploring', next: 'factor' },
       { label: 'Whether items fit a factor structure you expect', hint: 'confirming', next: 'cfa' },
       { label: 'Agreement of two raters on categories', next: 'kappa' },
@@ -749,6 +750,16 @@ export const ENDINGS: Ending[] = [
     slots: [{ key: 'items', label: 'The scale’s items', many: true, numeric: true }],
     args: (v) => ({ items: v.get('items') }),
     also: ['factor', 'cfa'],
+  },
+  {
+    id: 'item_analysis',
+    dialog: 'item_analysis',
+    title: 'Test Scoring and Item Analysis',
+    why: 'It scores the answers against your key and reports each question’s difficulty, both point-biserials, the upper and lower 27 percent groups and how often each option was chosen, with KR-20 and KR-21 for the test.',
+    check: 'Type the key in the dialog, one entry per question in the same order as the items.',
+    slots: [{ key: 'items', label: 'The test’s questions', many: true, numeric: false }],
+    args: (v) => ({ items: v.get('items') }),
+    also: ['reliability', 'factor'],
   },
   {
     id: 'factor',
