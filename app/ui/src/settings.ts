@@ -13,9 +13,13 @@ export interface Settings {
   browseOnly: boolean;
   /** The confidence level new dialogs start with, in percent. */
   level: number;
+  /** Check for a newer version at most once a day (Help › Check for Updates). Off by default. */
+  updateDaily: boolean;
+  /** When the last check was made (ISO time), or '' for never. */
+  updateLastCheck: string;
 }
 
-export const DEFAULTS: Settings = { textSize: 100, valueLabels: false, browseOnly: true, level: 95 };
+export const DEFAULTS: Settings = { textSize: 100, valueLabels: false, browseOnly: true, level: 95, updateDaily: false, updateLastCheck: '' };
 
 const KEY = 'prismstatistics.settings';
 
@@ -35,6 +39,8 @@ export function parseSettings(text: string | null): Settings {
     valueLabels: typeof raw.valueLabels === 'boolean' ? raw.valueLabels : DEFAULTS.valueLabels,
     browseOnly: typeof raw.browseOnly === 'boolean' ? raw.browseOnly : DEFAULTS.browseOnly,
     level,
+    updateDaily: raw.updateDaily === true,
+    updateLastCheck: typeof raw.updateLastCheck === 'string' && !Number.isNaN(Date.parse(raw.updateLastCheck)) ? raw.updateLastCheck : '',
   };
 }
 

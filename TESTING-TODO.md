@@ -125,3 +125,14 @@ Deferred (2026-11-15): Mac builds come later, for every tool together. The two c
   `r` variables. Matching each student's before and after: Data › Add Variables on `student_id`, then the paired
   Learning boxes in Training Evaluation.
 
+## Check for updates
+
+- [x] **Make the update key.** Done 2026-11-15 (key id 4594909526164EFC); its public half is built in. Double-click `tools\make-update-key.bat`. It asks for a password you choose, keeps the
+  key in your profile folder (`.prismstatistics-update.key` and `.pub`, as Prism Reference Manager does), and puts its
+  public half into the program. **Back up both files and the password, offline**: losing them means installed copies can
+  never update again. Then tell me, and I'll commit the public key.
+- [ ] **The first release with the button** (0.2.1 or later) has to be installed by hand once, because 0.2.0 has none.
+  Build it with `--sign --updates` (it asks for the key's password) and publish it as a full release with `latest.json`
+  (`docs/UPDATES.md`). From the release after that, Check now offers updates and Return to the previous version works.
+- [ ] **Watch the installed-apps entry** at that upgrade: after 0.2.0 it still read 0.1.1.
+

@@ -1,6 +1,6 @@
 # Validation report
 
-Generated 2026-11-15 by `python tools/validate.py` at commit `24414bb` (engine 0.2.0).
+Generated 2026-11-15 by `python tools/validate.py` at commit `1b2615f` (engine 0.2.1).
 R 4.6.1.
 
 **167 of 167 reference tests passed**.
@@ -84,9 +84,9 @@ Designed experiments against R (reference/doe_reference.json, made by make_doe_r
 - ✓ `fractional_factorials`
 - ✓ `full_factorial_and_response_surface_designs`
 - ✓ `mixture_models`
+- ✓ `mixture_designs`
 - ✓ `i_optimal_designs`
 - ✓ `response_surface`
-- ✓ `mixture_designs`
 - ✓ `plackett_burman_designs`
 - ✓ `d_optimal_designs`
 
@@ -193,9 +193,9 @@ The analyses added after the preview, against R (reference/more_reference.json, 
 - ✓ `mediation_and_moderation`
 - ✓ `one_way_manova`
 - ✓ `oneway_contrasts_and_adjusted_pairs`
-- ✓ `one_sided_tests`
 - ✓ `ordinal_multinomial_and_count_regression`
 - ✓ `partial_correlation`
+- ✓ `one_sided_tests`
 - ✓ `power_and_sample_size`
 - ✓ `rater_agreement`
 - ✓ `repeated_measures_and_mixed_anova`
@@ -258,8 +258,8 @@ The preview analyses against R (reference/preview_reference.json, made by make_p
 
 - ✓ `failures_say_why_and_never_interpret`
 - ✓ `crosstabs_and_chi_square`
-- ✓ `correlations`
 - ✓ `linear_regression`
+- ✓ `correlations`
 - ✓ `one_sample_t`
 - ✓ `rank_tests`
 - ✓ `paired_t`
@@ -318,8 +318,8 @@ Imports of .sav, .dta and .sas7bdat files against R's haven package (reference/s
 
 The training evaluation report by Kirkpatrick level against R (reference/training_reference.json, made by make_training_reference.R with base R's t.test from the Training evaluation example data), and xAPI statements read as data.
 
-- ✓ `nothing_chosen_is_refused_in_words`
 - ✓ `xapi_statements_open_as_data_without_identities`
+- ✓ `nothing_chosen_is_refused_in_words`
 - ✓ `learning_from_two_unlinked_groups_matches_welch`
 - ✓ `every_level_matches_r`
 
@@ -328,8 +328,8 @@ The training evaluation report by Kirkpatrick level against R (reference/trainin
 Sort Cases, Rank Cases, Standardize, Reverse Score and Date and Time against R (reference/transform_reference.json, made by make_transform_reference.R from preview.csv). The data have user-missing codes, which R gets as NA.
 
 - ✓ `z_scores_and_reverse_scores_match_r`
-- ✓ `sorting_matches_r`
 - ✓ `ranks_match_r`
+- ✓ `sorting_matches_r`
 - ✓ `dates_match_r`
 
 ### tree_reference

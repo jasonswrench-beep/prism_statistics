@@ -7,6 +7,8 @@
 
 use std::sync::Mutex;
 
+mod updates;
+
 use prism_api::Session;
 use serde_json::Value;
 use tauri::{Manager, RunEvent, State};
@@ -18,9 +20,29 @@ struct Engine(Mutex<Session>);
 #[derive(Default)]
 struct Opened(Mutex<Option<String>>);
 
-/// Runs one engine command. Async so a long analysis never freezes the window.
+/// Runs one engine command. Async so a long analysis never freezes the window. The `update.` commands are the window's
+/// own (Help › Check for Updates, see `updates.rs`) and never reach the engine, which makes no network connection.
 #[tauri::command]
-async fn call(cmd: String, args: Option<Value>, engine: State<'_, Engine>) -> Result<Value, String> {
+async fn call(app: tauri::AppHandle, cmd: String, args: Option<Value>, engine: State<'_, Engine>) -> Result<Value, String> {
+    if let Some(what) = cmd.strip_prefix("update.") {
+        let feed = updates::Feed::built_in();
+        let back = updates::Feed::rollback();
+        return match what {
+            "state" => Ok(updates::state(&app, &feed, &back)),
+            "rollback_check" => updates::rollback(&app, &back, false, || {}).await,
+            "rollback" => {
+                let handle = app.clone();
+                updates::rollback(&app, &back, true, move || autosave(&handle)).await
+            }
+            "check" => updates::check(&app, &feed).await,
+            "install" => {
+                let handle = app.clone();
+                // Unsaved work is copied to the recovery folder before the installer replaces the program.
+                updates::install(&app, &feed, move || autosave(&handle)).await
+            }
+            other => Err(format!("There is no command update.{other}.")),
+        };
+    }
     let args = args.unwrap_or(Value::Null);
     // Progress and Cancel answer at once, without waiting for the analysis that holds the engine.
     if let Some(answer) = prism_api::recovery::job_command(&cmd, &args) {
@@ -75,6 +97,7 @@ fn main() {
     }
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             // Unsaved work is copied to the app's own data folder every half minute, for recovery after a crash.
             let session = match app.path().app_local_data_dir() {

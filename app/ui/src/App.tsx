@@ -7,7 +7,9 @@ import { call, inTauri } from './bridge';
 import { DataView, type FindRequest } from './components/DataView';
 import { SettingsDialog } from './components/SettingsDialog';
 import { ExamplesDialog } from './components/ExamplesDialog';
-import { getSettings, onSettings } from './settings';
+import { UpdatesDialog } from './components/UpdatesDialog';
+import { getSettings, onSettings, saveSettings } from './settings';
+import { dailyCheckDue } from './updates';
 import { AnalysisDialog } from './components/AnalysisDialog';
 import { SemBuilder } from './components/SemBuilder';
 import { CfaDialog } from './components/CfaDialog';
@@ -353,6 +355,28 @@ export function App() {
       .catch(() => undefined);
   }, []);
 
+  // Help › Check for Updates' once-a-day check, if the person turned it on: at start-up and then hourly while the window
+  // is open, it asks the feed when a day has passed since the last check and only announces a newer version.
+  useEffect(() => {
+    if (!inTauri()) return;
+    const tick = async () => {
+      const s = getSettings();
+      if (!dailyCheckDue(s.updateDaily, s.updateLastCheck)) return;
+      try {
+        const st = await call<{ set_up: boolean }>('update.state');
+        if (!st.set_up) return;
+        const r = await call<{ available: boolean; version?: string }>('update.check');
+        saveSettings({ ...getSettings(), updateLastCheck: new Date().toISOString() });
+        if (r.available) say(`PrismStatistics ${r.version} is available. Help › Check for Updates to install it.`);
+      } catch {
+        // A daily check that fails says nothing; Help › Check for Updates shows why when the person asks.
+      }
+    };
+    void tick();
+    const timer = window.setInterval(tick, 60 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [say]);
+
   // A project double-clicked in File Explorer arrives as the program's argument; one opened from the macOS Finder
   // arrives as an event, also while the program is running.
   useEffect(() => {
@@ -467,6 +491,7 @@ export function App() {
         { label: 'Worked Examples', onSelect: () => setHelp('two-groups') },
         { label: 'Glossary', onSelect: () => setHelp('glossary') },
         { label: 'Saving, Backups and Recovery', onSelect: () => setHelp('saving') },
+        { label: 'Check for Updates…', onSelect: () => setDialog('updates') },
         { label: 'About PrismStatistics', onSelect: () => setDialog('about') },
       ],
     },
@@ -849,6 +874,7 @@ export function App() {
           onSave={() => ((unsaved.resolve as (v: boolean | 'save') => void)('save'), setUnsaved(null))}
         />
       )}
+      {dialog === 'updates' && <UpdatesDialog onClose={() => setDialog(null)} />}
       {dialog === 'about' && (
         <div className="overlay open" onKeyDown={(e) => e.key === 'Escape' && setDialog(null)}>
           <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" style={{ width: 'min(460px,100%)' }}>

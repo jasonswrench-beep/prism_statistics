@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 (teaching preview)
+
+Adds Help › Check for Updates. Install this version by hand once; from here on, PrismStatistics can update itself when you choose to. The installer and the program are code-signed.
+
+### Updates
+
+- **Help › Check for Updates**, as in Prism Reference Manager: **Check now** asks the newest full release on the public repository whether it is newer, and an optional **Check for updates once a day** (off by default) only announces one. **Download and install** checks the installer's signature against the key built into the program, copies unsaved work to the recovery folder, then runs it; **Return to the previous version** does the same for the release before. Nothing is downloaded or installed without your go-ahead (`docs/UPDATES.md`).
+
 ## 0.2.0 (teaching preview)
 
 Scoring tests and analysing their items, fit statistics for item response models, evaluating training by Kirkpatrick level, exporting the data itself, and the shared file formats with OpenAssess and PrismQDA, with faster handling of large data and full keyboard use of the dialogs. The installer and the program are code-signed.

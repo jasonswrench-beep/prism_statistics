@@ -749,3 +749,12 @@ table.dg td.found{outline:2px solid #C86B00;outline-offset:-2px;background:#FFF4
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* Release notes in Help > Check for Updates. */
+.updatenotes {
+  white-space: pre-wrap;
+  max-height: 240px;
+  overflow: auto;
+  font: inherit;
+  margin: 6px 0 0;
+}

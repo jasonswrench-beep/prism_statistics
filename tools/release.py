@@ -6,6 +6,14 @@
     python tools/release.py build --sign      # the same, with the program and installer signed and timestamped
     python tools/release.py build --core pstat-v1.2.0            # also run the shared core's checks on the build
     python tools/release.py build --core <openstage-core clone>  # the same, from a clone
+    python tools/release.py build --sign --updates   # also sign the installer for Help > Check for Updates and write latest.json
+
+`--updates` (docs/UPDATES.md) needs the update key that tools/make-update-key.bat made: %USERPROFILE%\.prismstatistics-update.key
+(or TAURI_SIGNING_PRIVATE_KEY_PATH), with its password from TAURI_SIGNING_PRIVATE_KEY_PASSWORD or asked for. It stops before
+building when the key is missing or when PUBKEY in app/src-tauri/src/updates.rs is empty or is not the key's public half (such a
+build could never update anything). After the code signature, it signs the installer with the update key (the update signature
+covers the exact bytes people download) and writes release/<version>/latest.json, plus previous.json (the outgoing release's
+latest.json, for Return to the previous version). Attach both to the release v<version> with the installer.
 
 `--core` names a release tag of the public openstage-core repository (its source is fetched from GitHub into a
 temporary folder) or a clone of it. With it, the build also runs the core's .pstat reader conformance check
@@ -176,7 +184,59 @@ def core_at_tag(tag):
     return os.path.join(dest, tops[0])
 
 
-def build(sign=False, core=None):
+UPDATES_RS = os.path.join(ROOT, "app", "src-tauri", "src", "updates.rs")
+PUBLIC_REPO = "jasonswrench-beep/prism_statistics"
+
+
+def update_key():
+    """The update key's file, checked against the public key built into the program; stops the build when anything is off."""
+    key = os.environ.get("TAURI_SIGNING_PRIVATE_KEY_PATH") or os.path.join(os.path.expanduser("~"), ".prismstatistics-update.key")
+    if not os.path.isfile(key):
+        sys.exit(f"--updates: there is no update key at {key} (tools/make-update-key.bat makes it).")
+    if not os.path.isfile(key + ".pub"):
+        sys.exit(f"--updates: the public half of the update key is not beside it ({key}.pub).")
+    m = re.search(r'pub const PUBKEY: &str = "([^"]*)";', read(UPDATES_RS))
+    if not m or not m.group(1):
+        sys.exit("--updates: PUBKEY in app/src-tauri/src/updates.rs is empty, so the program would not check for updates (tools/make-update-key.ps1 puts it there).")
+    if m.group(1) != read(key + ".pub").strip():
+        sys.exit("--updates: PUBKEY in updates.rs is not the public half of the update key; a program built like that would refuse every update.")
+    if not os.environ.get("TAURI_SIGNING_PRIVATE_KEY_PASSWORD"):
+        import getpass
+        os.environ["TAURI_SIGNING_PRIVATE_KEY_PASSWORD"] = getpass.getpass("Password for the update key (Enter if it has none): ")
+    return key
+
+
+def update_feed(exe, key, version, release_notes):
+    """Signs the finished installer with the update key and writes latest.json beside it."""
+    cli = os.path.join(ROOT, "app", "ui", "node_modules", ".bin", "tauri.cmd" if os.name == "nt" else "tauri")
+    step("Update signature", [cli, "signer", "sign", "-f", key, exe])
+    sig = exe + ".sig"
+    if not os.path.isfile(sig):
+        sys.exit("The update signature was not written.")
+    manifest = {
+        "version": version,
+        "notes": release_notes.strip(),
+        "pub_date": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "platforms": {"windows-x86_64": {"signature": read(sig).strip(), "url": f"https://github.com/{PUBLIC_REPO}/releases/download/v{version}/{os.path.basename(exe)}"}},
+    }
+    feed = os.path.join(os.path.dirname(exe), "latest.json")
+    write(feed, json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+    # The outgoing release's feed becomes previous.json, which Return to the previous version reads.
+    previous = os.path.join(os.path.dirname(exe), "previous.json")
+    if os.path.exists(previous):
+        os.remove(previous)
+    try:
+        with urllib.request.urlopen(f"https://github.com/{PUBLIC_REPO}/releases/latest/download/latest.json", timeout=30) as r:
+            old = json.loads(r.read().decode("utf-8"))
+        if old.get("version") and old["version"] != version:
+            write(previous, json.dumps(old, indent=2, ensure_ascii=False) + "\n")
+            print(f"previous.json points at version {old['version']}.")
+    except Exception:
+        print("No published latest.json yet, so no previous.json (normal for the first release with updates).")
+    print(f"Wrote {feed}: attach it (and previous.json, if written) to the release v{version} with the installer (docs/UPDATES.md).")
+
+
+def build(sign=False, core=None, updates=False):
     version = check()
     conf = json.loads(read(TAURI_CONF))
     win = conf.get("bundle", {}).get("windows", {})
@@ -184,6 +244,9 @@ def build(sign=False, core=None):
         sys.exit("tauri.conf.json has a signing setting. Signing is chosen per build with --sign, not kept in the configuration.")
     if sign:
         step("Signing: checking everything it needs", [sys.executable, "-I", SIGN_SCRIPT, "--ready"])
+    key = update_key() if updates else None
+    if updates and not sign:
+        sys.exit("--updates needs --sign: an update installer is code-signed too.")
     release_notes = notes(version)
     # Not a stop: it needs GitHub, and a change there is read and adopted by hand (decision D03).
     drift = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "check_shared_stats.py")])
@@ -214,6 +277,8 @@ def build(sign=False, core=None):
     shutil.copy2(os.path.join(bundle, found[0]), exe)
     if sign:
         step("Signing: checking the installer", [sys.executable, "-I", SIGN_SCRIPT, "--check", exe])
+    if key:
+        update_feed(exe, key, version, release_notes)
     digest = hashlib.sha256(open(exe, "rb").read()).hexdigest()
     write(os.path.join(out, "SHA256SUMS.txt"), f"{digest}  {found[0]}\n")
     signed_note = "The installer and the program are code-signed and timestamped." if sign else "This build is not code-signed: Windows shows \"Windows protected your PC\"; choose More info, then Run anyway."
@@ -234,8 +299,9 @@ if __name__ == "__main__":
     else:
         extra = sys.argv[2:]
         sign = "--sign" in extra
+        updates = "--updates" in extra
         core = None
-        rest = [a for a in extra if a != "--sign"]
+        rest = [a for a in extra if a not in ("--sign", "--updates")]
         if rest[:1] == ["--core"] and len(rest) == 2:
             if os.path.isdir(rest[1]):
                 core = os.path.abspath(rest[1])
@@ -244,5 +310,5 @@ if __name__ == "__main__":
             else:
                 core = core_at_tag(rest[1])
         elif rest:
-            sys.exit("build takes --sign and --core <core release tag or clone>, e.g. python tools/release.py build --core pstat-v1.2.0")
-        build(sign=sign, core=core)
+            sys.exit("build takes --sign, --updates and --core <core release tag or clone>, e.g. python tools/release.py build --sign --updates --core pstat-v1.2.0")
+        build(sign=sign, core=core, updates=updates)

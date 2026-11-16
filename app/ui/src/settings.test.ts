@@ -9,7 +9,7 @@ test('stored settings are read back, and anything unusable falls back to the def
   assert.deepEqual(parseSettings(null), DEFAULTS);
   assert.deepEqual(parseSettings('not json'), DEFAULTS);
   assert.deepEqual(parseSettings('[1,2]'), DEFAULTS);
-  assert.deepEqual(parseSettings(JSON.stringify({ textSize: 130, valueLabels: true, browseOnly: false, level: 99, extra: 1 })), { textSize: 130, valueLabels: true, browseOnly: false, level: 99 });
+  assert.deepEqual(parseSettings(JSON.stringify({ textSize: 130, valueLabels: true, browseOnly: false, level: 99, extra: 1 })), { textSize: 130, valueLabels: true, browseOnly: false, level: 99, updateDaily: false, updateLastCheck: '' });
   assert.deepEqual(parseSettings(JSON.stringify({ textSize: 200, valueLabels: 'yes', level: 100 })), DEFAULTS);
   assert.equal(parseSettings(JSON.stringify({ level: 49.9 })).level, 95);
   assert.equal(parseSettings(JSON.stringify({ level: 90 })).level, 90);

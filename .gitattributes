@@ -1,1 +1,2 @@
 crates/prism-engine/tests/reference/c3-item-analysis/** -text
+app/src-tauri/tests/fixtures/** -text
