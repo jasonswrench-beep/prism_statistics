@@ -1,4 +1,4 @@
-//! The project file (`.pstat`): format 1 as specified in PSTAT-1, revision 1.1 (openstage-core `specs/pstat`).
+//! The project file (`.pstat`): format 1 as specified in PSTAT-1, revision 1.3 (openstage-core `specs/pstat`).
 //!
 //! A project is one file holding the dataset (values, variables, labels and missing codes), where the data came from,
 //! the operation record (every analysis and variable change, in order, with its settings), and the results with the
@@ -156,7 +156,8 @@ pub struct Suggestion {
 ///
 /// - OpenAssess's results (profiles 1 and 2, PSTAT-1 sections 7.1 and 7.2): item analysis and reliability on the
 ///   points (`q01`, …) and descriptives of `total`; with profile 2, also item analysis of the letters marked (`r01`, …)
-///   scored with the file's own key, which gives the answers chosen by score group.
+///   scored with the file's own key, which gives the answers chosen by score group; and, when `assessment.json` gives
+///   the questions' details, item analysis with subscores by each detail that splits them (objective, chapter, ...).
 /// - PrismQDA's case table (section 7.3): how often each code was applied (frequencies of the `_present` variables,
 ///   descriptives of the `_count` ones), and a pointer to Add Variables to match it with survey data on `case_id`.
 pub fn profile_suggestions(p: &Project) -> Option<(String, Vec<Suggestion>)> {
@@ -184,11 +185,29 @@ pub fn profile_suggestions(p: &Project) -> Option<(String, Vec<Suggestion>)> {
                     about += ", the letters marked and the key";
                     if !points_only.is_empty() {
                         let list = points_only.iter().map(u64::to_string).collect::<Vec<_>>().join(", ");
-                        about += &if points_only.len() == 1 { format!(" (question {list} is analysed from its points only: its key differs by version or gives partial credit)") } else { format!(" (questions {list} are analysed from their points only: their keys differ by version or give partial credit)") };
+                        about += &if points_only.len() == 1 { format!(" (question {list} is analysed from its points only: it is scored by a person, or its key differs by version or gives partial credit)") } else { format!(" (questions {list} are analysed from their points only: they are scored by a person, or their keys differ by version or give partial credit)") };
                     }
                 }
             }
             out.push(Suggestion { dialog: "item_analysis".into(), label: "Item analysis of the points".into(), args: serde_json::json!({ "items": questions, "key": [], "scored": true, "group_fraction": 0.27 }) });
+            // The questions' details (objective, chapter, Bloom level, ...), when the file has them and they split the
+            // questions into at least two groups: subscores by each.
+            if let Some(part) = p.part_json() {
+                for (detail, name) in crate::analysis::item_analysis::DETAILS {
+                    let values = crate::analysis::item_analysis::details_from_assessment(&p.dataset, &part, detail);
+                    let groups: Vec<String> = questions.iter().map(|q| values.get(q).cloned().unwrap_or_default()).collect();
+                    let mut distinct: Vec<&String> = groups.iter().filter(|g| !g.is_empty()).collect();
+                    distinct.sort();
+                    distinct.dedup();
+                    if distinct.len() >= 2 {
+                        out.push(Suggestion {
+                            dialog: "item_analysis".into(),
+                            label: format!("Item analysis of the points, with subscores by {}", name.to_lowercase()),
+                            args: serde_json::json!({ "items": questions, "key": [], "scored": true, "group_fraction": 0.27, "groups": groups, "group_name": name }),
+                        });
+                    }
+                }
+            }
             out.push(Suggestion { dialog: "reliability".into(), label: "Reliability of the questions".into(), args: serde_json::json!({ "items": questions }) });
             if p.dataset.find("total").is_some() {
                 out.push(Suggestion { dialog: "descriptives".into(), label: "Descriptives of the total".into(), args: serde_json::json!({ "variables": ["total"] }) });

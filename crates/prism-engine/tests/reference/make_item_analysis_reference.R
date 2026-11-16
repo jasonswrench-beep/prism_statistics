@@ -63,6 +63,20 @@ for (j in 1:k) {
   }
 }
 
+# Subscores by a label per question (chapters "1", "2", "3", "10"; q10 and q12 in none; "3" has one item, so no
+# reliability), listed in natural order, as item_analysis.rs does.
+chap <- c("2", "2", "2", "10", "10", "10", "10", "1", "1", "", "3", "")
+for (j in seq_along(c("1", "2", "3", "10"))) {
+  g <- c("1", "2", "3", "10")[j]
+  cols <- which(chap == g)
+  Y <- X[, cols, drop = FALSE]; s <- rowSums(Y); kk <- length(cols)
+  key_j <- paste0("subscore.", j)
+  put(paste0(key_j, ".k"), kk); put(paste0(key_j, ".possible"), kk)
+  put(paste0(key_j, ".mean"), mean(s)); put(paste0(key_j, ".sd"), sd(s)); put(paste0(key_j, ".mean.p"), mean(s) / kk)
+  if (kk > 1) put(paste0(key_j, ".reliability"), kk / (kk - 1) * (1 - sum(apply(Y, 2, varn)) / varn(s)))
+}
+put("subscores", 4)
+
 # psych's own scoring of the single-answer questions (all but q03 and q10), on the same sheets.
 single <- setdiff(1:k, c(3, 10))
 num <- matrix(match(R[, single], LETTERS[1:4]), n)

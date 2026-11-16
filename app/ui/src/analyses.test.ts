@@ -111,6 +111,12 @@ test('an item analysis of points already earned, with points taken from the data
   assert.deepEqual(def.build(restore(def, args)), args);
 });
 
+test('an item analysis with subscores keeps each item’s label, an empty one included', () => {
+  const def = ANALYSES.item_analysis;
+  const args = { items: ['q01', 'q02', 'q03'], key: [], scored: true, group_fraction: 0.27, groups: ['Apply', '', 'Remember'], group_name: 'Bloom level' };
+  assert.deepEqual(def.build(restore(def, args)), args);
+});
+
 test('the answer key parses as the engine parses it', () => {
   assert.deepEqual(
     parseKey('b; A/c  ca - *').map((k) => [k.correct, k.adjustment]),

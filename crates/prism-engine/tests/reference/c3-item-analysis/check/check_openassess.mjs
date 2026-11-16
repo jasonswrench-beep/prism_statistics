@@ -37,7 +37,8 @@ function questionOf(it) {
   return { id: it.id, type: "multipleChoice", points: it.possible, body: { shuffle: false, options } };
 }
 /** An answer cell as OpenAssess's scoring keeps it: the bank's ids of the options marked. */
-const markedOf = (it, answer) => (it.type === "true_false" ? [...answer].map((l) => (l === "A" ? "true" : "false")) : [...answer]);
+// "~" (marks never settled, PSTAT-1 1.3) marks nothing.
+const markedOf = (it, answer) => (answer === "~" ? [] : it.type === "true_false" ? [...answer].map((l) => (l === "A" ? "true" : "false")) : [...answer]);
 
 for (const [name, want] of Object.entries(ref.cases)) {
   const { info, rows, answers } = readCase(name);

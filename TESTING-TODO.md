@@ -131,8 +131,20 @@ Deferred (2026-11-15): Mac builds come later, for every tool together. The two c
   key in your profile folder (`.prismstatistics-update.key` and `.pub`, as Prism Reference Manager does), and puts its
   public half into the program. **Back up both files and the password, offline**: losing them means installed copies can
   never update again. Then tell me, and I'll commit the public key.
-- [ ] **The first release with the button** (0.2.1 or later) has to be installed by hand once, because 0.2.0 has none.
+- [x] **The first release with the button** (0.2.1, installed by hand on 2026-11-16) has to be installed by hand once, because 0.2.0 has none.
   Build it with `--sign --updates` (it asks for the key's password) and publish it as a full release with `latest.json`
   (`docs/UPDATES.md`). From the release after that, Check now offers updates and Return to the previous version works.
 - [ ] **Watch the installed-apps entry** at that upgrade: after 0.2.0 it still read 0.1.1.
+- [ ] **The first update through the button**: when 0.2.2 is published, Help › Check for Updates › Check now in 0.2.1
+  should offer it; install it that way, check About, then try Return to the previous version (it should offer 0.2.1).
 
+## After 0.2.1
+
+- [ ] **Subscores in the window.** Open `crates/prism-engine/tests/reference/item_letters.csv`, run Test Scoring and
+  Item Analysis on q01 to q12 with the key `B, A, D/B, C, B, A, C, D, B, AC, C, D`, and in **Subscores: a label for
+  each item** type `2; 2; 2; 10; 10; 10; 10; 1; 1; ; 3;` with **The labels are** `Chapter`. The table "Subscores by
+  chapter" should list 1, 2, 3, 10 in that order, chapter 3 with no reliability, and a note that q10 and q12 have no
+  chapter. A wrong number of labels should be refused with a sentence saying so.
+- [ ] **Question details from OpenAssess.** When OpenAssess writes a results file whose questions have a chapter,
+  objective or Bloom level, open it: the banner should offer "Item analysis of the points, with subscores by …" for
+  each. (The core's sample files leave the details empty, so only the tests have tried this so far.)

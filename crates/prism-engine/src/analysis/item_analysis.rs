@@ -4,7 +4,9 @@
 //! Each item's response (a letter, letters for a select-all item, or a numeric code) is compared with the key. A key
 //! entry lists the answers that earn the item's points: `B`, or `B/D` when two answers are right, or `AC` for a
 //! select-all item that needs both A and C. An item can also be dropped (left out of every figure) or credited to
-//! everyone. A blank response earns nothing and is counted as a blank; a case with every item blank is left out.
+//! everyone. A blank response earns nothing and is counted as a blank; a case with every item blank is left out. On an
+//! item credited to everyone a blank is credited, never counted blank (PSTAT-1 revision 1.3): its sheets go in a row
+//! `credited` among the options.
 //!
 //! Reported, and checked against R (psych's score.multiple.choice and alpha, and base R for the rest):
 //! - difficulty, the share of the item's points earned;
@@ -15,6 +17,10 @@
 //! - each option's count overall and in the upper, middle and lower groups, with blanks;
 //! - KR-20 (Cronbach's alpha when items carry different points), KR-21 for right-or-wrong items of equal weight, the
 //!   test mean and SD, and the standard error of measurement.
+//!
+//! - with `groups` (one label per item, such as each question's objective, chapter or Bloom level from OpenAssess's
+//!   `assessment.json`), a subscore for each group: its items, points possible, mean, SD, mean share of the points
+//!   and reliability (KR-20 or alpha of the group's items).
 //!
 //! KR-21 and the variances in KR-20 use N as the divisor, describing the class tested; KR-20 is the same with either
 //! divisor. The SD reported for the total uses N − 1, as every other PrismStatistics table does.
@@ -77,6 +83,92 @@ pub struct Spec {
     /// The share of cases in each of the upper and lower groups.
     #[serde(default = "default_fraction")]
     pub group_fraction: f64,
+    /// One label per item, in the same order, to report a subscore for each label (an empty label: the item is in no
+    /// group). Empty: no subscores.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub groups: Vec<String>,
+    /// What the labels are, for the table's title and first column ("Objective", "Chapter", "Bloom level").
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub group_name: String,
+}
+
+/// The question details OpenAssess keeps in `assessment.json` (PSTAT-1 section 7.2) that items can be grouped by:
+/// the member of `details` and its name in a table.
+pub const DETAILS: [(&str, &str); 5] = [("objective", "Objective"), ("chapter", "Chapter"), ("section", "Section"), ("bloom", "Bloom level"), ("difficulty", "Difficulty level")];
+
+const BLOOM: [&str; 6] = ["remember", "understand", "apply", "analyze", "evaluate", "create"];
+const LEVELS: [&str; 3] = ["easy", "medium", "hard"];
+
+/// Each question's value of one detail (`objective`, `chapter`, `bloom`, ...) from `assessment.json`, by the names of
+/// both its points variable and its answer variable, so it serves either analysis. Bloom levels and difficulty levels
+/// start with a capital ("Apply", "Hard"); the others are kept as written.
+pub fn details_from_assessment(ds: &Dataset, part: &serde_json::Value, detail: &str) -> std::collections::BTreeMap<String, String> {
+    let name_of = |id: &serde_json::Value| id.as_u64().and_then(|id| ds.variables.iter().find(|v| u64::from(v.id) == id)).map(|v| v.name.clone());
+    let mut out = std::collections::BTreeMap::new();
+    for q in part["questions"].as_array().into_iter().flatten() {
+        let value = match &q["details"][detail] {
+            serde_json::Value::String(s) => s.trim().to_string(),
+            serde_json::Value::Number(n) => n.to_string(),
+            _ => continue,
+        };
+        if value.is_empty() {
+            continue;
+        }
+        let value = if detail == "bloom" || detail == "difficulty" {
+            let mut c = value.chars();
+            c.next().map(|f| f.to_uppercase().chain(c).collect()).unwrap_or_default()
+        } else {
+            value
+        };
+        for member in ["points_variable", "answer_variable"] {
+            if let Some(name) = name_of(&q[member]) {
+                out.insert(name, value.clone());
+            }
+        }
+    }
+    out
+}
+
+/// The order groups are listed in: Bloom's levels and easy, medium, hard in their own order; anything else in
+/// natural order, so chapter 2 comes before chapter 10.
+fn group_order(labels: &mut [String]) {
+    let rank = |list: &[&str], s: &str| list.iter().position(|w| w.eq_ignore_ascii_case(s));
+    for list in [&BLOOM[..], &LEVELS[..]] {
+        if labels.iter().all(|l| rank(list, l).is_some()) {
+            labels.sort_by_key(|l| rank(list, l));
+            return;
+        }
+    }
+    labels.sort_by(|a, z| natural(a, z));
+}
+
+/// Compares text with its runs of digits read as numbers ("2.10" after "2.9", "Chapter 10" after "Chapter 2").
+fn natural(a: &str, z: &str) -> std::cmp::Ordering {
+    fn parts(s: &str) -> Vec<(bool, String)> {
+        let mut out: Vec<(bool, String)> = Vec::new();
+        for c in s.chars() {
+            let d = c.is_ascii_digit();
+            match out.last_mut() {
+                Some((was, t)) if *was == d => t.push(c),
+                _ => out.push((d, c.to_string())),
+            }
+        }
+        out
+    }
+    let (pa, pz) = (parts(a), parts(z));
+    for (x, y) in pa.iter().zip(&pz) {
+        let o = match (x, y) {
+            ((true, x), (true, y)) => {
+                let (x, y) = (x.trim_start_matches('0'), y.trim_start_matches('0'));
+                x.len().cmp(&y.len()).then_with(|| x.cmp(y))
+            }
+            ((_, x), (_, y)) => x.to_lowercase().cmp(&y.to_lowercase()),
+        };
+        if o != std::cmp::Ordering::Equal {
+            return o;
+        }
+    }
+    pa.len().cmp(&pz.len()).then_with(|| a.cmp(z))
 }
 
 /// Parses a key typed as text: entries separated by commas or spaces, alternatives within an entry by "/" or "|".
@@ -222,6 +314,9 @@ pub fn run(ds: &Dataset, spec: &Spec) -> Result<ResultBundle> {
         if spec.items[..i].iter().any(|b| ds.find(a) == ds.find(b)) {
             return Err(Error::Invalid(format!("{a} is listed twice.")));
         }
+    }
+    if !spec.groups.is_empty() && spec.groups.len() != spec.items.len() {
+        return Err(Error::Invalid(format!("Give one group label for each item: there are {} labels for {} items.", spec.groups.len(), spec.items.len())));
     }
     if !(spec.group_fraction > 0.0 && spec.group_fraction <= 0.5) {
         return Err(Error::Invalid("The upper and lower groups must each be more than 0 and at most half of the cases.".into()));
@@ -431,7 +526,9 @@ fn report(
         let rpb_c = pearson(&earned[i], &rest);
         let others: Vec<&Vec<f64>> = live.iter().filter(|&&j| j != i).map(|&j| &earned[j]).collect();
         let a_del = if k > 2 { alpha(&others) } else { f64::NAN };
-        let blanks = letters.as_ref().map(|l| l.used.iter().filter(|&&r| l.answers[i][r].is_none()).count());
+        // A question credited to everyone is never counted blank (PSTAT-1 1.3, "Counting the answers"): an empty answer
+        // there is credited, whether left blank or never settled.
+        let blanks = letters.as_ref().map(|l| if adjustments[i] == Adjustment::CreditAll { 0 } else { l.used.iter().filter(|&&r| l.answers[i][r].is_none()).count() });
         let key_text = match (&letters, adjustments[i]) {
             (_, Adjustment::CreditAll) => "(all)".to_string(),
             (Some(l), _) => l.keys[i].join("/"),
@@ -509,6 +606,8 @@ fn report(
         },
     });
 
+    subscores(&mut b, spec, labels, live, earned, points, right_or_wrong);
+
     // Options by score group, when there are answers to count.
     let mut upside_down = Vec::new();
     let mut unused = Vec::new();
@@ -547,7 +646,8 @@ fn report(
                     continue;
                 }
                 let right = o.is_some_and(|o| l.keys[i].contains(o));
-                let name = o.cloned().unwrap_or_else(|| "blank".into());
+                let credited = o.is_none() && adjustments[i] == Adjustment::CreditAll;
+                let name = o.cloned().unwrap_or_else(|| if credited { "credited" } else { "blank" }.into());
                 let fk = format!("{item_key}.opt.{name}");
                 set(&mut b, format!("{fk}.n"), total as f64);
                 if split.is_some() {
@@ -563,7 +663,7 @@ fn report(
                 }
                 opt_rows.push(vec![
                     text(label.clone()),
-                    text(if o.is_none() { "(blank)".to_string() } else if right { format!("{name} (key)") } else { name }),
+                    text(if credited { "(no answer, credited)".to_string() } else if o.is_none() { "(blank)".to_string() } else if right { format!("{name} (key)") } else { name }),
                     count(total),
                     num(total as f64 / n as f64, 2),
                     if split.is_some() { count(c[0]) } else { Cell::Empty },
@@ -622,3 +722,66 @@ fn report(
 /// The column labels, as the C3 test set asks each tool to word them.
 pub const POINT_BISERIAL_LABEL: &str = "Point-biserial (total includes the question)";
 pub const CORRECTED_LABEL: &str = "Corrected item-total r (total leaves the item out)";
+
+/// A subscore for each group of items (`spec.groups`): the points earned on the group's items that count.
+fn subscores(b: &mut ResultBundle, spec: &Spec, labels: &[String], live: &[usize], earned: &[Vec<f64>], points: &[f64], right_or_wrong: bool) {
+    if spec.groups.is_empty() {
+        return;
+    }
+    let what = if spec.group_name.trim().is_empty() { "Group".to_string() } else { spec.group_name.trim().to_string() };
+    let mut names: Vec<String> = Vec::new();
+    for &i in live {
+        let g = spec.groups[i].trim();
+        if !g.is_empty() && !names.iter().any(|n| n == g) {
+            names.push(g.to_string());
+        }
+    }
+    if names.is_empty() {
+        return;
+    }
+    group_order(&mut names);
+    let n = earned[live[0]].len();
+    let reliability_name = if right_or_wrong { "KR-20" } else { "Cronbach's α" };
+    let mut rows = Vec::new();
+    let mut single = Vec::new();
+    for (j, name) in names.iter().enumerate() {
+        let members: Vec<usize> = live.iter().copied().filter(|&i| spec.groups[i].trim() == name).collect();
+        let cols: Vec<&Vec<f64>> = members.iter().map(|&i| &earned[i]).collect();
+        let sub: Vec<f64> = (0..n).map(|r| cols.iter().map(|c| c[r]).sum()).collect();
+        let possible: f64 = members.iter().map(|&i| points[i]).sum();
+        let m = mean(&sub);
+        let sd = (var_n(&sub) * n as f64 / (n as f64 - 1.0)).sqrt();
+        let rel = if members.len() >= 2 { alpha(&cols) } else { f64::NAN };
+        if members.len() < 2 {
+            single.push(name.clone());
+        }
+        let key = format!("subscore.{}", j + 1);
+        set_text(b, format!("{key}.name"), name.clone());
+        set_text(b, format!("{key}.items"), members.iter().map(|&i| labels[i].clone()).collect::<Vec<_>>().join("\u{1f}"));
+        for (k, v) in [("k", members.len() as f64), ("possible", possible), ("mean", m), ("sd", sd), ("mean.p", m / possible), ("reliability", rel)] {
+            if v.is_finite() {
+                set(b, format!("{key}.{k}"), v);
+            }
+        }
+        rows.push(vec![text(name.clone()), count(members.len()), num(possible, 2), num(m, 2), num(sd, 2), num(m / possible, 2), if rel.is_finite() { num(rel, 3) } else { Cell::Empty }]);
+    }
+    set(b, "subscores", names.len() as f64);
+    let lower = what.to_lowercase();
+    let ungrouped: Vec<String> = live.iter().filter(|&&i| spec.groups[i].trim().is_empty()).map(|&i| labels[i].clone()).collect();
+    let mut footnotes = vec![format!("Each subscore is the points earned on the items of that {lower}. The share of points is the subscore's mean divided by its points possible; reliability is {reliability_name} of the group's items, computed as for the whole test.")];
+    if !single.is_empty() {
+        footnotes.push(format!("{} {} only one item, so no reliability is given for {}.", apa::series(&single), if single.len() == 1 { "has" } else { "have" }, if single.len() == 1 { "it" } else { "them" }));
+    }
+    if !ungrouped.is_empty() {
+        footnotes.push(format!("{} {} no {lower} and {} counted in the whole test only.", apa::series(&ungrouped), if ungrouped.len() == 1 { "has" } else { "have" }, if ungrouped.len() == 1 { "is" } else { "are" }));
+    }
+    footnotes.push("A subscore made of few items is less reliable than the whole test; read small differences between groups with care.".into());
+    b.tables.push(Table {
+        id: "subscores".into(),
+        title: format!("Subscores by {lower}"),
+        columns: vec![what, "Items".into(), "Points possible".into(), "Mean".into(), "SD".into(), "Share of points".into(), reliability_name.into()],
+        rows,
+        footnotes,
+    });
+}
+

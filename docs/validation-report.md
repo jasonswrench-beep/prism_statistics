@@ -1,9 +1,9 @@
 # Validation report
 
-Generated 2026-11-15 by `python tools/validate.py` at commit `1b2615f` (engine 0.2.1).
+Generated 2026-11-16 by `python tools/validate.py` at commit `98b42b5` (engine 0.2.2).
 R 4.6.1.
 
-**167 of 167 reference tests passed**.
+**169 of 169 reference tests passed**.
 
 Each suite compares the engine with values computed independently: R scripts in `crates/prism-engine/tests/reference` (re-run them with `--regenerate`), and for SEM the product owner's reference packages. Tolerances are written in each test file: exact (to about 1e-8) where the reference is deterministic, and within the spread of repeated reference runs where it depends on random draws. The core methods shared with PrismQDA (t tests, ANOVA, correlation, regression, nonparametric tests and more) are validated against R in the `prismqda-stats` crate's own suite (published from openstage-core, pinned by tag), and the engine's unit tests (`cargo test -p prism-engine --lib`) cover each analysis module.
 
@@ -13,7 +13,7 @@ Each suite compares the engine with values computed independently: R scripts in 
 |---|---|---|---|
 | `bmeta_reference` | `make_bmeta_reference.R` | bayesmeta 3.5, metafor 5.2.1 | 2/2 |
 | `boost_reference` | `make_boost_reference.R` | gbm 2.3.1 | 3/3 |
-| `c3_reference` | `make_reference.R` | — | 5/5 |
+| `c3_reference` | `make_reference.R` | — | 7/7 |
 | `descriptives_reference` | `make_descriptives_reference.R` | — | 4/4 |
 | `doe_reference` | `make_doe_reference.R` | AlgDesign 1.2.1.2, BsMD 2023.920, FrF2 2.3.5, rcdd 1.6.1, rsm 2.10.6 | 10/10 |
 | `forest_reference` | `make_forest_reference.R` | randomForest 4.7.1.2 | 3/3 |
@@ -58,10 +58,12 @@ Gradient boosting against gbm (reference/boost_reference.json, made by make_boos
 
 ### c3_reference
 
-The shared item-analysis test set (C3, openstage-core `testsets/item-analysis`, set 1.1.0, copied whole into reference/c3-item-analysis). Every figure in its reference.json was computed in base R from the case files alone (make_reference.R there). Each case's .pstat file (profile `OpenAssess item results 1`, or 2 for `letters-60`) is opened as a project and run through Reliability (the listwise figures), Item Analysis on the scored points (the figures OpenAssess also reports, and `item_analysis_listwise`), and for `letters-60` Item Analysis on the letters with the key from the file's `assessment.json` (`answers`). Tolerances are the set's: 1e-9, and 1e-8 for Feldt's limits.
+The shared item-analysis test set (C3, openstage-core `testsets/item-analysis`, set 2.0.0, copied whole into reference/c3-item-analysis). Every figure in its reference.json was computed in base R from the case files alone (make_reference.R there). Each case's .pstat file (profile `OpenAssess item results 1`, or 2 for `letters-60` and `credited-40`) is opened as a project and run through Reliability (the listwise figures), Item Analysis on the scored points (the figures OpenAssess also reports, and `item_analysis_listwise`), and for the profile-2 cases Item Analysis on the letters with the key from the file's `assessment.json` (`answers`), where a question credited to everyone is never counted blank (set 2.0.0, PSTAT-1 revision 1.3). Tolerances are the set's: 1e-9, and 1e-8 for Feldt's limits.
 
-- ✓ `letters_scored_with_the_files_key_match_the_set`
+- ✓ `a_box_scored_by_a_person_is_analysed_from_its_points`
 - ✓ `a_profile_part_survives_a_save`
+- ✓ `letters_scored_with_the_files_key_match_the_set`
+- ✓ `question_details_are_offered_as_subscores`
 - ✓ `item_analysis_as_a_scale_analysis_matches_the_set`
 - ✓ `the_two_correlations_are_labelled_as_the_set_asks`
 - ✓ `every_case_matches_the_shared_test_set`
@@ -84,8 +86,8 @@ Designed experiments against R (reference/doe_reference.json, made by make_doe_r
 - ✓ `fractional_factorials`
 - ✓ `full_factorial_and_response_surface_designs`
 - ✓ `mixture_models`
-- ✓ `mixture_designs`
 - ✓ `i_optimal_designs`
+- ✓ `mixture_designs`
 - ✓ `response_surface`
 - ✓ `plackett_burman_designs`
 - ✓ `d_optimal_designs`
@@ -193,9 +195,9 @@ The analyses added after the preview, against R (reference/more_reference.json, 
 - ✓ `mediation_and_moderation`
 - ✓ `one_way_manova`
 - ✓ `oneway_contrasts_and_adjusted_pairs`
-- ✓ `ordinal_multinomial_and_count_regression`
-- ✓ `partial_correlation`
 - ✓ `one_sided_tests`
+- ✓ `partial_correlation`
+- ✓ `ordinal_multinomial_and_count_regression`
 - ✓ `power_and_sample_size`
 - ✓ `rater_agreement`
 - ✓ `repeated_measures_and_mixed_anova`
@@ -285,8 +287,8 @@ Structural equation models against lavaan (reference/sem_reference.json, made by
 - ✓ `model_errors_are_plain`
 - ✓ `multigroup_models`
 - ✓ `full_information_maximum_likelihood`
-- ✓ `path_analysis_with_fixed_x`
 - ✓ `ordinal_indicators_by_wlsmv`
+- ✓ `path_analysis_with_fixed_x`
 - ✓ `path_diagram_figure`
 - ✓ `reliability_and_validity`
 - ✓ `robust_maximum_likelihood`
@@ -328,8 +330,8 @@ The training evaluation report by Kirkpatrick level against R (reference/trainin
 Sort Cases, Rank Cases, Standardize, Reverse Score and Date and Time against R (reference/transform_reference.json, made by make_transform_reference.R from preview.csv). The data have user-missing codes, which R gets as NA.
 
 - ✓ `z_scores_and_reverse_scores_match_r`
-- ✓ `ranks_match_r`
 - ✓ `sorting_matches_r`
+- ✓ `ranks_match_r`
 - ✓ `dates_match_r`
 
 ### tree_reference
@@ -346,8 +348,8 @@ Decision trees against rpart (reference/tree_reference.json, made by make_tree_r
 The independent-samples t test against R (reference/ttest_reference.json, made by make_ttest_reference.R).  The data include every kind of case the test must leave out: an empty grouping cell, a user-missing group code, a third group, an empty score and a user-missing score. R gets the same exclusions written out by hand, so the test checks the case handling as well as the numbers.
 
 - ✓ `small_groups_are_flagged`
-- ✓ `every_excluded_case_has_one_reason`
 - ✓ `student_at_90_percent_matches_r`
+- ✓ `every_excluded_case_has_one_reason`
 - ✓ `too_few_cases_fails_without_numbers`
 - ✓ `template_paragraph_reads_correctly`
 - ✓ `swapping_groups_flips_the_sign_only`

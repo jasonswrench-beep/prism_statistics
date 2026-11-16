@@ -4137,7 +4137,7 @@ dependencies = [
 
 [[package]]
 name = "prism-ai"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "llama-cpp-2",
  "llama-cpp-sys-2",
@@ -4150,7 +4150,7 @@ dependencies = [
 
 [[package]]
 name = "prism-api"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "base64 0.22.1",
  "prism-ai",
@@ -4163,7 +4163,7 @@ dependencies = [
 
 [[package]]
 name = "prism-engine"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "ambers",
  "arrow-array",
@@ -4183,7 +4183,7 @@ dependencies = [
 
 [[package]]
 name = "prism-pdf"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "prism-engine",
  "resvg",
@@ -4206,7 +4206,7 @@ dependencies = [
 
 [[package]]
 name = "prismstatistics-app"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "prism-api",
  "semver",

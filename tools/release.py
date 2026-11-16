@@ -4,7 +4,7 @@
     python tools/release.py bump 0.2.0        # set a new version everywhere
     python tools/release.py build             # tests, validation report, UI build, then the unsigned installer
     python tools/release.py build --sign      # the same, with the program and installer signed and timestamped
-    python tools/release.py build --core pstat-v1.2.0            # also run the shared core's checks on the build
+    python tools/release.py build --core pstat-v1.3.0            # also run the shared core's checks on the build
     python tools/release.py build --core <openstage-core clone>  # the same, from a clone
     python tools/release.py build --sign --updates   # also sign the installer for Help > Check for Updates and write latest.json
 
@@ -170,7 +170,7 @@ CORE_REPO = "jasonswrench-beep/openstage-core"
 def core_at_tag(tag):
     """The core's source at a release tag, unpacked into a temporary folder; returns the folder."""
     if not re.fullmatch(r"[a-z][a-z0-9-]*-v\d+\.\d+\.\d+", tag):
-        sys.exit(f"{tag} is neither a folder nor a core release tag (such as pstat-v1.2.0).")
+        sys.exit(f"{tag} is neither a folder nor a core release tag (such as pstat-v1.3.0).")
     url = f"https://github.com/{CORE_REPO}/archive/refs/tags/{tag}.tar.gz"
     print(f"\nFetching the shared core at {tag}")
     with urllib.request.urlopen(url, timeout=120) as r:
@@ -266,7 +266,7 @@ def build(sign=False, core=None, updates=False):
         step("Shared core: .pstat reader conformance", ["node", os.path.join(core, "specs", "pstat", "conformance", "check_reader.mjs"), "--prism", program], cwd=core)
         step("Shared core: item-analysis test set", ["node", os.path.join(core, "testsets", "item-analysis", "check", "check_prismstatistics.mjs"), "--prism", program], cwd=core)
     else:
-        print("\nSkipped: the shared core's conformance and item-analysis checks on the build (give --core <release tag such as pstat-v1.2.0, or a clone>).")
+        print("\nSkipped: the shared core's conformance and item-analysis checks on the build (give --core <release tag such as pstat-v1.3.0, or a clone>).")
     bundle = os.path.join(ROOT, "app", "src-tauri", "target", "release", "bundle", "nsis")
     found = [f for f in os.listdir(bundle) if f.endswith("-setup.exe") and f"_{version}_" in f]
     if not found:
@@ -310,5 +310,5 @@ if __name__ == "__main__":
             else:
                 core = core_at_tag(rest[1])
         elif rest:
-            sys.exit("build takes --sign, --updates and --core <core release tag or clone>, e.g. python tools/release.py build --sign --updates --core pstat-v1.2.0")
+            sys.exit("build takes --sign, --updates and --core <core release tag or clone>, e.g. python tools/release.py build --sign --updates --core pstat-v1.3.0")
         build(sign=sign, core=core, updates=updates)

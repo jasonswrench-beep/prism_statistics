@@ -1781,6 +1781,29 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
+    /// The exported report, as Word and as a web page, against the core's accessibility rules (A11Y-1, tag
+    /// a11y-v0.1.0): no rule fails and nothing is left to review. (PDFs are not read by those rules yet; the PDF/UA check is the owner's.)
+    #[test]
+    fn exported_reports_pass_the_shared_accessibility_rules() {
+        use base64::Engine as _;
+        let mut s = session();
+        s.handle("descriptives", json!({ "variables": ["y"] })).unwrap();
+        s.handle("ttest_independent", json!({ "test_variables": ["y"], "grouping_variable": "g", "groups": [1.0, 2.0] })).unwrap();
+        s.handle("chart", json!({ "kind": "histogram", "variables": ["y"] })).unwrap();
+        for format in ["html", "docx"] {
+            let out = s.handle("export", json!({ "format": format })).unwrap();
+            let bytes = base64::engine::general_purpose::STANDARD.decode(out["base64"].as_str().unwrap()).unwrap();
+            if let Ok(dir) = std::env::var("PRISM_A11Y_OUT") {
+                std::fs::write(std::path::Path::new(&dir).join(format!("report.{format}")), &bytes).unwrap();
+            }
+            let report = openstage_a11y::check_bytes(&format!("report.{format}"), &bytes, &Default::default()).unwrap();
+            let failed: Vec<String> = report.findings.iter().filter(|f| matches!(f.status, openstage_a11y::Status::Fail | openstage_a11y::Status::NeedsReview)).map(|f| format!("{} {:?}: {}", f.rule, f.at, f.message)).collect();
+            assert!(failed.is_empty(), "{format} export fails or needs review under A11Y-1:
+{}", failed.join("
+"));
+        }
+    }
+
     #[test]
     fn one_figure_or_table_is_saved_on_its_own() {
         use base64::Engine as _;

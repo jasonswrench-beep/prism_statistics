@@ -144,3 +144,19 @@ a code's presence as a predictor). The return direction, PrismStatistics results
 - **R6:** `PrismQDA case table 1` files open with offers (how many cases each code appears in, excerpts per case) and a
   pointer to Add Variables on `case_id`; `case-table.json` is kept when saving.
 
+## Taken up (2026-11-16, third round: PSTAT-1 1.3, set 2.0.0, A11Y-1)
+
+- **The two rulings (PSTAT-1 revision 1.3, set 2.0.0, from the core's tags `pstat-v1.3.0` and `item-analysis-v2.0.0`):**
+  on a question credited to everyone, a sheet with no answer (left blank, or marks never settled) is counted
+  credited, never blank: `item.<i>.blank` is 0 and those sheets are in the option row `credited` (shown as "(no
+  answer, credited)"). A question of type `other` has no `r` variable and is analysed from its points; the banner now
+  says it is scored by a person. The set is copied whole at 2.0.0 and `c3_reference.rs` checks `credited-40` on the
+  letters as well; the spec's example `item-results-2-boxes.pstat` is in `tests/reference/pstat-examples` with a test.
+  Against a build of this commit: the reader conformance check passes 34 of 34, and `check_prismstatistics.mjs` 1,851
+  figures match and none differ. `tools/release.py` names `pstat-v1.3.0` in its examples.
+- **Question details** (objective, chapter, section, Bloom level, difficulty level) are now used: Test Scoring and Item
+  Analysis gives subscores by a label per question, and the banner offers subscores by each detail that splits the
+  questions. A set case whose `assessment.json` fills the details would let the set check subscores too (the
+  definitions are in `item_analysis.rs`, `subscores`); not a request yet.
+- **A11Y-1 (tag `a11y-v0.1.0`):** prism-api's tests run the engine on a report exported as Word and as a web page: no
+  rule fails and nothing needs review. PDFs wait on A11Y-1 section 6.6.

@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { PROFILE_ITEM_RESULTS, PROFILE_ITEM_RESULTS_2, writePstat } from "../../packages/pstat/src/index.js";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
-export const SET_VERSION = "1.1.0";
+export const SET_VERSION = "2.0.0";
 export const APP_VERSION = `OpenAssess item-analysis test set ${SET_VERSION}`;
 
 const csv = (path, cell) => {
@@ -43,20 +43,23 @@ export function projectFor(name) {
   // A question that counts on no sheet is left out, and the names keep version A's numbers (PSTAT-1 section 7.1).
   const items = info.items.filter((it) => rows.some((r) => r[it.id] !== null));
   const versions = [...new Set(rows.map((r) => r.version))].sort((a, b) => a - b);
+  // A question of type other has no letters, so no answer variable (PSTAT-1 1.3).
+  const lettered = items.filter((it) => it.type !== "other");
   let id = 1;
   const variables = [
     variable(id++, "sheet", "Sheet number", "nominal"),
     variable(id++, "version", "Version", "nominal", versions.map((v) => ({ value: v, label: letter(v) }))),
     ...items.map((it) => variable(id++, `q${tag(it)}`, `Question ${number(it)}`, "scale")),
     variable(id++, "total", "Total score", "scale"),
-    ...(answers ? items.map((it) => variable(id++, `r${tag(it)}`, `Question ${number(it)} answer`, "nominal")) : []),
+    ...(answers ? lettered.map((it) => variable(id++, `r${tag(it)}`, `Question ${number(it)} answer`, "nominal")) : []),
   ];
   const columns = [
     { type: "numeric", values: rows.map((r) => r.sheet) },
     { type: "numeric", values: rows.map((r) => r.version) },
     ...items.map((it) => ({ type: "numeric", values: rows.map((r) => r[it.id]) })),
     { type: "numeric", values: rows.map((r) => items.reduce((s, it) => s + (r[it.id] ?? 0), 0)) },
-    ...(answers ? items.map((it) => ({ type: "text", values: rows.map((r, k) => (r[it.id] === null ? null : answers[k][it.id])) })) : []),
+    // "~" in answers.csv is marks never settled: an empty answer cell beside the points (PSTAT-1 1.3).
+    ...(answers ? lettered.map((it) => ({ type: "text", values: rows.map((r, k) => (r[it.id] === null || answers[k][it.id] === "~" ? null : answers[k][it.id])) })) : []),
   ];
   const notes = [
     ...info.items.filter((it) => !items.includes(it)).map((it) => `Question ${number(it)} counts on none of the sheets written (it was dropped), so it is left out.`),

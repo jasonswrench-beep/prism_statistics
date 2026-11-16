@@ -30,7 +30,9 @@ const KEY: &str = "B, A, D/B, C, B, A, C, D, B, AC, C, D";
 #[test]
 fn letters_scored_against_the_key_match_r() {
     let ds = data();
-    let spec = Spec { items: names(12), key: item_analysis::parse_key(KEY), scored: false, group_fraction: 0.27 };
+    // Subscores by chapter, as the R script groups them: q10 and q12 in no chapter, chapter 3 a single item.
+    let chapters = ["2", "2", "2", "10", "10", "10", "10", "1", "1", "", "3", ""].map(String::from).to_vec();
+    let spec = Spec { items: names(12), key: item_analysis::parse_key(KEY), scored: false, group_fraction: 0.27, groups: chapters, group_name: "Chapter".into() };
     let b = item_analysis::run(&ds, &spec).unwrap();
     assert!(b.is_ok(), "{:?}", b.status);
     let mut failures = Vec::new();
@@ -47,6 +49,13 @@ fn letters_scored_against_the_key_match_r() {
     assert!(n > 300, "only {n} figures");
     // The sheet R leaves out as entirely blank is an empty line, which the CSV reader already skips.
     assert_eq!(b.number("n"), Some(119.0));
+    // Chapters in natural order, 10 last; the one-item chapter has no reliability.
+    let t = b.tables.iter().find(|t| t.id == "subscores").unwrap();
+    assert_eq!(t.title, "Subscores by chapter");
+    let firsts: Vec<String> = t.rows.iter().map(|r| match &r[0] { prism_engine::result::Cell::Text { text } => text.clone(), _ => String::new() }).collect();
+    assert_eq!(firsts, ["1", "2", "3", "10"]);
+    assert!(b.number("subscore.3.reliability").is_none());
+    assert!(t.footnotes.iter().any(|f| f.contains("q10 and q12 have no chapter")), "{:?}", t.footnotes);
     // q12 was simulated to run the wrong way, and the diagnostics say so.
     let d = b.diagnostics.iter().find(|d| d.id == "discrimination").unwrap();
     assert!(d.message.contains("q12"), "{}", d.message);
@@ -58,7 +67,7 @@ fn single_answer_questions_match_psych() {
     let single: Vec<usize> = (1..=12).filter(|i| *i != 3 && *i != 10).collect();
     let key: Vec<KeyEntry> = item_analysis::parse_key(KEY).into_iter().enumerate().filter(|(i, _)| single.contains(&(i + 1))).map(|(_, k)| k).collect();
     let items: Vec<String> = single.iter().map(|i| format!("q{i:02}")).collect();
-    let b = item_analysis::run(&ds, &Spec { items, key, scored: false, group_fraction: 0.27 }).unwrap();
+    let b = item_analysis::run(&ds, &Spec { items, key, scored: false, group_fraction: 0.27, groups: vec![], group_name: String::new() }).unwrap();
     let r = r();
     // psych scores every row; the sheet with all twelve blank is also blank on these ten, so both leave it out.
     assert_eq!(b.number("n"), r["psych.n"].as_f64());
@@ -86,14 +95,14 @@ fn keys_adjustments_and_answer_forms() {
     let mut key = item_analysis::parse_key(KEY);
     key[0].adjustment = Adjustment::Dropped;
     key[1].adjustment = Adjustment::CreditAll;
-    let b = item_analysis::run(&ds, &Spec { items: names(12), key, scored: false, group_fraction: 0.27 }).unwrap();
+    let b = item_analysis::run(&ds, &Spec { items: names(12), key, scored: false, group_fraction: 0.27, groups: vec![], group_name: String::new() }).unwrap();
     assert_eq!(b.number("k"), Some(11.0), "a dropped item is left out");
     assert_eq!(b.number("item.1.p"), Some(1.0), "q02 is credited to everyone");
     assert!(b.number("item.1.rpb").is_none(), "an item everyone got right has no correlation");
     assert!(b.method_note.contains("dropped") && b.method_note.contains("credited"));
 
     // A key of the wrong length is refused in words.
-    let e = item_analysis::run(&ds, &Spec { items: names(12), key: item_analysis::parse_key("A, B"), scored: false, group_fraction: 0.27 }).unwrap_err();
+    let e = item_analysis::run(&ds, &Spec { items: names(12), key: item_analysis::parse_key("A, B"), scored: false, group_fraction: 0.27, groups: vec![], group_name: String::new() }).unwrap_err();
     assert!(e.to_string().contains("one key entry for each item"), "{e}");
 }
 
@@ -103,7 +112,7 @@ fn small_classes_are_flagged_and_not_split() {
     for (name, col) in [("a", ["A", "B", "A", "A", "C", ""]), ("b", ["B", "B", "A", "B", "B", ""]), ("c", ["C", "C", "C", "D", "C", " "])] {
         ds.add_variable(name, prism_engine::model::Column::Text(col.iter().map(|s| Some(s.to_string())).collect())).unwrap();
     }
-    let b = item_analysis::run(&ds, &Spec { items: vec!["a".into(), "b".into(), "c".into()], key: item_analysis::parse_key("A B C"), scored: false, group_fraction: 0.27 }).unwrap();
+    let b = item_analysis::run(&ds, &Spec { items: vec!["a".into(), "b".into(), "c".into()], key: item_analysis::parse_key("A B C"), scored: false, group_fraction: 0.27, groups: vec![], group_name: String::new() }).unwrap();
     assert!(b.number("group.size").is_none(), "27% of 5 rounds to 1, too few to form groups");
     assert_eq!((b.cases.total, b.cases.analyzed), (6, 5));
     assert_eq!(b.cases.excluded[0].reason, "every item blank");

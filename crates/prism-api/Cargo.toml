@@ -19,3 +19,5 @@ ureq.workspace = true
 
 [dev-dependencies]
 zip.workspace = true
+# The core's accessibility rules (A11Y-1), held to the reports this program exports.
+openstage-a11y = { git = "https://github.com/jasonswrench-beep/openstage-core", tag = "a11y-v0.1.0" }

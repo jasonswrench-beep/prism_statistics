@@ -1582,13 +1582,18 @@ export const ANALYSES: Record<string, AnalysisDef> = {
       { key: 'key', label: 'Answer key', type: 'text', default: '', hint: 'One entry per item, in order: B, A, D/B, AC. Use / for two right answers, letters together for select-all, - to drop an item, * to credit everyone.', showWhen: { option: 'mode', values: ['letters'] } },
       { key: 'points', label: 'Points per item', type: 'text', default: '', hint: 'Optional, in the same order (1, 1, 2 …). Empty: one point each, or with points earned, each item’s highest score.' },
       { key: 'group', label: 'Upper and lower groups (%)', type: 'number', default: '27' },
+      { key: 'subgroups', label: 'Subscores: a label for each item', type: 'text', default: '', hint: 'Optional, in the items’ order, separated by semicolons: 3; 3; 4; 4. Each label gets a subscore; leave a place empty for an item in no group. OpenAssess files fill this from each question’s objective, chapter or Bloom level.' },
+      { key: 'subgroup_name', label: 'The labels are', type: 'text', default: '', hint: 'Such as Chapter, Objective or Bloom level; names the subscore table.' },
     ],
     build: (c) => {
       const points = numberList(c.options.points) ?? [];
+      const labels = String(c.options.subgroups ?? '');
+      const groups = labels.trim() ? labels.split(';').map((g) => g.trim()) : [];
+      const name = String(c.options.subgroup_name ?? '').trim();
       const scored = c.options.mode === 'points';
       const key: KeyEntry[] = scored ? points.map((p) => ({ correct: [], points: p, adjustment: 'none' as const })) : parseKey(String(c.options.key ?? ''));
       if (!scored) key.forEach((k, i) => (k.points = points[i] ?? 1));
-      return { items: c.roles.items, key, scored, group_fraction: Number(c.options.group) / 100 };
+      return { items: c.roles.items, key, scored, group_fraction: Number(c.options.group) / 100, ...(groups.length ? { groups, group_name: name } : {}) };
     },
   },
   kirkpatrick: {
@@ -2233,6 +2238,11 @@ export function problem(def: AnalysisDef, c: Collected): string | null {
     }
     const g = Number(c.options.group);
     if (!(g > 0 && g <= 50)) return 'The upper and lower groups must each be more than 0% and at most 50% of the cases.';
+    const labels = String(c.options.subgroups ?? '');
+    if (labels.trim()) {
+      const count = labels.split(';').length;
+      if (count !== n) return `The subscore labels give ${count} ${count === 1 ? 'place' : 'places'} for ${n} items; give one per item, separated by semicolons.`;
+    }
   }
   if (def.id === 'chisq_gof') {
     const e = numberList(c.options.expected);
@@ -2377,7 +2387,14 @@ const ROLE_ARGS: Record<string, (a: Args) => Partial<Collected>> = {
     const plain = !scored && pts.every((p) => p === 1);
     return {
       roles: { items: strs(a.items) },
-      options: { mode: scored ? 'points' : 'letters', key: scored ? '' : keyText(key), points: plain ? '' : pts.join(', '), group: String(Math.round(Number(a.group_fraction ?? 0.27) * 1000) / 10) },
+      options: {
+        mode: scored ? 'points' : 'letters',
+        key: scored ? '' : keyText(key),
+        points: plain ? '' : pts.join(', '),
+        group: String(Math.round(Number(a.group_fraction ?? 0.27) * 1000) / 10),
+        subgroups: strs(a.groups).join('; '),
+        subgroup_name: typeof a.group_name === 'string' ? a.group_name : '',
+      },
     };
   },
   canonical: (a) => ({ roles: { set1: strs(a.set1), set2: strs(a.set2) } }),

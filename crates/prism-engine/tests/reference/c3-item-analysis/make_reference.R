@@ -3,7 +3,7 @@
 # Uses only base R and reads only the case files (cases/<name>/scores.csv, case.json and, for a case with letters,
 # answers.csv), never a tool's code. README.md defines every figure; the names here are the names there.
 
-SET_VERSION <- "1.1.0"
+SET_VERSION <- "2.0.0"
 
 cases <- sort(list.dirs("cases", recursive = FALSE, full.names = FALSE))
 
@@ -16,7 +16,9 @@ read_case <- function(name) {
     possible = as.numeric(sub('.*"possible": ([0-9.]+).*', "\\1", items)),
     partial = grepl('"partial_credit": true', items),
     options = lapply(items, function(line) list_of(line, "options")),
-    correct = lapply(items, function(line) list_of(line, "correct"))
+    correct = lapply(items, function(line) list_of(line, "correct")),
+    type = ifelse(grepl('"type": "', items), sub('.*"type": "([a-z_]+)".*', "\\1", items), "none"),
+    adjustment = ifelse(grepl('"adjustment": "', items), sub('.*"adjustment": "([a-z_]+)".*', "\\1", items), "none")
   )
 }
 
@@ -168,6 +170,9 @@ one_case <- function(name) {
   )
 
   # The letters marked (a case with answers.csv): blanks, each answer by score group, and each letter's marks.
+  # PSTAT-1 1.3, "Counting the answers": "~" is marks never settled (an empty answer cell). On a question credited to
+  # everyone, a sheet with "" or "~" is credited, never blank (the row "credited" in place of "blank"); a question of
+  # type other has no letters, so no answers entry.
   answers <- NULL
   if (file.exists(file.path("cases", name, "answers.csv"))) {
     ans <- read.csv(file.path("cases", name, "answers.csv"), colClasses = "character", na.strings = character())
@@ -175,17 +180,20 @@ one_case <- function(name) {
     middle <- setdiff(seq_len(nc), c(up_l, lo_l))
     answers <- list()
     for (j in seq_len(k)) {
+      if (info$type[j] == "other") next
       a <- ans[[info$id[j]]]
-      seen <- unique(c(a[a != ""], info$options[[j]], info$correct[[j]]))
+      credited <- info$adjustment[j] == "credit_all"
+      stopifnot(credited || !any(a == "~"))
+      seen <- unique(c(a[a != "" & a != "~"], info$options[[j]], info$correct[[j]]))
       seen <- seen[order(nchar(seen), seen)]
       by_answer <- list()
-      for (o in c(seen, "blank")) {
-        hit <- a == (if (o == "blank") "" else o)
+      for (o in c(seen, if (credited) "credited" else "blank")) {
+        hit <- if (o == "blank") a == "" else if (o == "credited") a %in% c("", "~") else a == o
         by_answer[[o]] <- list(n = sum(hit), upper = sum(hit[up_l]), middle = sum(hit[middle]), lower = sum(hit[lo_l]))
       }
       by_letter <- list()
       for (l in info$options[[j]]) by_letter[[l]] <- sum(grepl(l, a, fixed = TRUE))
-      answers[[info$id[j]]] <- list(blank = sum(a == ""), by_answer = by_answer, by_letter = by_letter)
+      answers[[info$id[j]]] <- list(blank = if (credited) 0L else sum(a == ""), by_answer = by_answer, by_letter = by_letter)
     }
   }
 

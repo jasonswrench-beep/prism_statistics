@@ -2074,6 +2074,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
+name = "openstage-a11y"
+version = "0.1.0"
+source = "git+https://github.com/jasonswrench-beep/openstage-core?tag=a11y-v0.1.0#40c0743cca1566260e4f75028df9f00f95fe07e4"
+dependencies = [
+ "flate2",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "palette"
 version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2326,7 +2336,7 @@ dependencies = [
 
 [[package]]
 name = "prism-ai"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "llama-cpp-2",
  "llama-cpp-sys-2",
@@ -2339,9 +2349,10 @@ dependencies = [
 
 [[package]]
 name = "prism-api"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "base64 0.22.1",
+ "openstage-a11y",
  "prism-ai",
  "prism-engine",
  "prism-pdf",
@@ -2353,7 +2364,7 @@ dependencies = [
 
 [[package]]
 name = "prism-cli"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "prism-api",
  "prism-engine",
@@ -2363,7 +2374,7 @@ dependencies = [
 
 [[package]]
 name = "prism-engine"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "ambers",
  "arrow-array",
@@ -2383,7 +2394,7 @@ dependencies = [
 
 [[package]]
 name = "prism-pdf"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "prism-engine",
  "resvg",

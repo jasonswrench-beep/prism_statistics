@@ -1,6 +1,6 @@
 # Item-analysis test set (C3)
 
-**Set version 1.1.0, 2026-11-15.**
+**Set version 2.0.0, 2026-11-16.**
 
 OpenAssess (TypeScript) and PrismStatistics (Rust) both compute item statistics. They share no code. Instead, both run
 this set, and neither ships a release that breaks it. Each case is a class's scored answer sheets. Every figure in
@@ -12,7 +12,7 @@ this set, and neither ships a release that breaks it. Each case is a class's sco
 |---|---|
 | `cases/<name>/scores.csv` | One row per complete sheet: `sheet`, `version`, then the points earned on each question. An empty cell means the question does not count on that sheet, which is not the same as 0. |
 | `cases/<name>/case.json` | What each question is worth and whether it gives partial credit. For a case with letters, also each question's type, options, the answers that earn its points (`correct`) and any adjustment (`none`, `credit_all`, `dropped`). |
-| `cases/<name>/answers.csv` | A case with letters only: one row per sheet, the letters marked on each question in version A's lettering, an empty cell for a blank. |
+| `cases/<name>/answers.csv` | A case with letters only: one row per sheet, the letters marked on each question in version A's lettering, an empty cell for a blank, and `~` where the marks were never settled (2.0.0; an empty answer cell in the `.pstat` file). |
 | `cases/<name>/<name>.pstat` | The same sheets as the `.pstat` file OpenAssess sends to PrismStatistics: profile `OpenAssess item results 1` ([PSTAT-1](../../specs/pstat/PSTAT-1.md) section 7.1), or profile 2 with its `assessment.json` (section 7.2) for a case with letters. |
 | `reference.json` | R's figures for every case, named as below. |
 | `make_cases.R` | Made the case files once. They are kept, so a change in R's random numbers cannot move a reference value. |
@@ -35,6 +35,7 @@ this set, and neither ships a release that breaks it. Each case is a class's sco
 | `adjusted-30` | 30 | q04 does not count on version 2. Shows where the two tools differ on purpose (below). |
 | `omitted-25` | 25 | (1.1.0) q03 was dropped on every version, so it counts on no sheet: it has no figures, and the `.pstat` file leaves it out, naming the others `q01`, `q02`, `q04` ... by their number on version A. |
 | `letters-60` | 60 | (1.1.0) The letters marked, scored against a key, in profile 2: one-answer questions (q07 with a wrong answer that draws the high scorers), q08 with a second answer also accepted, q09 select-all, q10 true/false, q11 credited to everyone, q12 dropped. Blanks, and two letters marked on a one-answer question. |
+| `credited-40` | 40 | (2.0.0) The letters marked, in profile 2: q07 was credited to everyone, five sheets left it blank and on three the marks were never settled (`~`). Credited, never blank, and never left out (PSTAT-1 1.3, "Counting the answers"). |
 
 ## The figures
 
@@ -106,11 +107,13 @@ difference.
 
 **The letters marked** (`answers.<q>`, a case with letters only), over the sheets the question counts on:
 
-- `blank`: the sheets left blank on it.
+- `blank`: the sheets left blank on it; always 0 on a question credited to everyone (2.0.0).
 - `by_answer`: for each answer written (`B`, `AB`, `ACD`), each of the question's options, each answer in its key, and
   `blank`: how many sheets gave it (`n`), and how many of them are in the upper, middle and lower group of
   `item_analysis_listwise` (the middle group is every sheet in neither). A whole answer is one row: `AC` is not counted
-  under `A`. **PrismStatistics's option counts.** A row with `n` 0 may be left out by a tool.
+  under `A`. **PrismStatistics's option counts.** A row with `n` 0 may be left out by a tool. On a question credited
+  to everyone the last row is `credited` in place of `blank`: the sheets that left it blank or whose marks were never
+  settled.
 - `by_letter`: for each option, the sheets whose answer marks it, so a sheet that marked `AC` counts once for `A` and
   once for `C`. **OpenAssess's option counts.**
 
@@ -141,8 +144,10 @@ shows that q06 runs the wrong way.
 4. **Rounding**: OpenAssess keeps four places; PrismStatistics keeps every digit and rounds only for display.
 5. **Option counts** (`letters-60`): OpenAssess counts the marks on each option (`by_letter`), PrismStatistics each
    whole answer by score group (`by_answer`). Both are kept.
-6. **A credited question left blank**: OpenAssess calls such a sheet credited, not blank; PrismStatistics counts it as a
-   blank. No case holds one until the two agree what it is (`letters-60`'s credited q11 is never blank).
+6. (No longer a difference: settled in 2.0.0.) **A credited question left blank** is credited, never blank, the
+   author's ruling of 2026-11-15, written into PSTAT-1 1.3 ("Counting the answers"). A sheet whose marks on it were
+   never settled (an empty answer cell beside the points) is credited too, and counts in every figure like the
+   others. `credited-40` holds both.
 7. **Which sheets an item analysis uses**: OpenAssess's figures for a question use the sheets it counts on;
    PrismStatistics's Item Analysis, like its Reliability, the sheets with a value on every question. They differ only
    where a question does not count on every sheet (`adjusted-30`).
@@ -174,9 +179,12 @@ changed copy of `reference.json`, which shows they fail when a figure is wrong.
 | 2026-11-15 | PrismStatistics | `prism.exe` built from the 0.1.1 tree, 2026-11-15 16:07, set 1.0.0 | 176 of 176 match |
 | 2026-11-15 | OpenAssess | source at commit ca56055, set 1.1.0 | 512 of 512 match |
 | 2026-11-15 | PrismStatistics | `prism.exe` built from commit 10cee4b (its item-analysis round), set 1.1.0 | 1,497 of 1,497 match |
+| 2026-11-16 | OpenAssess | source at commit d1ef945 (alpha 29), set 2.0.0 | 598 of 598 match |
+| 2026-11-16 | PrismStatistics | `prism.exe` built from commit aa186e0 (0.2.1), set 2.0.0 | 1,846 of 1,852 match: the 6 that differ are `credited-40` q07's 8 credited sheets, counted as blank (the ruling it has to follow) |
 
 Both checkers were also run against a copy of `reference.json` with figures changed on purpose (six at 1.0.0, eight
-at 1.1.0): each reported every change that concerned it and exited with an error.
+at 1.1.0, and at 2.0.0 q07's blanks set back to 5): each reported every change that concerned it and exited with an
+error.
 
 ## Changing the set
 
@@ -191,6 +199,13 @@ at 1.1.0): each reported every change that concerned it and exited with an error
   `@openstage/pstat` is. `sha256sum -c SHA256SUMS` in the folder checks the same thing.
 
 ## Changes
+
+- **2.0.0 (2026-11-16).** One changed definition, so a major version: on a question credited to everyone, a sheet that
+  left it blank is counted credited, never blank (`blank` 0, and a `credited` row in `by_answer` in place of `blank`),
+  the author's ruling of 2026-11-15 (PSTAT-1 1.3, "Counting the answers"). Its only effect on an existing figure:
+  `letters-60`'s q11 has a `credited` row where it had a `blank` row, both with `n` 0. One case, `credited-40`, with
+  five blank and three never-settled sheets on its credited q07; `~` in `answers.csv` for marks never settled. Every
+  other figure of 1.1.0 is unchanged. The `.pstat` files carry `app_version` `OpenAssess item-analysis test set 2.0.0`.
 
 - **1.1.0 (2026-11-15).** Two cases (`omitted-25`, `letters-60`), the letters case's `answers.csv`, and new figures for
   every case: `item_analysis_listwise` (KR-21, the standard error of measurement, each group's share, D), each group's

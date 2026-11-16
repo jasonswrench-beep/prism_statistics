@@ -185,3 +185,55 @@ letters_case <- function() {
              pts, versions, rep(1, 12), not_counted = list(q12 = 1:2), extra = extra, answers = a)
 }
 letters_case()
+
+# 10. (set 2.0.0) Forty sheets with the letters marked: a question credited to everyone that some sheets left blank and
+# on which some sheets' marks were never settled (PSTAT-1 1.3, "Counting the answers": credited, never blank, and never
+# left out). Eight questions, two versions, every question worth one point:
+#   q01 to q06  one answer of A to D; on each a sheet is left blank one time in 25
+#   q07         one answer of A to D, credited to everyone: five sheets left it blank (""), and on three the marks
+#               were never settled ("~" in answers.csv, an empty answer cell in the .pstat file)
+#   q08         true/false (A True, B False), the answer True; left blank one time in 25
+# Made after every other case, so the random numbers of the cases before it are unchanged.
+credited_case <- function() {
+  n <- 40
+  versions <- rep(1:2, n / 2)
+  theta <- rnorm(n)
+  abcd <- c("A", "B", "C", "D")
+  one <- function(right, b) {
+    vapply(seq_len(n), function(i) {
+      if (runif(1) < plogis(theta[i] - b)) return(right)
+      sample(setdiff(abcd, right), 1, prob = c(0.5, 0.3, 0.2))
+    }, "")
+  }
+  a <- matrix("", n, 8)
+  a[, 1] <- one("B", -1.0)
+  a[, 2] <- one("D", -0.4)
+  a[, 3] <- one("A", 0.0)
+  a[, 4] <- one("C", 0.4)
+  a[, 5] <- one("B", 0.8)
+  a[, 6] <- one("A", 1.2)
+  a[, 7] <- sample(abcd, n, replace = TRUE, prob = c(0.35, 0.35, 0.2, 0.1))
+  a[, 8] <- vapply(seq_len(n), function(i) if (runif(1) < plogis(theta[i] + 0.4)) "A" else "B", "")
+  for (j in c(1:6, 8)) a[runif(n) < 0.04, j] <- ""
+  rows <- sample(n, 8)
+  a[rows[1:5], 7] <- ""
+  a[rows[6:8], 7] <- "~"
+
+  # The points, by the rule of PSTAT-1 section 7.2, written here independently of any tool.
+  correct <- list("B", "D", "A", "C", "B", "A", character(), "A")
+  pts <- matrix(0, n, 8)
+  for (j in c(1:6, 8)) pts[, j] <- as.numeric(a[, j] == correct[[j]])
+  pts[, 7] <- 1
+
+  types <- c(rep("multiple_choice", 7), "true_false")
+  options <- c(rep(list(abcd), 7), list(c("A", "B")))
+  adjustment <- c(rep("none", 6), "credit_all", "none")
+  arr <- function(v) paste0("[", paste0('"', v, '"', collapse = ", "), "]")
+  extra <- vapply(1:8, function(j) {
+    sprintf(', "type": "%s", "options": %s, "correct": %s, "adjustment": "%s"', types[j], arr(options[[j]]),
+            if (length(correct[[j]]) == 0) "[]" else arr(correct[[j]]), adjustment[j])
+  }, "")
+  write_case("credited-40", "Forty sheets with the letters marked: q07 was credited to everyone, five sheets left it blank and on three the marks were never settled; credited, never blank.",
+             pts, versions, rep(1, 8), extra = extra, answers = a)
+}
+credited_case()

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.2 (teaching preview)
+
+Subscores in item analysis, PSTAT-1 revision 1.3, and exported reports checked for accessibility. The first version offered through Help › Check for Updates. The installer and the program are code-signed.
+
+### Test Scoring and Item Analysis
+
+- **Subscores**: give each question a label (its chapter, objective or Bloom level, typed in the dialog as `3; 3; 4; 4`) and the analysis adds a subscore for each label: its questions, points possible, mean, SD, share of the points and KR-20 (or alpha). Checked against base R.
+- **OpenAssess's question details**: when a results file gives its questions' objective, chapter, section, Bloom level or difficulty level, the banner offers item analysis with subscores by each detail that splits the questions, with the labels filled in.
+
+- **Credited questions are never counted blank** (PSTAT-1 revision 1.3, the shared test set 2.0.0): on a question credited to everyone, a sheet with no answer is counted under "(no answer, credited)", not Blank. A short answer scored by a person has no letters, and the OpenAssess banner says it is analysed from its points.
+
+### Accessibility
+
+- Exported reports (Word and web page) are now checked in the tests against the suite's shared accessibility rules (A11Y-1, from the core's tag `a11y-v0.1.0`): no rule fails and nothing is left to review. PDFs are not read by those rules yet.
+
 ## 0.2.1 (teaching preview)
 
 Adds Help › Check for Updates. Install this version by hand once; from here on, PrismStatistics can update itself when you choose to. The installer and the program are code-signed.

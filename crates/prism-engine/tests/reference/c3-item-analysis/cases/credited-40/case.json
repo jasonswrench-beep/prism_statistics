@@ -1,0 +1,16 @@
+{
+  "case": "credited-40",
+  "description": "Forty sheets with the letters marked: q07 was credited to everyone, five sheets left it blank and on three the marks were never settled; credited, never blank.",
+  "sheets": 40,
+  "versions": 2,
+  "items": [
+    {"id": "q01", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["B"], "adjustment": "none"},
+    {"id": "q02", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["D"], "adjustment": "none"},
+    {"id": "q03", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["A"], "adjustment": "none"},
+    {"id": "q04", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["C"], "adjustment": "none"},
+    {"id": "q05", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["B"], "adjustment": "none"},
+    {"id": "q06", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["A"], "adjustment": "none"},
+    {"id": "q07", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": [], "adjustment": "credit_all"},
+    {"id": "q08", "possible": 1, "partial_credit": false, "type": "true_false", "options": ["A", "B"], "correct": ["A"], "adjustment": "none"}
+  ]
+}
