@@ -1,0 +1,15 @@
+{
+  "case": "omitted-25",
+  "description": "Twenty-five sheets, seven questions; q03 was dropped on every version, so the file leaves it out.",
+  "sheets": 25,
+  "versions": 2,
+  "items": [
+    {"id": "q01", "possible": 1, "partial_credit": false},
+    {"id": "q02", "possible": 1, "partial_credit": false},
+    {"id": "q03", "possible": 1, "partial_credit": false, "not_counted_on_versions": [1, 2]},
+    {"id": "q04", "possible": 1, "partial_credit": false},
+    {"id": "q05", "possible": 1, "partial_credit": false},
+    {"id": "q06", "possible": 1, "partial_credit": false},
+    {"id": "q07", "possible": 1, "partial_credit": false}
+  ]
+}

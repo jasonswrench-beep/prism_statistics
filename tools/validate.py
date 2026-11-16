@@ -161,7 +161,7 @@ def main():
     L.append("")
     L.append(f"**{passed} of {total} reference tests passed**" + (f", {ignored} ignored" if ignored else "") + (f", **{failed} failed**." if failed else "."))
     L.append("")
-    L.append("Each suite compares the engine with values computed independently: R scripts in `crates/prism-engine/tests/reference` (re-run them with `--regenerate`), and for SEM the product owner's reference packages. Tolerances are written in each test file: exact (to about 1e-8) where the reference is deterministic, and within the spread of repeated reference runs where it depends on random draws. The core methods shared with PrismQDA (t tests, ANOVA, correlation, regression, nonparametric tests and more) are validated against R in the `prismqda-stats` crate's own suite, and the engine's unit tests (`cargo test -p prism-engine --lib`) cover each analysis module.")
+    L.append("Each suite compares the engine with values computed independently: R scripts in `crates/prism-engine/tests/reference` (re-run them with `--regenerate`), and for SEM the product owner's reference packages. Tolerances are written in each test file: exact (to about 1e-8) where the reference is deterministic, and within the spread of repeated reference runs where it depends on random draws. The core methods shared with PrismQDA (t tests, ANOVA, correlation, regression, nonparametric tests and more) are validated against R in the `prismqda-stats` crate's own suite (published from openstage-core, pinned by tag), and the engine's unit tests (`cargo test -p prism-engine --lib`) cover each analysis module.")
     L.append("")
     if regen:
         ran, diff = regen

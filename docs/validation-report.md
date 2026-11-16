@@ -1,11 +1,11 @@
 # Validation report
 
-Generated 2026-11-15 by `python tools/validate.py` at commit `84f8d82` (engine 0.1.1).
+Generated 2026-11-15 by `python tools/validate.py` at commit `10cee4b` (engine 0.1.1).
 R 4.6.1.
 
-**164 of 164 reference tests passed**.
+**167 of 167 reference tests passed**.
 
-Each suite compares the engine with values computed independently: R scripts in `crates/prism-engine/tests/reference` (re-run them with `--regenerate`), and for SEM the product owner's reference packages. Tolerances are written in each test file: exact (to about 1e-8) where the reference is deterministic, and within the spread of repeated reference runs where it depends on random draws. The core methods shared with PrismQDA (t tests, ANOVA, correlation, regression, nonparametric tests and more) are validated against R in the `prismqda-stats` crate's own suite, and the engine's unit tests (`cargo test -p prism-engine --lib`) cover each analysis module.
+Each suite compares the engine with values computed independently: R scripts in `crates/prism-engine/tests/reference` (re-run them with `--regenerate`), and for SEM the product owner's reference packages. Tolerances are written in each test file: exact (to about 1e-8) where the reference is deterministic, and within the spread of repeated reference runs where it depends on random draws. The core methods shared with PrismQDA (t tests, ANOVA, correlation, regression, nonparametric tests and more) are validated against R in the `prismqda-stats` crate's own suite (published from openstage-core, pinned by tag), and the engine's unit tests (`cargo test -p prism-engine --lib`) cover each analysis module.
 
 ## Suites
 
@@ -13,7 +13,7 @@ Each suite compares the engine with values computed independently: R scripts in 
 |---|---|---|---|
 | `bmeta_reference` | `make_bmeta_reference.R` | bayesmeta 3.5, metafor 5.2.1 | 2/2 |
 | `boost_reference` | `make_boost_reference.R` | gbm 2.3.1 | 3/3 |
-| `c3_reference` | `make_reference.R` | — | 2/2 |
+| `c3_reference` | `make_reference.R` | — | 5/5 |
 | `descriptives_reference` | `make_descriptives_reference.R` | — | 4/4 |
 | `doe_reference` | `make_doe_reference.R` | AlgDesign 1.2.1.2, BsMD 2023.920, FrF2 2.3.5, rcdd 1.6.1, rsm 2.10.6 | 10/10 |
 | `forest_reference` | `make_forest_reference.R` | randomForest 4.7.1.2 | 3/3 |
@@ -58,8 +58,11 @@ Gradient boosting against gbm (reference/boost_reference.json, made by make_boos
 
 ### c3_reference
 
-The shared item-analysis test set (C3, openstage-core `testsets/item-analysis`, set 1.0.0, copied whole into reference/c3-item-analysis). Every figure in its reference.json was computed in base R from the case files alone (make_reference.R there). Each case's .pstat file, written to the `OpenAssess item results 1` profile, is opened as a project and run through Reliability (the listwise figures) and Item Analysis on the scored points (the figures OpenAssess also reports, here unrounded). Tolerances are the set's: 1e-9, and 1e-8 for Feldt's limits.
+The shared item-analysis test set (C3, openstage-core `testsets/item-analysis`, set 1.1.0, copied whole into reference/c3-item-analysis). Every figure in its reference.json was computed in base R from the case files alone (make_reference.R there). Each case's .pstat file (profile `OpenAssess item results 1`, or 2 for `letters-60`) is opened as a project and run through Reliability (the listwise figures), Item Analysis on the scored points (the figures OpenAssess also reports, and `item_analysis_listwise`), and for `letters-60` Item Analysis on the letters with the key from the file's `assessment.json` (`answers`). Tolerances are the set's: 1e-9, and 1e-8 for Feldt's limits.
 
+- ✓ `letters_scored_with_the_files_key_match_the_set`
+- ✓ `a_profile_part_survives_a_save`
+- ✓ `item_analysis_as_a_scale_analysis_matches_the_set`
 - ✓ `the_two_correlations_are_labelled_as_the_set_asks`
 - ✓ `every_case_matches_the_shared_test_set`
 
@@ -185,14 +188,14 @@ The analyses added after the preview, against R (reference/more_reference.json, 
 - ✓ `logistic_regression`
 - ✓ `mcnemar_test`
 - ✓ `linear_mixed_models`
-- ✓ `missing_patterns_and_multiple_imputation`
-- ✓ `noncentral_f_against_r`
 - ✓ `mediation_and_moderation`
+- ✓ `noncentral_f_against_r`
+- ✓ `missing_patterns_and_multiple_imputation`
 - ✓ `one_way_manova`
-- ✓ `one_sided_tests`
 - ✓ `oneway_contrasts_and_adjusted_pairs`
 - ✓ `ordinal_multinomial_and_count_regression`
 - ✓ `partial_correlation`
+- ✓ `one_sided_tests`
 - ✓ `power_and_sample_size`
 - ✓ `rater_agreement`
 - ✓ `repeated_measures_and_mixed_anova`
@@ -212,8 +215,8 @@ Structural equation models against the product owner's two SEM reference package
 - ✓ `latent_growth_model`
 - ✓ `path_model`
 - ✓ `confirmatory_factor_analysis`
-- ✓ `political_democracy_model`
 - ✓ `satorra_bentler_correction`
+- ✓ `political_democracy_model`
 - ✓ `two_group_models`
 
 ### panel_reference
@@ -255,8 +258,8 @@ The preview analyses against R (reference/preview_reference.json, made by make_p
 
 - ✓ `failures_say_why_and_never_interpret`
 - ✓ `crosstabs_and_chi_square`
-- ✓ `linear_regression`
 - ✓ `correlations`
+- ✓ `linear_regression`
 - ✓ `one_sample_t`
 - ✓ `rank_tests`
 - ✓ `paired_t`
@@ -266,8 +269,8 @@ The preview analyses against R (reference/preview_reference.json, made by make_p
 
 The data tools against base R (reference/make_reshape_reference.R writes the inputs and the expected datasets): append with a source variable, merges (left, inner, all, one-to-many), aggregate (eleven summaries, and added to cases), and restructuring wide to long (with and without dropping missing rows) and back to wide.
 
-- ✓ `append_cases`
 - ✓ `aggregate`
+- ✓ `append_cases`
 - ✓ `restructure`
 - ✓ `merges`
 
@@ -307,8 +310,8 @@ Imports of .sav, .dta and .sas7bdat files against R's haven package (reference/s
 
 - ✓ `damaged_files_are_refused_plainly`
 - ✓ `sas_catalog_labels_attach_by_format_name`
-- ✓ `sas7bdat_matches_haven`
 - ✓ `dta_matches_haven`
+- ✓ `sas7bdat_matches_haven`
 - ✓ `sav_matches_haven_and_keeps_missing_settings`
 
 ### training_reference
@@ -326,8 +329,8 @@ Sort Cases, Rank Cases, Standardize, Reverse Score and Date and Time against R (
 
 - ✓ `z_scores_and_reverse_scores_match_r`
 - ✓ `sorting_matches_r`
-- ✓ `dates_match_r`
 - ✓ `ranks_match_r`
+- ✓ `dates_match_r`
 
 ### tree_reference
 

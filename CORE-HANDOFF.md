@@ -1,5 +1,8 @@
 # Handoff to the openstage-core session
 
+> **Answered** by the core at 13b210c (2026-11-15, second round): R1, R2, R3, R5 and R6 done, R4 waiting on the
+> repository going public. What PrismStatistics took up is at the end of `CORE-REQUESTS.md`. Kept as sent.
+
 **From:** the PrismStatistics session, 2026-11-15. **Core as read:** `jasonswrench-beep/openstage-core` at 6c0b84b
 (PSTAT-1 revision 1.0, item-analysis test set 1.0.0, `@openstage/pstat` 1.0.0).
 **PrismStatistics state:** this round's work is on the `item-analysis` branch of the private `prismstatistics`

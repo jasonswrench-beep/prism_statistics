@@ -16,10 +16,11 @@ license = "Apache-2.0"
 authors = ["PrismStatistics contributors"]
 
 [workspace.dependencies]
-# The statistics are shared with PrismQDA (decision D03): one implementation, validated against R there and here.
-# Pinned to a commit of the public PrismQDA repository (its 0.1.0-beta.1 release), so a change in PrismQDA never changes
-# PrismStatistics' numbers without a deliberate update.
-prismqda-stats = { git = "https://github.com/jasonswrench-beep/prismqda", rev = "56a161e0b0b9fb2d81268e75045fc31269d7b47e" }
+# The statistics shared with PrismQDA (decision D03), published from openstage-core (`crates/prismqda-stats`) and
+# pinned to a tag there, so a change never moves PrismStatistics' numbers without a deliberate update. A new tag is
+# taken only with `python tools/validate.py` passing. 1.0.0 is PrismQDA's copy at 56a161e, unchanged.
+# The core repository is public; .cargo/config.toml has cargo fetch it with git.
+prismqda-stats = { git = "https://github.com/jasonswrench-beep/openstage-core", tag = "prismqda-stats-v1.0.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 csv = "1.4"

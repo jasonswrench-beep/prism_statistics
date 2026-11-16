@@ -26,7 +26,14 @@
 
 - The desktop app opens a project sent from the macOS Finder, at start-up or while it runs, and the bundle carries the macOS icon. A Mac build workflow (tests and an unsigned disk image for Apple silicon and Intel) is in `.github/workflows/macos.yml`, run by hand. No Mac build has been made or tried yet.
 
-### Project files
+### Project files (PSTAT-1 revision 1.1)
+
+- Results files from OpenAssess that carry the letters marked and the key (profile `OpenAssess item results 2`) offer an item analysis of the answers, scored with the file's own key, with the answers chosen by score group. A question whose key differs by version or gives partial credit is analysed from its points, and the banner says which.
+- Case tables from PrismQDA (profile `PrismQDA case table 1`) offer how often each code was applied, and point to Data › Add Variables to match them with survey data on `case_id`.
+- A profile's extra part (`assessment.json`, `case-table.json`) is kept unchanged when the project is saved.
+- The shared statistics crate now comes from openstage-core (tag `prismqda-stats-v1.0.0`), the same code as before.
+- Checked against the shared item-analysis test set 1.1.0: nine cases, including the item analysis on the points for every case and the answers by score group for the case with letters.
+
 
 - The `.pstat` format is no longer provisional: it is format 1 of the shared specification PSTAT-1 (revision 1.0). A file that names a profile keeps it when saved again.
 - A file from a newer format names the program that wrote it ("OpenAssess 0.2.0"), rather than always saying "PrismStatistics".

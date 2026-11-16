@@ -600,7 +600,7 @@ export function App() {
                 <div className="offer-actions">
                   {offer.suggestions.map((s) => (
                     <button
-                      key={s.dialog}
+                      key={s.label}
                       type="button"
                       className="btn"
                       onClick={() => {

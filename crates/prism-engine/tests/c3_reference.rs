@@ -1,8 +1,10 @@
-//! The shared item-analysis test set (C3, openstage-core `testsets/item-analysis`, set 1.0.0, copied whole into
+//! The shared item-analysis test set (C3, openstage-core `testsets/item-analysis`, set 1.1.0, copied whole into
 //! reference/c3-item-analysis). Every figure in its reference.json was computed in base R from the case files alone
-//! (make_reference.R there). Each case's .pstat file, written to the `OpenAssess item results 1` profile, is opened as
-//! a project and run through Reliability (the listwise figures) and Item Analysis on the scored points (the figures
-//! OpenAssess also reports, here unrounded). Tolerances are the set's: 1e-9, and 1e-8 for Feldt's limits.
+//! (make_reference.R there). Each case's .pstat file (profile `OpenAssess item results 1`, or 2 for `letters-60`) is
+//! opened as a project and run through Reliability (the listwise figures), Item Analysis on the scored points (the
+//! figures OpenAssess also reports, and `item_analysis_listwise`), and for `letters-60` Item Analysis on the letters
+//! with the key from the file's `assessment.json` (`answers`). Tolerances are the set's: 1e-9, and 1e-8 for Feldt's
+//! limits.
 
 use std::path::PathBuf;
 
@@ -51,13 +53,13 @@ fn number(b: &ResultBundle, key: &str) -> Option<f64> {
 #[test]
 fn every_case_matches_the_shared_test_set() {
     let r = reference();
-    assert_eq!(r["_set_version"], "1.0.0", "the copy is at set 1.0.0");
+    assert_eq!(r["_set_version"], "1.1.0", "the copy is at set 1.1.0");
     let cases = r["cases"].as_object().unwrap();
-    assert_eq!(cases.len(), 7);
+    assert_eq!(cases.len(), 9);
     let mut c = Checker { failures: Vec::new(), figures: 0 };
     for (case, want) in cases {
         let p = open(case);
-        assert_eq!(p.profile.as_deref(), Some(project::PROFILE_ITEM_RESULTS), "{case} names the profile");
+        assert!(matches!(p.profile.as_deref(), Some(project::PROFILE_ITEM_RESULTS) | Some(project::PROFILE_ITEM_RESULTS_2)), "{case} names a profile");
         let ds = &p.dataset;
         let qs = questions(ds);
 
@@ -81,10 +83,9 @@ fn every_case_matches_the_shared_test_set() {
 
         // Item analysis on the scored points, with each question's points from case.json.
         let info: Value = serde_json::from_str(&std::fs::read_to_string(set_dir().join("cases").join(case).join("case.json")).unwrap()).unwrap();
-        let key: Vec<item_analysis::KeyEntry> = info["items"]
-            .as_array()
-            .unwrap()
+        let key: Vec<item_analysis::KeyEntry> = qs
             .iter()
+            .map(|q| info["items"].as_array().unwrap().iter().find(|it| it["id"] == q.as_str()).unwrap_or_else(|| panic!("{case}: {q} in case.json")))
             .map(|it| item_analysis::KeyEntry { correct: vec![], points: it["possible"].as_f64().unwrap(), adjustment: item_analysis::Adjustment::None })
             .collect();
         let b = item_analysis::run(ds, &item_analysis::Spec { items: qs.clone(), key, scored: true, group_fraction: 0.27 }).unwrap();
@@ -114,6 +115,8 @@ fn every_case_matches_the_shared_test_set() {
             for (i, q) in qs.iter().enumerate() {
                 let w = &want["item"][q];
                 let k = format!("item.{}", i + 1);
+                c.check(&format!("{case} {q} upper 27"), number(&b, &format!("{k}.upper")), &w["upper_27"], 1e-9);
+                c.check(&format!("{case} {q} lower 27"), number(&b, &format!("{k}.lower")), &w["lower_27"], 1e-9);
                 c.check(&format!("{case} {q} difficulty"), number(&b, &format!("{k}.p")), &w["difficulty"], 1e-9);
                 c.check(&format!("{case} {q} point-biserial"), number(&b, &format!("{k}.rpb")), &w["point_biserial_item_included"], 1e-9);
                 c.check(&format!("{case} {q} upper - lower"), number(&b, &format!("{k}.D")), &w["upper_lower_27"], 1e-9);
@@ -122,6 +125,91 @@ fn every_case_matches_the_shared_test_set() {
     }
     assert!(c.failures.is_empty(), "{} of {} figures differ from R:\n{}", c.failures.len(), c.figures, c.failures.join("\n"));
     assert!(c.figures > 400, "only {} figures checked", c.figures);
+}
+
+/// `item_analysis_listwise` for one result, against the set's figures for it.
+fn listwise(c: &mut Checker, case: &str, b: &ResultBundle, want: &Value, qs: &[String]) {
+    let w = &want["item_analysis_listwise"];
+    for (ours, theirs) in [("n", "n"), ("k", "k"), ("possible", "possible"), ("mean", "mean"), ("sd", "sd"), ("sd.n", "sd_n"), ("mean.p", "mean_p"), ("reliability", "reliability"), ("kr21", "kr21"), ("sem", "sem"), ("group.size", "group_size")] {
+        let theirs = if theirs == "group_size" && w["split"] == false { &Value::Null } else { &w[theirs] };
+        c.check(&format!("{case} listwise {ours}"), number(b, ours), theirs, 1e-9);
+    }
+    assert_eq!(b.text("reliability.kind") == Some("KR-20"), w["right_or_wrong"].as_bool().unwrap(), "{case}: KR-20 or alpha");
+    for (i, q) in qs.iter().enumerate() {
+        let wi = &w["item"][q];
+        let k = format!("item.{}", i + 1);
+        for (ours, theirs) in [("p", "p"), ("mean", "mean"), ("rpb", "point_biserial_item_included"), ("rpb_corrected", "corrected_item_total_r"), ("alpha_deleted", "alpha_if_deleted"), ("upper", "upper"), ("lower", "lower"), ("D", "d")] {
+            c.check(&format!("{case} listwise {q} {theirs}"), number(b, &format!("{k}.{ours}")), &wi[theirs], 1e-9);
+        }
+    }
+}
+
+#[test]
+fn item_analysis_as_a_scale_analysis_matches_the_set() {
+    let r = reference();
+    let mut c = Checker { failures: Vec::new(), figures: 0 };
+    for (case, want) in r["cases"].as_object().unwrap() {
+        let p = open(case);
+        let qs = questions(&p.dataset);
+        let info: Value = serde_json::from_str(&std::fs::read_to_string(set_dir().join("cases").join(case).join("case.json")).unwrap()).unwrap();
+        let key: Vec<item_analysis::KeyEntry> = qs
+            .iter()
+            .map(|q| info["items"].as_array().unwrap().iter().find(|it| it["id"] == q.as_str()).unwrap())
+            .map(|it| item_analysis::KeyEntry { correct: vec![], points: it["possible"].as_f64().unwrap(), adjustment: item_analysis::Adjustment::None })
+            .collect();
+        let b = item_analysis::run(&p.dataset, &item_analysis::Spec { items: qs.clone(), key, scored: true, group_fraction: 0.27 }).unwrap();
+        listwise(&mut c, case, &b, want, &qs);
+    }
+    assert!(c.failures.is_empty(), "{} of {} figures differ from R:\n{}", c.failures.len(), c.figures, c.failures.join("\n"));
+    assert!(c.figures > 500, "only {} figures checked", c.figures);
+}
+
+#[test]
+fn letters_scored_with_the_files_key_match_the_set() {
+    let r = reference();
+    let want = &r["cases"]["letters-60"];
+    let p = open("letters-60");
+    assert_eq!(p.profile.as_deref(), Some(project::PROFILE_ITEM_RESULTS_2));
+    let part = p.part_json().expect("the file's assessment.json is kept");
+    let (keyed, points_only) = item_analysis::key_from_assessment(&p.dataset, &part);
+    assert!(points_only.is_empty(), "every question in letters-60 has a plain key: {points_only:?}");
+    let items: Vec<String> = keyed.iter().map(|(v, _)| v.clone()).collect();
+    assert_eq!(items.len(), 11, "q12 is dropped on every version, so the file leaves it out");
+    let b = item_analysis::run(&p.dataset, &item_analysis::Spec { items: items.clone(), key: keyed.into_iter().map(|(_, k)| k).collect(), scored: false, group_fraction: 0.27 }).unwrap();
+    assert!(b.is_ok(), "{:?}", b.status);
+    let qs: Vec<String> = (1..=11).map(|i| format!("q{i:02}")).collect();
+    let mut c = Checker { failures: Vec::new(), figures: 0 };
+    // Scoring the letters gives the file's points, so every scale figure is the same.
+    listwise(&mut c, "letters-60 (letters)", &b, want, &qs);
+    for (i, q) in qs.iter().enumerate() {
+        let w = &want["answers"][q];
+        let k = format!("item.{}", i + 1);
+        c.check(&format!("letters-60 {q} blank"), number(&b, &format!("{k}.blank")), &w["blank"], 0.0);
+        for (answer, row) in w["by_answer"].as_object().unwrap() {
+            for g in ["n", "upper", "middle", "lower"] {
+                let got = number(&b, &format!("{k}.opt.{answer}.{g}"));
+                // A row with no sheets may be left out by a tool.
+                let got = if got.is_none() && row["n"] == 0 { Some(0.0) } else { got };
+                c.check(&format!("letters-60 {q} answer {answer} {g}"), got, &row[g], 0.0);
+            }
+        }
+    }
+    assert!(c.failures.is_empty(), "{} of {} figures differ from R:\n{}", c.failures.len(), c.figures, c.failures.join("\n"));
+    assert!(c.figures > 300, "only {} figures checked", c.figures);
+}
+
+#[test]
+fn a_profile_part_survives_a_save() {
+    let src = std::fs::read(set_dir().join("cases/letters-60/letters-60.pstat")).unwrap();
+    let p = project::from_bytes(&src).unwrap();
+    let (name, bytes) = p.part.clone().expect("the part is read");
+    assert_eq!(name, "assessment.json");
+    let again = project::from_bytes(&project::to_bytes(&p).unwrap()).unwrap();
+    assert_eq!(again.part, Some((name, bytes)), "written back byte for byte (rule Z4)");
+    // A project that no longer names the profile drops the part.
+    let mut plain = p.clone();
+    plain.profile = None;
+    assert!(project::from_bytes(&project::to_bytes(&plain).unwrap()).unwrap().part.is_none());
 }
 
 #[test]

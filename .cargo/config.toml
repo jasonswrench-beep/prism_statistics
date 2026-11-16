@@ -2,3 +2,8 @@
 # This is where the Windows LLVM installer puts it; a setting in the environment takes precedence (macOS, other paths).
 [env]
 LIBCLANG_PATH = { value = "C:/Program Files/LLVM/bin", force = false }
+
+# The shared statistics crate comes from the openstage-core repository. Fetching it with git rather than cargo's own
+# client keeps working if the repository is ever private again (git uses the signed-in Git Credential Manager).
+[net]
+git-fetch-with-cli = true

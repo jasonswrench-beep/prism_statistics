@@ -5,7 +5,7 @@ The product owner signs a suite after reviewing its comparison in `docs/validati
 | Suite | Signed by | Date | Notes |
 |---|---|---|---|
 | `bmeta_reference` | | | |
-| `c3_reference` | | | Shared item-analysis test set (openstage-core, set 1.0.0) |
+| `c3_reference` | | | Shared item-analysis test set (openstage-core, set 1.1.0) |
 | `boost_reference` | | | |
 | `descriptives_reference` | | | |
 | `doe_reference` | | | |
@@ -33,5 +33,6 @@ The product owner signs a suite after reviewing its comparison in `docs/validati
 | `ttest_reference` | | | |
 | `training_reference` | | | |
 | `transform_reference` | | | |
+| `c3_reference` | | | |
 | `c3_reference` | | | |
 | `c3_reference` | | | |

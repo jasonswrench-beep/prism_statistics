@@ -88,8 +88,8 @@ they belong to (November 2026 list). Tick a box when it's done; add what you fou
   statements as JSON, open one (File › Open data, choose the .json file) and check the verbs, activities and scores.
   Learners show as "Learner 1", "Learner 2"; nothing identifying is read.
 - [ ] **Matched learning gains from OpenAssess.** Two OpenAssess results files can be compared as two groups today
-  (Add Cases, then the two-groups boxes). Matching each student's before and after needs a student id in the file,
-  which the locked profile does not carry; R1 in `CORE-REQUESTS.md` asks for it.
+  (Add Cases, then the two-groups boxes). Revision 1.2 lets the files carry `student_id`, so each student's before and
+  after can be matched (Add Variables on `student_id`); OpenAssess doesn't hold ids yet, so no real file has one.
 
 ## Item 8. Exporting the data
 
@@ -109,4 +109,19 @@ Deferred (2026-11-15): Mac builds come later, for every tool together. The two c
   is not signed). Check opening a .pstat file from Finder, the file dialogs, and VoiceOver on the menus and a dialog.
 - [ ] **Signing and notarization.** A Mac build that opens without warnings needs an Apple Developer ID ($99 a year)
   and notarization. That is your decision; nothing is set up for it.
+
+## Core's second round (PSTAT-1 1.1, test set 1.1.0)
+
+- [ ] **Open a profile-2 file in the window.** Double-click
+  `crates/prism-engine/tests/reference/c3-item-analysis/cases/letters-60/letters-60.pstat`. The banner should offer
+  "Item analysis of the answers marked, with the file's key" first; it should open with r01 to r11 and the key
+  `C, A, D, B, A, D, B, B/E, AC, B, *` filled in, and the result should show the options by score group.
+- [ ] **Open a case table.** Double-click `crates/prism-engine/tests/reference/pstat-examples/case-table.pstat` (the
+  spec's example): the banner should offer code frequencies and excerpts per case.
+- [x] **Publishing and the core.** The core went public on 2026-11-15, so the public `prism_statistics` copy builds
+  its statistics from the core's tag like this one. Publishing waits only on your word.
+- [x] **Student ids in profile 2.** Answered 2026-11-15: ids and names are both fine, since the files stay on the
+  instructor's computer. PSTAT-1 revision 1.2 has `student_id` and `student_name` as optional text variables after the
+  `r` variables. Matching each student's before and after: Data › Add Variables on `student_id`, then the paired
+  Learning boxes in Training Evaluation.
 

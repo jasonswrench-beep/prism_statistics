@@ -1,4 +1,4 @@
-//! The project file (`.pstat`): format 1 as specified in PSTAT-1, revision 1.0 (openstage-core `specs/pstat`).
+//! The project file (`.pstat`): format 1 as specified in PSTAT-1, revision 1.1 (openstage-core `specs/pstat`).
 //!
 //! A project is one file holding the dataset (values, variables, labels and missing codes), where the data came from,
 //! the operation record (every analysis and variable change, in order, with its settings), and the results with the
@@ -25,6 +25,19 @@ pub const FORMAT: &str = "PrismStatistics project";
 pub const VERSION: u32 = 1;
 /// The layout OpenAssess writes for a class's scored answer sheets (PSTAT-1 section 7.1).
 pub const PROFILE_ITEM_RESULTS: &str = "OpenAssess item results 1";
+/// The same with the letters marked and the part `assessment.json` (key and question details; section 7.2).
+pub const PROFILE_ITEM_RESULTS_2: &str = "OpenAssess item results 2";
+/// PrismQDA's cases with their attributes and codes, and the part `case-table.json` (section 7.3).
+pub const PROFILE_CASE_TABLE: &str = "PrismQDA case table 1";
+
+/// The part (an entry beside project.json) each profile carries.
+pub fn part_for(profile: &str) -> Option<&'static str> {
+    match profile {
+        PROFILE_ITEM_RESULTS_2 => Some("assessment.json"),
+        PROFILE_CASE_TABLE => Some("case-table.json"),
+        _ => None,
+    }
+}
 const ENTRY: &str = "project.json";
 
 /// Where the data came from.
@@ -112,11 +125,22 @@ pub struct Project {
     /// The profile the file says it follows (PSTAT-1 section 7), kept when the project is saved again.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub profile: Option<String>,
+    /// The profile's part as it was read (entry name and bytes), written back unchanged beside project.json when the
+    /// project is saved (rule Z4). Not part of project.json.
+    #[serde(skip)]
+    pub part: Option<(String, Vec<u8>)>,
+}
+
+impl Project {
+    /// The profile's part, parsed, when the file carries one.
+    pub fn part_json(&self) -> Option<Value> {
+        self.part.as_ref().and_then(|(_, b)| serde_json::from_slice(b).ok())
+    }
 }
 
 impl Project {
     pub fn new(dataset: Dataset, source: Option<Source>) -> Self {
-        Project { format: FORMAT.into(), version: VERSION, app_version: env!("CARGO_PKG_VERSION").into(), dataset, source, operations: Vec::new(), results: Vec::new(), report: None, data_settings: Default::default(), profile: None }
+        Project { format: FORMAT.into(), version: VERSION, app_version: env!("CARGO_PKG_VERSION").into(), dataset, source, operations: Vec::new(), results: Vec::new(), report: None, data_settings: Default::default(), profile: None, part: None }
     }
 }
 
@@ -128,32 +152,71 @@ pub struct Suggestion {
     pub args: Value,
 }
 
-/// What to offer for a file that follows a known profile, and a sentence saying what the file is. A results file from
-/// OpenAssess (profile 7.1) holds the points earned on q01, q02, … and the total; it gets item analysis and
-/// reliability on the questions and descriptives of the total.
+/// What to offer for a file that follows a known profile, and a sentence saying what the file is.
+///
+/// - OpenAssess's results (profiles 1 and 2, PSTAT-1 sections 7.1 and 7.2): item analysis and reliability on the
+///   points (`q01`, …) and descriptives of `total`; with profile 2, also item analysis of the letters marked (`r01`, …)
+///   scored with the file's own key, which gives the answers chosen by score group.
+/// - PrismQDA's case table (section 7.3): how often each code was applied (frequencies of the `_present` variables,
+///   descriptives of the `_count` ones), and a pointer to Add Variables to match it with survey data on `case_id`.
 pub fn profile_suggestions(p: &Project) -> Option<(String, Vec<Suggestion>)> {
-    if p.profile.as_deref() != Some(PROFILE_ITEM_RESULTS) {
-        return None;
+    let by = |fallback: &str| p.app_version.split_whitespace().next().filter(|w| !w.starts_with(|c: char| c.is_ascii_digit())).unwrap_or(fallback).to_string();
+    let names = |keep: &dyn Fn(&str) -> bool| -> Vec<String> { p.dataset.variables.iter().map(|v| v.name.clone()).filter(|n| keep(n)).collect() };
+    match p.profile.as_deref() {
+        Some(PROFILE_ITEM_RESULTS) | Some(PROFILE_ITEM_RESULTS_2) => {
+            let numbered = |prefix: char| move |n: &str| n.len() >= 3 && n.starts_with(prefix) && n[1..].chars().all(|c| c.is_ascii_digit());
+            let questions = names(&numbered('q'));
+            if questions.len() < 2 {
+                return None;
+            }
+            let mut out = Vec::new();
+            let mut about = format!("This file is {}'s scored results: {} questions, with the points each sheet earned", by("OpenAssess"), questions.len());
+            if let Some(part) = p.part_json() {
+                let (keyed, points_only) = crate::analysis::item_analysis::key_from_assessment(&p.dataset, &part);
+                if keyed.len() >= 2 {
+                    let items: Vec<&String> = keyed.iter().map(|(v, _)| v).collect();
+                    let key: Vec<&crate::analysis::item_analysis::KeyEntry> = keyed.iter().map(|(_, k)| k).collect();
+                    out.push(Suggestion {
+                        dialog: "item_analysis".into(),
+                        label: "Item analysis of the answers marked, with the file's key".into(),
+                        args: serde_json::json!({ "items": items, "key": key, "scored": false, "group_fraction": 0.27 }),
+                    });
+                    about += ", the letters marked and the key";
+                    if !points_only.is_empty() {
+                        let list = points_only.iter().map(u64::to_string).collect::<Vec<_>>().join(", ");
+                        about += &if points_only.len() == 1 { format!(" (question {list} is analysed from its points only: its key differs by version or gives partial credit)") } else { format!(" (questions {list} are analysed from their points only: their keys differ by version or give partial credit)") };
+                    }
+                }
+            }
+            out.push(Suggestion { dialog: "item_analysis".into(), label: "Item analysis of the points".into(), args: serde_json::json!({ "items": questions, "key": [], "scored": true, "group_fraction": 0.27 }) });
+            out.push(Suggestion { dialog: "reliability".into(), label: "Reliability of the questions".into(), args: serde_json::json!({ "items": questions }) });
+            if p.dataset.find("total").is_some() {
+                out.push(Suggestion { dialog: "descriptives".into(), label: "Descriptives of the total".into(), args: serde_json::json!({ "variables": ["total"] }) });
+            }
+            Some((about + ".", out))
+        }
+        Some(PROFILE_CASE_TABLE) => {
+            let code = |suffix: &'static str| move |n: &str| n.starts_with("code_") && n.ends_with(suffix);
+            let present = names(&code("_present"));
+            let counts = names(&code("_count"));
+            let mut out = Vec::new();
+            if !present.is_empty() {
+                out.push(Suggestion { dialog: "frequencies".into(), label: "How many cases each code appears in".into(), args: serde_json::json!({ "variables": present }) });
+            }
+            if !counts.is_empty() {
+                out.push(Suggestion { dialog: "descriptives".into(), label: "Excerpts per case for each code".into(), args: serde_json::json!({ "variables": counts }) });
+            }
+            let about = format!(
+                "This file is {}'s case table: {} cases, with {} code{} applied in each. To set it beside survey data, open the survey file and use Data › Add Variables with this file, matching on case_id.",
+                by("PrismQDA"),
+                p.dataset.n_rows(),
+                present.len(),
+                if present.len() == 1 { "" } else { "s" }
+            );
+            Some((about, out))
+        }
+        _ => None,
     }
-    let questions: Vec<String> = p
-        .dataset
-        .variables
-        .iter()
-        .map(|v| v.name.clone())
-        .filter(|n| n.len() >= 3 && n.starts_with('q') && n[1..].chars().all(|c| c.is_ascii_digit()))
-        .collect();
-    if questions.len() < 2 {
-        return None;
-    }
-    let mut out = vec![
-        Suggestion { dialog: "item_analysis".into(), label: "Item analysis of the questions".into(), args: serde_json::json!({ "items": questions, "key": [], "scored": true, "group_fraction": 0.27 }) },
-        Suggestion { dialog: "reliability".into(), label: "Reliability of the questions".into(), args: serde_json::json!({ "items": questions }) },
-    ];
-    if p.dataset.find("total").is_some() {
-        out.push(Suggestion { dialog: "descriptives".into(), label: "Descriptives of the total".into(), args: serde_json::json!({ "variables": ["total"] }) });
-    }
-    let by = p.app_version.split_whitespace().next().filter(|w| !w.starts_with(|c: char| c.is_ascii_digit())).unwrap_or("OpenAssess");
-    Some((format!("This file is {by}'s scored results: {} questions, with the points each sheet earned.", questions.len()), out))
 }
 
 /// Writes the project to bytes (a zip archive holding `project.json`).
@@ -163,6 +226,13 @@ pub fn to_bytes(project: &Project) -> Result<Vec<u8>> {
     let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
     zip.start_file(ENTRY, options).map_err(zip_error)?;
     zip.write_all(&json)?;
+    // The profile's part, byte for byte, while the project still names that profile.
+    if let (Some((name, bytes)), Some(profile)) = (&project.part, &project.profile) {
+        if part_for(profile) == Some(name.as_str()) {
+            zip.start_file(name.as_str(), options).map_err(zip_error)?;
+            zip.write_all(bytes)?;
+        }
+    }
     Ok(zip.finish().map_err(zip_error)?.into_inner())
 }
 
@@ -181,6 +251,15 @@ pub fn from_bytes(bytes: &[u8]) -> Result<Project> {
         return Err(Error::Invalid(newer_message(head.get("app_version").and_then(Value::as_str))));
     }
     let mut project: Project = serde_json::from_value(head).map_err(|e| Error::Invalid(format!("The project is damaged and could not be read: {e}")))?;
+    // A profile's part is kept as it is, to be written back when the project is saved. One that can't be read is
+    // left out (the data are still the file's).
+    if let Some(name) = project.profile.as_deref().and_then(part_for) {
+        if let Ok(entry) = zip.by_name(name) {
+            if let Ok(bytes) = crate::limits::read_capped(entry, "This project's part") {
+                project.part = Some((name.to_string(), bytes));
+            }
+        }
+    }
     // A hand-edited project could hold a dataset that doesn't add up; check it before anything uses it.
     project.dataset.check().map_err(|e| Error::Invalid(format!("The project is damaged and could not be read: {e}")))?;
     // Stored chart pictures are rebuilt from the parts the engine's own charts use; one that can't be is left out.

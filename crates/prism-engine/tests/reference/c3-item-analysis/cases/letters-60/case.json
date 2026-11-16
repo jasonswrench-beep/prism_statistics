@@ -1,0 +1,20 @@
+{
+  "case": "letters-60",
+  "description": "Sixty sheets with the letters marked, scored against a key: one answer, an answer also accepted, select-all, true/false, a credited and a dropped question.",
+  "sheets": 60,
+  "versions": 2,
+  "items": [
+    {"id": "q01", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["C"], "adjustment": "none"},
+    {"id": "q02", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["A"], "adjustment": "none"},
+    {"id": "q03", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["D"], "adjustment": "none"},
+    {"id": "q04", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["B"], "adjustment": "none"},
+    {"id": "q05", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["A"], "adjustment": "none"},
+    {"id": "q06", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["D"], "adjustment": "none"},
+    {"id": "q07", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": ["B"], "adjustment": "none"},
+    {"id": "q08", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D", "E"], "correct": ["B", "E"], "adjustment": "none"},
+    {"id": "q09", "possible": 1, "partial_credit": false, "type": "select_all", "options": ["A", "B", "C", "D", "E"], "correct": ["AC"], "adjustment": "none"},
+    {"id": "q10", "possible": 1, "partial_credit": false, "type": "true_false", "options": ["A", "B"], "correct": ["B"], "adjustment": "none"},
+    {"id": "q11", "possible": 1, "partial_credit": false, "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": [], "adjustment": "credit_all"},
+    {"id": "q12", "possible": 1, "partial_credit": false, "not_counted_on_versions": [1, 2], "type": "multiple_choice", "options": ["A", "B", "C", "D"], "correct": [], "adjustment": "dropped"}
+  ]
+}

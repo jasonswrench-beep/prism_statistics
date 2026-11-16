@@ -33,6 +33,10 @@ Draft 1 · November 10, 2026 · Mirrors the *Decisions* sheet of the tracker; th
   for in `CORE-REQUESTS.md` (R5) rather than built here. Until then PrismStatistics keeps its pin to PrismQDA commit
   56a161e, and `tools/check_shared_stats.py` (run by every release build) says when PrismQDA's copy has changed since
   the pin. On 2026-11-15 it had not: both apps compute with the same code.
+- **Done (2026-11-15, second round):** the core published the crate (`openstage-core/crates/prismqda-stats`, tag
+  `prismqda-stats-v1.0.0`, its source identical to PrismQDA's at 56a161e). PrismStatistics now pins that tag;
+  `tools/check_shared_stats.py` reports a newer tag or untagged changes in the core. PrismQDA, being public, keeps its
+  own copy until the core repository is public.
 - **Status:** Proposed (recommendation changed 2026-11-11) · **Decision record:** —
 
 ## D04 Distribution and source licensing
@@ -78,6 +82,8 @@ Draft 1 · November 10, 2026 · Mirrors the *Decisions* sheet of the tracker; th
   shared core's format), one row per case. PrismStatistics now reads a `.pstat` file in Add Variables and Add Cases, so
   a case table merges onto survey data by its case id. The layout PrismQDA writes (case id, attributes, each code's
   presence and count, and where they came from) is a new profile of PSTAT-1, asked for in `CORE-REQUESTS.md` (R6).
+  **Done (2026-11-15, second round):** PSTAT-1 revision 1.1 has it (section 7.3, `PrismQDA case table 1`, with the part
+  `case-table.json`). PrismStatistics recognises it on opening and keeps the part when saving; PrismQDA writes it.
 - **Conflict found (2026-11-11), needs the product owner:** PrismQDA's own roadmap puts t tests, one-way ANOVA, correlation, linear regression and the rank tests in *its* 1.0, and its `prismqda-stats` crate already computes them. If both apps share one statistics crate (D03), the "one implementation" goal holds even if PrismQDA keeps running tests. Either PrismQDA's roadmap changes to match this decision, or this decision changes to "shared engine, both apps may run tests".
 
 ## D11 Naming and visual identity

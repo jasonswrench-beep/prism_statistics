@@ -2190,6 +2190,75 @@ mod tests {
     }
 
     #[test]
+    fn profile_2_and_case_table_files_offer_their_analyses_and_keep_their_parts() {
+        let dir = std::env::temp_dir().join(format!("prism-profiles-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let reference = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../prism-engine/tests/reference");
+        // OpenAssess results with the letters and the key: the first offer scores the letters with the file's key.
+        let path = dir.join("letters-60.pstat");
+        std::fs::copy(reference.join("c3-item-analysis/cases/letters-60/letters-60.pstat"), &path).unwrap();
+        let mut s = Session::new();
+        let r = s.handle("open_project", json!({ "path": path.to_string_lossy() })).unwrap();
+        let offer = &r["profile"];
+        assert!(offer["about"].as_str().unwrap().contains("the letters marked and the key"), "{offer}");
+        let first = &offer["suggestions"][0];
+        assert_eq!(first["args"]["scored"], false);
+        assert_eq!(first["args"]["items"][0], "r01");
+        assert_eq!(first["args"]["key"][7]["correct"], json!(["B", "E"]), "q08 accepts B or E");
+        let out = s.handle("item_analysis", first["args"].clone()).unwrap();
+        assert!(out.to_string().contains("Options by score group"), "{out}");
+        // Saving keeps assessment.json (rule Z4), so the offer is still there after reopening.
+        s.handle("save_project", json!({ "path": path.to_string_lossy() })).unwrap();
+        let again = Session::new().handle("open_project", json!({ "path": path.to_string_lossy() })).unwrap();
+        assert_eq!(again["profile"]["suggestions"][0]["args"]["scored"], false);
+        // A PrismQDA case table: how often each code appears, and where to match it with survey data.
+        let table = dir.join("case-table.pstat");
+        std::fs::copy(reference.join("pstat-examples/case-table.pstat"), &table).unwrap();
+        let r = Session::new().handle("open_project", json!({ "path": table.to_string_lossy() })).unwrap();
+        let offer = &r["profile"];
+        assert!(offer["about"].as_str().unwrap().contains("case_id"), "{offer}");
+        assert_eq!(offer["suggestions"][0]["dialog"], "frequencies");
+        assert_eq!(offer["suggestions"][0]["args"]["variables"], json!(["code_12_present", "code_13_present", "code_20_present"]));
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn students_ids_and_names_open_but_stay_out_of_the_results() {
+        // PSTAT-1 revision 1.2: profile 2 may carry student_id and student_name after the r variables. A file with
+        // both still gets its offers, its analyses never mention a student, and the ids can match two administrations.
+        let reference = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../prism-engine/tests/reference");
+        let mut p = prism_engine::project::from_bytes(&std::fs::read(reference.join("c3-item-analysis/cases/letters-60/letters-60.pstat")).unwrap()).unwrap();
+        let n = p.dataset.n_rows();
+        let ids: Vec<Option<String>> = (0..n).map(|i| Some(format!("S{:04}", 1000 + i))).collect();
+        let names: Vec<Option<String>> = (0..n).map(|i| Some(format!("Student Name{i}"))).collect();
+        p.dataset.add_variable("student_id", prism_engine::model::Column::Text(ids)).unwrap();
+        p.dataset.add_variable("student_name", prism_engine::model::Column::Text(names)).unwrap();
+        let dir = std::env::temp_dir().join(format!("prism-ids-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("with-ids.pstat");
+        std::fs::write(&path, prism_engine::project::to_bytes(&p).unwrap()).unwrap();
+        let mut s = Session::new();
+        let r = s.handle("open_project", json!({ "path": path.to_string_lossy() })).unwrap();
+        let offers = r["profile"]["suggestions"].as_array().unwrap().clone();
+        assert!(offers.len() >= 4, "{offers:?}");
+        for o in &offers {
+            assert!(!o["args"].to_string().contains("student"), "no offer reads the students: {o}");
+            let out = s.handle(o["dialog"].as_str().unwrap(), o["args"].clone()).unwrap();
+            let text = out.to_string();
+            assert!(!text.contains("Student Name") && !text.contains("S1000"), "{} shows no student", o["label"]);
+        }
+        // Two administrations matched on student_id: Add Variables brings the second file's points beside the first.
+        let second = dir.join("second.pstat");
+        std::fs::copy(&path, &second).unwrap();
+        s.handle("merge_variables", json!({ "path": second.to_string_lossy(), "keys": ["student_id"] })).unwrap();
+        let ds = &s.project.as_ref().unwrap().dataset;
+        assert!(ds.find("total_2").is_some(), "the second file's total arrives as total_2");
+        let k = s.handle("kirkpatrick", json!({ "learning": [{ "pre": "total", "post": "total_2" }], "learning_max": 11 })).unwrap();
+        assert!(k.to_string().contains("learning.1.n"), "{k}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
     fn save_reopen_and_mark_out_of_date() {
         let dir = std::env::temp_dir().join(format!("prism-api-test-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();

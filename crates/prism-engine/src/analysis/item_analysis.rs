@@ -93,6 +93,41 @@ pub fn parse_key(text: &str) -> Vec<KeyEntry> {
         .collect()
 }
 
+/// The answer variables and key of an `OpenAssess item results 2` file (PSTAT-1 section 7.2), from its part
+/// `assessment.json`, for scoring the letters here. A question whose key differs by version, gives partial credit or
+/// has no letters has no equivalent in this key; it is listed in the second value (by its number on version A) to be
+/// analysed from its points instead, as the spec says.
+pub fn key_from_assessment(ds: &Dataset, part: &serde_json::Value) -> (Vec<(String, KeyEntry)>, Vec<u64>) {
+    let name_of = |id: &serde_json::Value| id.as_u64().and_then(|id| ds.variables.iter().find(|v| u64::from(v.id) == id)).map(|v| v.name.clone());
+    let mut keyed = Vec::new();
+    let mut points_only = Vec::new();
+    for q in part["questions"].as_array().into_iter().flatten() {
+        let number = q["number"].as_u64().unwrap_or(0);
+        if q["points_variable"].is_null() {
+            continue; // left out of the file
+        }
+        let Some(var) = name_of(&q["answer_variable"]) else {
+            points_only.push(number);
+            continue;
+        };
+        let entries = q["key"].as_array().map(Vec::as_slice).unwrap_or_default();
+        let simple = entries.len() == 1 && entries[0].get("versions").is_none() && entries[0]["partial_credit"].as_bool() != Some(true) && q["type"].as_str() != Some("other");
+        if !simple {
+            points_only.push(number);
+            continue;
+        }
+        let e = &entries[0];
+        let adjustment = match e["adjustment"].as_str() {
+            Some("dropped") => Adjustment::Dropped,
+            Some("credit_all") => Adjustment::CreditAll,
+            _ => Adjustment::None,
+        };
+        let correct = e["correct"].as_array().into_iter().flatten().filter_map(|c| c.as_str().map(str::to_string)).collect();
+        keyed.push((var, KeyEntry { correct, points: e["points"].as_f64().unwrap_or(1.0), adjustment }));
+    }
+    (keyed, points_only)
+}
+
 /// A response or key answer in one comparable form: upper case, with spaces and separators removed and the letters of a
 /// select-all answer in order, so "c, a" and "AC" are the same answer. Numbers keep their digits ("10" stays "10").
 pub fn normalize(s: &str) -> String {

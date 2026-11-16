@@ -1,17 +1,15 @@
-"""Says whether PrismQDA's statistics crate has changed since the commit PrismStatistics pins (decision D03).
+"""Says whether the shared statistics crate has moved on since the tag PrismStatistics pins (decision D03).
 
-PrismStatistics takes its core statistics from `prismqda-stats`, pinned in Cargo.toml to one PrismQDA commit, so a
-change in PrismQDA never changes PrismStatistics's numbers by itself. The cost is that a fix made there does not reach
-here. Until the crate is shared from openstage-core (CORE-REQUESTS.md, R5), this check is the bridge: run it before
-each release, and when it reports changes, read them, move the pin and run `python tools/validate.py`.
+PrismStatistics takes its core statistics from `prismqda-stats`, published from openstage-core and pinned in
+Cargo.toml to a tag there (`prismqda-stats-v1.0.0`), so a change in the core never changes PrismStatistics's numbers
+by itself. Run this before each release (tools/release.py does). When it reports a newer tag, read the changes, move
+the tag in Cargo.toml, run `cargo update -p prismqda-stats` (here and in app/src-tauri) and `python tools/validate.py`.
 
-    python tools/check_shared_stats.py            # list changes since the pin (exit 1 if there are any)
-    python tools/check_shared_stats.py --branch main
+    python tools/check_shared_stats.py            # exit 1 when a newer tag exists or main has untagged changes
 
-It asks GitHub through the `gh` command (signed in), reading only the public PrismQDA repository.
+It asks GitHub through the `gh` command (signed in; the core repository is private for now).
 """
 
-import argparse
 import json
 import os
 import re
@@ -20,41 +18,48 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CRATE = "crates/prismqda-stats/"
+PREFIX = "prismqda-stats-v"
 
 
-def pin():
+def pinned():
     text = open(os.path.join(ROOT, "Cargo.toml"), encoding="utf-8").read()
-    m = re.search(r'prismqda-stats\s*=\s*\{\s*git\s*=\s*"https://github\.com/([^"]+?)(?:\.git)?"\s*,\s*rev\s*=\s*"([0-9a-f]{7,40})"', text)
+    m = re.search(r'prismqda-stats\s*=\s*\{\s*git\s*=\s*"https://github\.com/([^"]+?)(?:\.git)?"\s*,\s*tag\s*=\s*"([^"]+)"', text)
     if not m:
-        sys.exit("Cargo.toml does not pin prismqda-stats to a git commit; nothing to compare.")
+        sys.exit("Cargo.toml does not pin prismqda-stats to a git tag; nothing to compare.")
     return m.group(1), m.group(2)
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--branch", default="main")
-    a = ap.parse_args()
-    repo, rev = pin()
+def gh(path):
     try:
-        out = subprocess.run(["gh", "api", f"repos/{repo}/compare/{rev}...{a.branch}"], capture_output=True, text=True, encoding="utf-8", check=True).stdout
+        out = subprocess.run(["gh", "api", path], capture_output=True, text=True, encoding="utf-8", check=True).stdout
     except (OSError, subprocess.CalledProcessError) as e:
         sys.exit(f"Could not ask GitHub (is `gh` installed and signed in?): {e}")
-    cmp = json.loads(out)
+    return json.loads(out)
+
+
+def version(tag):
+    return tuple(int(x) for x in tag[len(PREFIX):].split(".") if x.isdigit())
+
+
+def main():
+    repo, tag = pinned()
+    tags = sorted((t["name"] for t in gh(f"repos/{repo}/tags?per_page=100") if t["name"].startswith(PREFIX)), key=version)
+    print(f"Pinned: {repo} at {tag}. Tags of the crate there: {', '.join(tags) or 'none'}.")
+    status = 0
+    newer = [t for t in tags if version(t) > version(tag)]
+    if newer:
+        print(f"Newer: {', '.join(newer)}. Read the changes, move the tag in Cargo.toml and validate.")
+        status = 1
+    cmp = gh(f"repos/{repo}/compare/{tag}...main")
     files = [f for f in cmp.get("files", []) if f["filename"].startswith(CRATE)]
-    print(f"Pinned: {repo} at {rev[:10]}; {a.branch} is {cmp.get('ahead_by', 0)} commit(s) ahead.")
-    if not files:
-        print(f"No change to {CRATE} since the pin: PrismStatistics and PrismQDA compute with the same code.")
-        return 0
-    print(f"{len(files)} file(s) in {CRATE} changed since the pin:")
-    for f in files:
-        print(f"  {f['status']:<9} {f['filename']} (+{f['additions']} -{f['deletions']})")
-    commits = [c for c in cmp.get("commits", [])]
-    if commits:
-        print("Commits on the branch since the pin (newest last):")
-        for c in commits[-20:]:
-            print(f"  {c['sha'][:10]} {c['commit']['message'].splitlines()[0]}")
-    print("Read the changes, move the rev in Cargo.toml, then run python tools/validate.py.")
-    return 1
+    if files:
+        print(f"{len(files)} file(s) in {CRATE} changed on main since {tag}, not yet tagged:")
+        for f in files:
+            print(f"  {f['status']:<9} {f['filename']} (+{f['additions']} -{f['deletions']})")
+        status = 1
+    if not status:
+        print("No change since the pinned tag: PrismStatistics computes with the core's current crate.")
+    return status
 
 
 if __name__ == "__main__":

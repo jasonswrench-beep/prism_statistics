@@ -1,9 +1,9 @@
 # Reference values for the item-analysis test set (C3), written to reference.json.
 # Run from this folder: Rscript make_reference.R
-# Uses only base R and reads only the case files (cases/<name>/scores.csv and case.json), never a tool's code.
-# README.md defines every figure; the names here are the names there.
+# Uses only base R and reads only the case files (cases/<name>/scores.csv, case.json and, for a case with letters,
+# answers.csv), never a tool's code. README.md defines every figure; the names here are the names there.
 
-SET_VERSION <- "1.0.0"
+SET_VERSION <- "1.1.0"
 
 cases <- sort(list.dirs("cases", recursive = FALSE, full.names = FALSE))
 
@@ -14,9 +14,22 @@ read_case <- function(name) {
   list(
     id = sub('.*"id": "(q[0-9]+)".*', "\\1", items),
     possible = as.numeric(sub('.*"possible": ([0-9.]+).*', "\\1", items)),
-    partial = grepl('"partial_credit": true', items)
+    partial = grepl('"partial_credit": true', items),
+    options = lapply(items, function(line) list_of(line, "options")),
+    correct = lapply(items, function(line) list_of(line, "correct"))
   )
 }
+
+# A list of strings in one item's line of case.json, such as "options": ["A", "B"]; empty when the line has none.
+list_of <- function(line, member) {
+  m <- regmatches(line, regexpr(sprintf('"%s": \\[[^]]*\\]', member), line))
+  if (length(m) == 0) return(character())
+  inner <- sub(sprintf('"%s": \\[([^]]*)\\]', member), "\\1", m)
+  if (inner == "") character() else gsub('"', "", trimws(strsplit(inner, ",")[[1]]))
+}
+
+# A variance with n as the divisor.
+varn <- function(v) mean((v - mean(v))^2)
 
 # A correlation, or NA when either side does not vary (the figure is undefined, not zero).
 r_or_na <- function(a, b) if (length(a) < 2 || sd(a) == 0 || sd(b) == 0) NA_real_ else cor(a, b)
@@ -33,6 +46,9 @@ alpha_of <- function(m) {
 one_case <- function(name) {
   info <- read_case(name)
   d <- read.csv(file.path("cases", name, "scores.csv"))
+  # A question that counts on no sheet is not in the .pstat file (PSTAT-1 section 7.1): it has no figures at all.
+  live <- vapply(info$id, function(q) any(!is.na(d[[q]])), TRUE)
+  info <- lapply(info, function(v) v[live])
   x <- as.matrix(d[, info$id, drop = FALSE])
   n <- nrow(x)
   total <- rowSums(x, na.rm = TRUE)
@@ -51,12 +67,14 @@ one_case <- function(name) {
     frac <- x[counted, j] / info$possible[j]
     in_upper <- which(counted) %in% upper
     in_lower <- which(counted) %in% lower
-    ul <- if (split && any(in_upper) && any(in_lower)) mean(frac[in_upper]) - mean(frac[in_lower]) else NA_real_
+    both <- split && any(in_upper) && any(in_lower)
     items[[info$id[j]]] <- list(
       sheets = sum(counted),
       difficulty = mean(frac),
       point_biserial_item_included = r_or_na(x[counted, j], total[counted]),
-      upper_lower_27 = ul
+      upper_lower_27 = if (both) mean(frac[in_upper]) - mean(frac[in_lower]) else NA_real_,
+      upper_27 = if (both) mean(frac[in_upper]) else NA_real_,
+      lower_27 = if (both) mean(frac[in_lower]) else NA_real_
     )
   }
 
@@ -98,15 +116,91 @@ one_case <- function(name) {
     item = rel_items
   )
 
-  list(
+  # Item analysis on the points as a scale analysis (PrismStatistics's Item Analysis): the sheets with a value on every
+  # question, variances divided by n.
+  pc <- info$possible
+  tc <- rowSums(xc)
+  vt <- varn(tc)
+  rw <- all(vapply(seq_len(k), function(j) all(xc[, j] == 0 | xc[, j] == pc[j]), TRUE))
+  equal <- rw && all(pc == pc[1])
+  rel <- if (k >= 2 && vt > 1e-12) k / (k - 1) * (1 - sum(apply(xc, 2, varn)) / vt) else NA_real_
+  kr21 <- if (equal && vt > 1e-12) {
+    w <- pc[1]
+    mc <- mean(tc) / w
+    k / (k - 1) * (1 - mc * (k - mc) / (k * vt / w^2))
+  } else NA_real_
+  gl <- (27 * nc + 50) %/% 100
+  split_l <- gl >= 2 && 2 * gl <= nc
+  ord_l <- order(-tc, d$sheet[cc])
+  up_l <- if (split_l) ord_l[seq_len(gl)] else integer()
+  lo_l <- if (split_l) ord_l[(nc - gl + 1):nc] else integer()
+  ia_items <- list()
+  for (j in seq_len(k)) {
+    f <- xc[, j] / pc[j]
+    ia_items[[info$id[j]]] <- list(
+      p = mean(f),
+      mean = mean(xc[, j]),
+      point_biserial_item_included = r_or_na(xc[, j], tc),
+      corrected_item_total_r = r_or_na(xc[, j], tc - xc[, j]),
+      alpha_if_deleted = if (k > 2) alpha_of(xc[, -j, drop = FALSE]) else NA_real_,
+      upper = if (split_l) mean(f[up_l]) else NA_real_,
+      lower = if (split_l) mean(f[lo_l]) else NA_real_,
+      d = if (split_l) mean(f[up_l]) - mean(f[lo_l]) else NA_real_
+    )
+  }
+  ia <- list(
+    n = nc,
+    k = k,
+    possible = sum(pc),
+    mean = mean(tc),
+    sd = sd(tc),
+    sd_n = sqrt(vt),
+    mean_p = mean(tc) / sum(pc),
+    right_or_wrong = rw,
+    reliability = rel,
+    kr21 = kr21,
+    sem = if (is.na(rel)) NA_real_ else sd(tc) * sqrt(max(0, 1 - rel)),
+    group_size = gl,
+    split = split_l,
+    upper = I(d$sheet[cc][up_l]),
+    lower = I(d$sheet[cc][lo_l]),
+    item = ia_items
+  )
+
+  # The letters marked (a case with answers.csv): blanks, each answer by score group, and each letter's marks.
+  answers <- NULL
+  if (file.exists(file.path("cases", name, "answers.csv"))) {
+    ans <- read.csv(file.path("cases", name, "answers.csv"), colClasses = "character", na.strings = character())
+    stopifnot(all(cc), identical(as.integer(ans$sheet), as.integer(d$sheet)))
+    middle <- setdiff(seq_len(nc), c(up_l, lo_l))
+    answers <- list()
+    for (j in seq_len(k)) {
+      a <- ans[[info$id[j]]]
+      seen <- unique(c(a[a != ""], info$options[[j]], info$correct[[j]]))
+      seen <- seen[order(nchar(seen), seen)]
+      by_answer <- list()
+      for (o in c(seen, "blank")) {
+        hit <- a == (if (o == "blank") "" else o)
+        by_answer[[o]] <- list(n = sum(hit), upper = sum(hit[up_l]), middle = sum(hit[middle]), lower = sum(hit[lo_l]))
+      }
+      by_letter <- list()
+      for (l in info$options[[j]]) by_letter[[l]] <- sum(grepl(l, a, fixed = TRUE))
+      answers[[info$id[j]]] <- list(blank = sum(a == ""), by_answer = by_answer, by_letter = by_letter)
+    }
+  }
+
+  out <- list(
     sheets = n,
     small_group = n < 30,
     test = list(mean = mean(total), sd_population = sqrt(mean((total - mean(total))^2)), sd_sample = sd(total)),
     groups_27 = list(size = g, split = split, upper = I(d$sheet[upper]), lower = I(d$sheet[lower])),
     item = items,
     reliability_every_sheet = rel_every,
-    reliability_listwise = rel_listwise
+    reliability_listwise = rel_listwise,
+    item_analysis_listwise = ia
   )
+  if (!is.null(answers)) out$answers <- answers
+  out
 }
 
 # A small JSON writer: numbers to 17 significant digits, NA as null, I() for a list that must stay a list.

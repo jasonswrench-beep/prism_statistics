@@ -4,9 +4,11 @@
     python tools/release.py bump 0.2.0        # set a new version everywhere
     python tools/release.py build             # tests, validation report, UI build, then the unsigned installer
     python tools/release.py build --sign      # the same, with the program and installer signed and timestamped
-    python tools/release.py build --core <openstage-core clone>  # also run the shared core's checks on the build
+    python tools/release.py build --core pstat-v1.2.0            # also run the shared core's checks on the build
+    python tools/release.py build --core <openstage-core clone>  # the same, from a clone
 
-`--core` names a clone of openstage-core. With it, the build also runs the core's .pstat reader conformance check
+`--core` names a release tag of the public openstage-core repository (its source is fetched from GitHub into a
+temporary folder) or a clone of it. With it, the build also runs the core's .pstat reader conformance check
 (specs/pstat/conformance/check_reader.mjs) and its item-analysis check (testsets/item-analysis/check/
 check_prismstatistics.mjs) against the program just built, without changing it. Without it those two are reported as
 skipped; the item-analysis test set itself always runs, from the copy in the Rust reference tests (c3_reference).
@@ -20,7 +22,11 @@ repository; tauri.conf.json itself never holds a signing setting, and the build 
 """
 
 import hashlib
+import io
 import json
+import tarfile
+import tempfile
+import urllib.request
 import os
 import re
 import shutil
@@ -150,6 +156,26 @@ def tauri_config(sign):
     return path
 
 
+CORE_REPO = "jasonswrench-beep/openstage-core"
+
+
+def core_at_tag(tag):
+    """The core's source at a release tag, unpacked into a temporary folder; returns the folder."""
+    if not re.fullmatch(r"[a-z][a-z0-9-]*-v\d+\.\d+\.\d+", tag):
+        sys.exit(f"{tag} is neither a folder nor a core release tag (such as pstat-v1.2.0).")
+    url = f"https://github.com/{CORE_REPO}/archive/refs/tags/{tag}.tar.gz"
+    print(f"\nFetching the shared core at {tag}")
+    with urllib.request.urlopen(url, timeout=120) as r:
+        data = r.read()
+    dest = tempfile.mkdtemp(prefix="openstage-core-")
+    with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as t:
+        t.extractall(dest, filter="data")
+    tops = [d for d in os.listdir(dest) if os.path.isdir(os.path.join(dest, d))]
+    if len(tops) != 1 or not os.path.isfile(os.path.join(dest, tops[0], "CORE-NOTES.md")):
+        sys.exit(f"The archive for {tag} is not the core's source.")
+    return os.path.join(dest, tops[0])
+
+
 def build(sign=False, core=None):
     version = check()
     conf = json.loads(read(TAURI_CONF))
@@ -177,7 +203,7 @@ def build(sign=False, core=None):
         step("Shared core: .pstat reader conformance", ["node", os.path.join(core, "specs", "pstat", "conformance", "check_reader.mjs"), "--prism", program], cwd=core)
         step("Shared core: item-analysis test set", ["node", os.path.join(core, "testsets", "item-analysis", "check", "check_prismstatistics.mjs"), "--prism", program], cwd=core)
     else:
-        print("\nSkipped: the shared core's conformance and item-analysis checks on the build (give --core <openstage-core clone>).")
+        print("\nSkipped: the shared core's conformance and item-analysis checks on the build (give --core <release tag such as pstat-v1.2.0, or a clone>).")
     bundle = os.path.join(ROOT, "app", "src-tauri", "target", "release", "bundle", "nsis")
     found = [f for f in os.listdir(bundle) if f.endswith("-setup.exe") and f"_{version}_" in f]
     if not found:
@@ -211,9 +237,12 @@ if __name__ == "__main__":
         core = None
         rest = [a for a in extra if a != "--sign"]
         if rest[:1] == ["--core"] and len(rest) == 2:
-            core = os.path.abspath(rest[1])
-            if not os.path.isfile(os.path.join(core, "CORE-NOTES.md")):
-                sys.exit(f"{core} is not a clone of openstage-core (no CORE-NOTES.md).")
+            if os.path.isdir(rest[1]):
+                core = os.path.abspath(rest[1])
+                if not os.path.isfile(os.path.join(core, "CORE-NOTES.md")):
+                    sys.exit(f"{core} is not a clone of openstage-core (no CORE-NOTES.md).")
+            else:
+                core = core_at_tag(rest[1])
         elif rest:
-            sys.exit("build takes --sign and --core <openstage-core clone>, e.g. python tools/release.py build --core <openstage-core clone>")
+            sys.exit("build takes --sign and --core <core release tag or clone>, e.g. python tools/release.py build --core pstat-v1.2.0")
         build(sign=sign, core=core)

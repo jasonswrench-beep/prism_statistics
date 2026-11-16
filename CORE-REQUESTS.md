@@ -1,5 +1,9 @@
 # Requests to the shared core
 
+**Status, 2026-11-15 (core's second round, commit 13b210c):** R1, R2, R3, R5 and R6 are done in the core and taken up
+here (PSTAT-1 revision 1.1, test set 1.1.0, `prismqda-stats` 1.0.0). R4 waited on the core going public, which it now is (2026-11-15).
+What PrismStatistics did with each is under "Taken up" at the end.
+
 Things PrismStatistics needs from `openstage-core` that the core does not offer yet. PrismStatistics does not build its
 own version of any of these; each waits here until the core publishes it. Newest last. Core as read: commit 6c0b84b
 (PSTAT-1 revision 1.0, item-analysis test set 1.0.0, `@openstage/pstat` 1.0.0).
@@ -123,3 +127,20 @@ PrismStatistics already reads any `.pstat` file in Add Variables and Add Cases (
 so a case table merges onto survey data by `case_id` today. Once the profile is fixed, PrismStatistics will recognise
 it on opening, as it does the item-results profile, and offer the joint analyses (crosstabs of a code by a group,
 a code's presence as a predictor). The return direction, PrismStatistics results into PrismQDA, is PrismQDA's to read.
+
+## Taken up (2026-11-15, second round)
+
+- **R1 (profile 2):** `OpenAssess item results 2` files open with an offer to analyse the letters marked with the
+  file's own key (`item_analysis::key_from_assessment`); a question whose key differs by version or gives partial
+  credit is analysed from its points, and the banner names it. `assessment.json` is kept byte for byte when saving
+  (rule Z4). Question details (objective, Bloom level and the rest) are kept in the part but not yet used to group
+  items.
+- **R2 (set 1.1.0):** copied whole; `c3_reference.rs` now also checks `item_analysis_listwise` for every case, each
+  group's own share, and `answers` (answers by score group) for `letters-60`, scored with the file's key.
+- **R3:** the copy passes `node check/check_set.mjs` in place.
+- **R5:** `prismqda-stats` comes from the core at tag `prismqda-stats-v1.0.0` (source identical to the old pin), fetched
+  with `git-fetch-with-cli`. The core went public the same day, so the public `prism_statistics` copy builds from the
+  same tag; R4 (tagged releases with the conformance files) is unblocked for the core.
+- **R6:** `PrismQDA case table 1` files open with offers (how many cases each code appears in, excerpts per case) and a
+  pointer to Add Variables on `case_id`; `case-table.json` is kept when saving.
+
