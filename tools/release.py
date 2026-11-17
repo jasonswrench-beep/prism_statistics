@@ -21,6 +21,16 @@ temporary folder) or a clone of it. With it, the build also runs the core's .pst
 check_prismstatistics.mjs) against the program just built, without changing it. Without it those two are reported as
 skipped; the item-analysis test set itself always runs, from the copy in the Rust reference tests (c3_reference).
 
+`build` builds only a tagged commit (CLAUDE.md): before anything else it stops unless `git status` shows nothing to
+commit (no changed and no untracked files outside .gitignore) and HEAD carries the tag v<version>, and at the end it
+stops if the build changed any tracked file. Commit and tag first:
+
+    git commit ...; git tag v0.2.3; python tools/release.py build --sign --updates
+
+The release folder's validation report is written there, at the tagged commit; docs/validation-report.md is not touched
+(run tools/validate.py and commit it before tagging, if it should change). A suite new to docs/validation-signoff.md
+makes that file change, so the build stops; run tools/validate.py, commit, tag again.
+
 `build` stops at the first failure. It maps the build folders out of the program (--remap-path-prefix, /d1trimfile) and
 fails if the program still holds the user profile or repository path. It writes the installer, its SHA-256 checksum and the release notes for this version
 (from CHANGELOG.md) to release/<version>/. Signing is a deliberate choice: only `--sign` signs, through
@@ -236,8 +246,39 @@ def update_feed(exe, key, version, release_notes):
     print(f"Wrote {feed}: attach it (and previous.json, if written) to the release v{version} with the installer (docs/UPDATES.md).")
 
 
+def git(*args):
+    r = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+    if r.returncode:
+        sys.exit(f"git {' '.join(args)} failed: {r.stderr.strip()}")
+    return r.stdout
+
+
+def uncommitted():
+    """Every changed, staged or untracked file not covered by .gitignore, as `git status --porcelain` lists it."""
+    return [line for line in git("status", "--porcelain", "--untracked-files=all").splitlines() if line.strip()]
+
+
+def tagged_commit(version):
+    """Stops unless everything is committed and HEAD is tagged v<version>; returns HEAD's full hash."""
+    dirty = uncommitted()
+    if dirty:
+        shown = "\n  ".join(dirty[:20]) + ("\n  ..." if len(dirty) > 20 else "")
+        sys.exit(f"Not built: commit everything first (CLAUDE.md), then tag that commit v{version}. Not committed:\n  {shown}")
+    head = git("rev-parse", "HEAD").strip()
+    tags = git("tag", "--points-at", "HEAD").split()
+    if f"v{version}" not in tags:
+        there = git("rev-parse", f"refs/tags/v{version}^{{commit}}").strip() if git("tag", "-l", f"v{version}").strip() else ""
+        where = f" The tag v{version} is on {there[:7]}, not on HEAD ({head[:7]})." if there else ""
+        sys.exit(f"Not built: HEAD is not tagged v{version} (CLAUDE.md: tag the commit, then build from it).{where}")
+    return head
+
+
 def build(sign=False, core=None, updates=False):
     version = check()
+    head = tagged_commit(version)
+    print(f"Building v{version} from {head[:7]}.")
+    out = os.path.join(ROOT, "release", version)
+    os.makedirs(out, exist_ok=True)
     conf = json.loads(read(TAURI_CONF))
     win = conf.get("bundle", {}).get("windows", {})
     if win.get("certificateThumbprint") or win.get("signCommand"):
@@ -254,7 +295,7 @@ def build(sign=False, core=None, updates=False):
         print("\nNote: PrismQDA's statistics crate has changed since the pin (above). The build goes on with the pinned copy.")
     step("Rust tests", ["cargo", "test", "--workspace", "-q"])
     step("Interface tests", "npm test", cwd=os.path.join(ROOT, "app", "ui"), shell=True)
-    step("Validation report", [sys.executable, os.path.join(ROOT, "tools", "validate.py")])
+    step("Validation report", [sys.executable, os.path.join(ROOT, "tools", "validate.py"), "--out", os.path.join(out, "validation-report.md")])
     step("Interface build", "npm run build", cwd=os.path.join(ROOT, "app", "ui"), shell=True)
     # The interface is built above, so Tauri's own before-build step (which resolves ../ui from the folder it was
     # started in) is switched off by tools/tauri-release.json.
@@ -271,8 +312,6 @@ def build(sign=False, core=None, updates=False):
     found = [f for f in os.listdir(bundle) if f.endswith("-setup.exe") and f"_{version}_" in f]
     if not found:
         sys.exit(f"No installer for {version} in {bundle}")
-    out = os.path.join(ROOT, "release", version)
-    os.makedirs(out, exist_ok=True)
     exe = os.path.join(out, found[0])
     shutil.copy2(os.path.join(bundle, found[0]), exe)
     if sign:
@@ -283,7 +322,10 @@ def build(sign=False, core=None, updates=False):
     write(os.path.join(out, "SHA256SUMS.txt"), f"{digest}  {found[0]}\n")
     signed_note = "The installer and the program are code-signed and timestamped." if sign else "This build is not code-signed: Windows shows \"Windows protected your PC\"; choose More info, then Run anyway."
     write(os.path.join(out, "RELEASE-NOTES.md"), release_notes + "\n" + signed_note + "\n")
-    shutil.copy2(os.path.join(ROOT, "docs", "validation-report.md"), os.path.join(out, "validation-report.md"))
+    changed = uncommitted()
+    if changed or git("rev-parse", "HEAD").strip() != head:
+        sys.exit("The build changed the repository, so the installer is not the tagged commit's (CLAUDE.md):\n  " + "\n  ".join(changed or ["HEAD moved"]) + "\nCommit the change, move the tag and build again; release/ is left as it is, do not publish it.")
+    print(f"\nBuilt from v{version} ({head[:7]}).")
     print(f"\n{'Signed' if sign else 'Unsigned'} installer: {os.path.relpath(exe, ROOT)}\nSHA-256: {digest}")
 
 

@@ -48,12 +48,15 @@ once. The key and its password never pass through anyone else.
 
 ## Making a release that the button offers
 
-1. `python tools/release.py build --sign --updates`. It finds the key in your profile folder, stops before building if
+1. Commit everything and tag the commit `v<version>` (`CLAUDE.md`): the build refuses changed or untracked files and an
+   untagged HEAD, and fails if it changes a tracked file itself, so the tag is the exact commit the installer came from.
+2. `python tools/release.py build --sign --updates`. It finds the key in your profile folder, stops before building if
    `PUBKEY` is not its public half, and asks for the password. It writes `release/<version>/latest.json`, and
    `previous.json` (the published release's `latest.json`) when there is one.
-2. Publish the release `v<version>` on `prism_statistics` as a **full release** (not a pre-release), with the installer,
-   `SHA256SUMS.txt`, the validation report, `latest.json` and `previous.json`.
-3. From a computer with the previous version installed: Help › Check for Updates, Check now, read the notes, install, and
+3. Publish the release `v<version>` on `prism_statistics` as a **full release** (not a pre-release), tagged on the public
+   commit whose tree is the tagged commit's, with the installer, `SHA256SUMS.txt`, the validation report, `latest.json`
+   and `previous.json`.
+4. From a computer with the previous version installed: Help › Check for Updates, Check now, read the notes, install, and
    see the version change in About.
 
 Every release needs a higher version number than the one before it, or the button won't offer it. 0.2.0 has no button,
